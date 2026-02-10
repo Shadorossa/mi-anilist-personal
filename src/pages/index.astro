@@ -34,11 +34,10 @@ const stats = {
 	favs: allContent.filter((i) => i.data.score >= 9).length,
 };
 
-// Favoritos para Hall of Fame
+// AHORA: Filtramos por booleano y ordenamos por índice
 const favorites = allContent
-	.filter((i) => i.data.score >= 9)
-	.sort((a, b) => b.data.score - a.data.score)
-	.slice(0, 10);
+	.filter((i) => i.data.favorite === true)
+	.sort((a, b) => (a.data.favIndex || 999) - (b.data.favIndex || 999));
 
 // DATOS MOCKUP (Editables aquí)
 const monthlyPicks = [

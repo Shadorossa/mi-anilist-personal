@@ -1,21 +1,23 @@
 // src/content/config.ts
 import { defineCollection, z } from 'astro:content';
 
-// Definimos el esquema básico para todo (Juegos, Anime, Manga)
 const mediaCollection = defineCollection({
-    type: 'data', // Son archivos JSON
+    type: 'data',
     schema: z.object({
         title: z.string(),
         cover: z.string(),
-        status: z.enum(['Jugando', 'Completado', 'Pendiente', 'Abandonado']),
+        status: z.enum(['Jugando', 'Completado', 'Pendiente', 'Abandonado', 'Pausado']),
         score: z.number(),
-        year: z.union([z.string(), z.number()]).optional(), // Acepta texto o numero
+        year: z.union([z.string(), z.number()]).optional(),
         id: z.number().optional(),
-        type: z.string().optional() // Para saber si es game/anime
+        type: z.string().optional(),
+
+        // --- NUEVOS CAMPOS ---
+        favorite: z.boolean().optional(), // ¿Es favorito?
+        favIndex: z.number().optional()   // ¿En qué posición está? (1, 2, 3...)
     }),
 });
 
-// Exportamos las colecciones
 export const collections = {
     'games': mediaCollection,
     'anime': mediaCollection,
