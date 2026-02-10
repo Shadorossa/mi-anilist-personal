@@ -4,139 +4,86 @@ import { getCollection } from "astro:content";
 // Componentes
 import ProfileHeader from "../components/ProfileHeader.astro";
 import HallOfFame from "../components/HallOfFame.astro";
-import MonthlyPicks from "../components/MonthlyPicks.astro";
+import MonthlyHistory from "../components/MonthlyHistory.astro"; // <-- IMPORTAR EL NUEVO
 import LibraryGrid from "../components/LibraryGrid.astro";
 
-// 1. CARGAR CONFIGURACIÓN PERFIL
+// 1. CONFIGURACIÓN
 let profile = { username: "Admin", bio: "Cargando..." };
-try {
-	const config = await import("../content/config.json");
-	profile = config.default || config;
-} catch (e) {}
+try { const config = await import("../content/config.json"); profile = config.default || config; } catch (e) {}
 
-// 2. CARGAR BASE DE DATOS CENTRAL (Aquí está la magia ahora)
-let db = { favorites: [], monthlyPicks: [] };
-try {
-	// Leemos el archivo database.json que crea el admin
-	const d = await import("../content/database.json");
-	db = d.default || d;
-} catch (e) {}
+// 2. DB
+let db = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
+try { const d = await import("../content/database.json"); db = d.default || d; } catch (e) {}
 
-const bannerPath = "/img/profile/banner.png";
+const bannerPath = "/img/profile/banner.png"; 
 const avatarPath = "/img/profile/pic.png";
 
-// 3. CARGAR OBRAS
+// 3. OBRAS
 const games = await getCollection("games").catch(() => []);
 const anime = await getCollection("anime").catch(() => []);
 const manga = await getCollection("manga").catch(() => []);
-
-const allContent = [
-	...games.map((i) => ({ ...i, type: "game" })),
-	...anime.map((i) => ({ ...i, type: "anime" })),
-	...manga.map((i) => ({ ...i, type: "manga" })),
+const allContent = [ 
+    ...games.map((i) => ({ ...i.data, id: i.id, type: "game" })), 
+    ...anime.map((i) => ({ ...i.data, id: i.id, type: "anime" })), 
+    ...manga.map((i) => ({ ...i.data, id: i.id, type: "manga" })) 
 ];
 
-// Stats
-const stats = {
-	total: allContent.length,
-	playing: allContent.filter((i) => i.data.status === "Jugando").length,
-	favs: db.favorites.length, // Ahora contamos desde la DB central
+const stats = { 
+    total: allContent.length, 
+    playing: allContent.filter((i) => i.status === "Jugando").length, 
+    favs: db.favorites.length 
 };
 
-// 4. PROCESAR FAVORITOS (Desde database.json)
-// Mapeamos los títulos guardados en orden a los objetos reales
+// 4. FAVORITOS
 const favorites = db.favorites
-	.map((title) => allContent.find((item) => item.data.title === title))
-	.filter((item) => item !== undefined); // Evita errores si borraste un juego
+    .map((title) => allContent.find((item) => item.title === title))
+    .filter((item) => item !== undefined);
 
-// 5. PROCESAR MENSUALES (Desde database.json)
-const monthlyTimeline = (db.monthlyPicks || [])
-	.map((pick) => {
-		// pick.month viene como "2026-02" del Admin
-		const [y, m] = pick.month.split("-");
+// 5. MENSUALES (OBRAS)
+const monthlyWorks = (db.monthlyPicks || []).map(pick => {
+    const [y, m] = pick.month.split("-");
+    const dateObj = new Date(parseInt(y), parseInt(m) - 1);
+    const monthName = dateObj.toLocaleString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
+    return { title: pick.title, cover: pick.cover, year: y, month: monthName, rawDate: pick.month };
+}).sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
-		// Formatear nombre del mes (02 -> FEB)
-		const dateObj = new Date(parseInt(y), parseInt(m) - 1);
-		const monthName = dateObj
-			.toLocaleString("es-ES", { month: "short" })
-			.toUpperCase()
-			.replace(".", "");
+// 6. MENSUALES (PERSONAJES)
+const monthlyChars = (db.monthlyChars || []).map(pick => {
+    const [y, m] = pick.month.split("-");
+    const dateObj = new Date(parseInt(y), parseInt(m) - 1);
+    const monthName = dateObj.toLocaleString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
+    return { title: pick.name, cover: pick.cover, year: y, month: monthName, rawDate: pick.month };
+}).sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
-		return {
-			title: pick.title,
-			cover: pick.cover,
-			year: y,
-			month: monthName,
-			rawDate: pick.month, // Usado solo para ordenar
-		};
-	})
-	.sort((a, b) => b.rawDate.localeCompare(a.rawDate)); // Ordenar: Más reciente primero
-
-// Personajes (Hardcoded o podrías meterlos en db.json en el futuro)
-const customCharacters = [
-	{
-		name: "Malenia",
-		source: "Elden Ring",
-		img: "https://i.pinimg.com/564x/a4/06/13/a40613869260cb269d0335e265c79ba8.jpg",
-	},
-	{
-		name: "Guts",
-		source: "Berserk",
-		img: "https://i.pinimg.com/564x/31/85/3e/31853e6601d51a66072b22650c822369.jpg",
-	},
-	{
-		name: "2B",
-		source: "Nier: Automata",
-		img: "https://i.pinimg.com/564x/44/2c/62/442c628df529e0617300cf9d0411a0a2.jpg",
-	},
-];
+// 7. HALL OF FAME PERSONAJES
+let customCharacters = [];
+if (db.characters && db.characters.length > 0) { 
+    customCharacters = db.characters.map(c => ({ name: c.title, img: c.cover, source: c.source })); 
+} else { 
+    customCharacters = [ { name: "Malenia", source: "Elden Ring", img: "https://placehold.co/400x600" } ]; 
+}
 ---
 
 <html lang="es" class="dark">
-	<head>
-		<meta charset="UTF-8" />
-		<title>{profile.username} | Colección</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-		/>
-		<style>
-			body {
-				background-color: #050505;
-				color: #e4e4e7;
-				background-image: radial-gradient(
-					circle at 50% 0%,
-					#1a1a20 0%,
-					#050505 70%
-				);
-			}
-			.glass {
-				background: rgba(20, 20, 23, 0.7);
-				backdrop-filter: blur(12px);
-				border: 1px solid rgba(255, 255, 255, 0.05);
-			}
-			.hide-scroll::-webkit-scrollbar {
-				display: none;
-			}
-		</style>
-	</head>
-	<body
-		class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white"
-	>
-		<ProfileHeader
-			profile={profile}
-			bannerPath={bannerPath}
-			avatarPath={avatarPath}
-			stats={stats}
-		/>
+<head>
+    <meta charset="UTF-8" />
+    <title>{profile.username} | Colección</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style> 
+        body { background-color: #050505; color: #e4e4e7; background-image: radial-gradient( circle at 50% 0%, #1a1a20 0%, #050505 70% ); } 
+        .hide-scroll::-webkit-scrollbar { display: none; } 
+    </style>
+</head>
+<body class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white">
+    <ProfileHeader profile={profile} bannerPath={bannerPath} avatarPath={avatarPath} stats={stats} />
+    
+    <main class="max-w-7xl mx-auto px-4 md:px-8 space-y-16">
+        <HallOfFame favorites={favorites} characters={customCharacters} />
 
-		<main class="max-w-7xl mx-auto px-4 md:px-8 space-y-16">
-			<HallOfFame favorites={favorites} characters={customCharacters} />
+        <MonthlyHistory works={monthlyWorks} chars={monthlyChars} />
 
-			<MonthlyPicks picks={monthlyTimeline} />
-
-			<LibraryGrid items={allContent} />
-		</main>
-	</body>
+        <LibraryGrid items={allContent} />
+    </main>
+</body>
 </html>

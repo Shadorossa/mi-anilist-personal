@@ -3,5 +3,16 @@
     "The Legend of Heroes: Trails into Reverie",
     "Silent Hill 2"
   ],
-  "monthlyPicks": []
+  "monthlyPicks": [
+    {
+      "month": "2025-06",
+      "title": "The Legend of Heroes: Trails into Reverie",
+      "cover": "/img/covers/the-legend-of-heroes--trails-into-reverie.jpg"
+    },
+    {
+      "month": "2024-01",
+      "title": "Silent Hill 2",
+      "cover": "/img/covers/silent-hill-2.jpg"
+    }
+  ]
 }

@@ -1,135 +1,137 @@
 ---
-const { favorites, characters } = Astro.props;
+const { favorites = [], characters = [] } = Astro.props;
+
+// Rellenar hasta 10 huecos exactos
+const padArray = (arr, size) => {
+    const padded = [...arr];
+    while (padded.length < size) {
+        padded.push(null);
+    }
+    return padded.slice(0, size);
+};
+
+const fixedFavorites = padArray(favorites, 10);
+const fixedCharacters = padArray(characters, 10);
 ---
 
-<section>
-    <div class="flex items-center justify-between mb-8">
-        <h2
-            class="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tight"
-        >
-            <span
-                class="bg-yellow-500 text-black w-8 h-8 flex items-center justify-center rounded-lg shadow-lg shadow-yellow-500/20"
-                ><i class="fa-solid fa-crown"></i></span
-            >
-            Hall of Fame
+<section class="py-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tighter">
+            <span id="hof-icon" class="text-yellow-500"><i class="fa-solid fa-crown"></i></span>
+            <span id="hof-title">Hall of Fame</span>
         </h2>
 
-        <div
-            class="bg-[#1a1a1e] p-1.5 rounded-xl flex text-xs font-bold border border-white/10 shadow-inner"
-        >
-            <button
-                onclick="switchFav('works', this)"
-                class="fav-tab active px-5 py-2 rounded-lg bg-white text-black shadow-sm transition-all flex items-center gap-2"
-            >
-                <i class="fa-solid fa-layer-group"></i> Obras
+        <div class="bg-[#0a0a0c] p-1 rounded-full border border-white/10 flex relative w-24 h-10 shadow-inner">
+            <div id="tab-bg" class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-transform duration-300 ease-out border border-white/5"></div>
+            <button onclick="switchView('works')" id="btn-works" class="relative z-10 w-1/2 h-full flex items-center justify-center text-white transition-colors">
+                <i class="fa-solid fa-gamepad text-sm"></i>
             </button>
-            <button
-                onclick="switchFav('chars', this)"
-                class="fav-tab px-5 py-2 rounded-lg text-gray-400 hover:text-white transition-all flex items-center gap-2"
-            >
-                <i class="fa-solid fa-users"></i> Personajes
+            <button onclick="switchView('chars')" id="btn-chars" class="relative z-10 w-1/2 h-full flex items-center justify-center text-gray-600 hover:text-white transition-colors">
+                <i class="fa-solid fa-mask text-sm"></i>
             </button>
         </div>
     </div>
 
-    <div
-        id="fav-works"
-        class="accordion-container flex justify-start gap-2 w-full overflow-x-auto pb-2"
-    >
-        {
-            favorites.map((item) => (
-                <div class="accordion-item group cursor-pointer relative w-20 h-96 shrink-0 rounded-2xl border border-white/10 overflow-hidden transition-all duration-500 hover:w-80 bg-[#111] filter grayscale brightness-50 hover:filter-none hover:brightness-100 hover:z-10 hover:shadow-2xl">
-                    <img
-                        src={item.data.cover}
-                        class="w-full h-full object-cover"
-                    />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60" />
+    <div id="view-works" class="flex h-[400px] w-full gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+        {fixedFavorites.map((item, index) => (
+            <div class={`relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 ${item ? 'hover:flex-[3] cursor-pointer bg-black' : 'bg-[#121215] flex-1'}`}>
+                
+                {item ? (
+                    <>
+                        <img 
+                            src={item.cover} 
+                            alt={item.title} 
+                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                            loading="lazy"
+                        />
+                        
+                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500"></div>
 
-                    <div class="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
-                        <span
-                            class="writing-vertical text-white/50 font-black tracking-widest text-xs uppercase truncate h-64 rotate-180"
-                            style="writing-mode: vertical-rl;"
-                        >
-                            {item.data.title}
-                        </span>
-                    </div>
-
-                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 delay-100 min-w-[200px]">
-                        <h3 class="text-2xl font-black text-white leading-none uppercase italic drop-shadow-md line-clamp-2">
-                            {item.data.title}
-                        </h3>
-                        <div class="flex items-center gap-2 mt-3">
-                            <span class="bg-yellow-500 text-black text-xs font-black px-2 py-0.5 rounded">
-                                {item.data.score} / 10
-                            </span>
-                            <span class="text-gray-300 text-xs font-bold border border-white/20 px-2 py-0.5 rounded">
-                                {item.data.year}
-                            </span>
+                        <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
+                            <span class="text-[10px] font-bold text-white/40 group-hover:text-yellow-500">#{index + 1}</span>
                         </div>
+
+                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                             <h3 class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+                                 {item.title}
+                             </h3>
+                        </div>
+
+                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">{item.title}</h3>
+                            <div class="h-0.5 w-6 bg-yellow-500 mt-2 opacity-70"></div>
+                        </div>
+                    </>
+                ) : (
+                    <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/5 transition-colors">
+                        <span class="text-white/5 font-bold text-lg group-hover:text-white/10">#{index + 1}</span>
                     </div>
-                </div>
-            ))
-        }
+                )}
+            </div>
+        ))}
     </div>
 
-    <div
-        id="fav-chars"
-        class="accordion-container hidden justify-start gap-2 w-full overflow-x-auto pb-2"
-    >
-        {
-            characters.map((char) => (
-                <div class="accordion-item group cursor-pointer relative w-20 h-96 shrink-0 rounded-2xl border border-white/10 overflow-hidden transition-all duration-500 hover:w-80 bg-[#111] filter grayscale brightness-50 hover:filter-none hover:brightness-100 hover:z-10 hover:shadow-2xl">
-                    <img
-                        src={char.img}
-                        class="w-full h-full object-cover object-top"
-                    />
-                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90" />
+    <div id="view-chars" class="hidden flex h-[400px] w-full gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+        {fixedCharacters.map((char, index) => (
+            <div class={`relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 ${char ? 'hover:flex-[3] cursor-pointer bg-black' : 'bg-[#121215] flex-1'}`}>
+                
+                {char ? (
+                    <>
+                        <img 
+                            src={char.img} 
+                            class="absolute inset-0 w-full h-full object-cover object-top opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                            loading="lazy"
+                        />
+                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500"></div>
 
-                    <div class="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
-                        <span
-                            class="writing-vertical text-white/50 font-black tracking-widest text-xs uppercase truncate h-64 rotate-180"
-                            style="writing-mode: vertical-rl;"
-                        >
-                            {char.name}
-                        </span>
-                    </div>
+                        <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
+                            <span class="text-[10px] font-bold text-white/40 group-hover:text-pink-500">#{index + 1}</span>
+                        </div>
 
-                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 delay-100 min-w-[200px]">
-                        <h3 class="text-3xl font-black text-white leading-none uppercase italic drop-shadow-lg">
-                            {char.name}
-                        </h3>
-                        <p class="text-indigo-400 text-sm font-bold mt-1 tracking-wider">
-                            {char.source}
-                        </p>
+                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                             <h3 class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+                                 {char.name}
+                             </h3>
+                        </div>
+
+                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">{char.name}</h3>
+                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">{char.source}</p>
+                        </div>
+                    </>
+                ) : (
+                    <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/5 transition-colors">
+                        <span class="text-white/5 font-bold text-lg group-hover:text-white/10">#{index + 1}</span>
                     </div>
-                </div>
-            ))
-        }
+                )}
+            </div>
+        ))}
     </div>
 </section>
 
 <script is:inline>
-    function switchFav(type, btn) {
-        document.querySelectorAll(".fav-tab").forEach((b) => {
-            b.classList.remove("bg-white", "text-black");
-            b.classList.add("text-gray-400");
-        });
-        btn.classList.add("bg-white", "text-black");
-        btn.classList.remove("text-gray-400");
+    window.switchView = (type) => {
+        const worksView = document.getElementById('view-works');
+        const charsView = document.getElementById('view-chars');
+        const btnWorks = document.getElementById('btn-works');
+        const btnChars = document.getElementById('btn-chars');
+        const bg = document.getElementById('tab-bg');
+        const icon = document.getElementById('hof-icon');
 
-        const works = document.getElementById("fav-works");
-        const chars = document.getElementById("fav-chars");
-
-        if (type === "works") {
-            works.classList.remove("hidden");
-            works.classList.add("flex");
-            chars.classList.add("hidden");
-            chars.classList.remove("flex");
+        if(type === 'works') {
+            worksView.classList.remove('hidden'); worksView.classList.add('flex');
+            charsView.classList.add('hidden'); charsView.classList.remove('flex');
+            bg.style.transform = 'translateX(0)';
+            btnWorks.classList.add('text-white'); btnWorks.classList.remove('text-gray-600');
+            btnChars.classList.add('text-gray-600'); btnChars.classList.remove('text-white');
+            icon.innerHTML = '<i class="fa-solid fa-crown"></i>'; icon.className = 'text-yellow-500';
         } else {
-            works.classList.add("hidden");
-            works.classList.remove("flex");
-            chars.classList.remove("hidden");
-            chars.classList.add("flex");
+            worksView.classList.add('hidden'); worksView.classList.remove('flex');
+            charsView.classList.remove('hidden'); charsView.classList.add('flex');
+            bg.style.transform = 'translateX(100%)';
+            btnChars.classList.add('text-white'); btnChars.classList.remove('text-gray-600');
+            btnWorks.classList.add('text-gray-600'); btnWorks.classList.remove('text-white');
+            icon.innerHTML = '<i class="fa-solid fa-mask"></i>'; icon.className = 'text-pink-500';
         }
     }
 </script>

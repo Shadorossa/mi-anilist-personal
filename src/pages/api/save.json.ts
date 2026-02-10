@@ -10,7 +10,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // --- ACTUALIZAR DATABASE.JSON ---
     if (data.type === 'update_db') {
-      let currentDb = { favorites: [], monthlyPicks: [], characters: [] };
+      let currentDb = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
       try {
         const file = await fs.readFile(dbPath, 'utf-8');
         currentDb = JSON.parse(file);
@@ -18,8 +18,9 @@ export const POST: APIRoute = async ({ request }) => {
 
       if (data.favorites !== undefined) currentDb.favorites = data.favorites;
       if (data.monthlyPicks !== undefined) currentDb.monthlyPicks = data.monthlyPicks;
-      // NUEVO: Guardar array de personajes
       if (data.characters !== undefined) currentDb.characters = data.characters;
+      // NUEVO: Guardar historial personajes
+      if (data.monthlyChars !== undefined) currentDb.monthlyChars = data.monthlyChars;
 
       await fs.writeFile(dbPath, JSON.stringify(currentDb, null, 2));
       return new Response(JSON.stringify({ success: true }));

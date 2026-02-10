@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 
-// 1. CARGAR DATOS
+// 1. CARGAR DATOS LOCALES
 const games = await getCollection("games").catch(() => []);
 const anime = await getCollection("anime").catch(() => []);
 const manga = await getCollection("manga").catch(() => []);
@@ -13,7 +13,7 @@ const localLibrary = [
 ];
 
 // 2. CARGAR DB CENTRAL
-let db = { favorites: [], monthlyPicks: [], characters: [] };
+let db = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
 try {
     const d = await import("../content/database.json");
     db = d.default || d;
@@ -38,14 +38,12 @@ const favoritesOrdered = db.favorites
             font-family: 'Inter', system-ui, -apple-system, sans-serif; 
             background-image: radial-gradient(circle at 50% 0%, #1a1a20 0%, #050505 80%);
         }
-        .glass-panel { background: rgba(20, 20, 23, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .hide-scroll::-webkit-scrollbar { display: none; }
         
-        /* Grid Estricto (Densidad Alta) */
+        /* Grid Estricto */
         .dense-grid {
             display: grid;
             gap: 1rem;
-            /* Móvil: 3 cols | Tablet: 5 cols | Desktop: 7 cols | Wide: 9 cols */
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
         @media (min-width: 640px) { .dense-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -53,16 +51,13 @@ const favoritesOrdered = db.favorites
         @media (min-width: 1024px) { .dense-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
         @media (min-width: 1280px) { .dense-grid { grid-template-columns: repeat(9, minmax(0, 1fr)); } }
 
-        /* Tags */
         .tag-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #d4d4d8; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
         .tag-pill button:hover { color: #ef4444; }
         
-        /* Estrellas */
         .stars-container i { cursor: pointer; transition: transform 0.1s, color 0.1s; }
         .stars-container i:hover { transform: scale(1.2); }
-
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .mask-fade-right { mask-image: linear-gradient(to right, black 60%, transparent 100%); }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="flex h-screen w-full selection:bg-indigo-500/30 selection:text-white">
@@ -195,13 +190,10 @@ const favoritesOrdered = db.favorites
                                 <select id="tagMonth" class="appearance-none bg-transparent text-gray-300 text-[10px] font-bold py-2 pl-3 pr-6 outline-none cursor-pointer uppercase tracking-wider relative z-10 hover:text-white transition">
                                     <option value="01">Ene</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
                                 </select>
-                                <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-gray-600 z-0"></i>
                             </div>
                             <div class="w-px h-4 bg-white/5"></div>
                             <input type="number" id="tagYear" class="bg-transparent text-gray-300 text-[10px] font-bold py-2 px-2 w-12 text-center outline-none hover:text-white transition" placeholder="Year">
-                            <button onclick="addMonthTag()" class="bg-white/5 hover:bg-white/10 text-white h-full px-3 flex items-center justify-center transition border-l border-white/5">
-                                <i class="fa-solid fa-plus text-[10px]"></i>
-                            </button>
+                            <button onclick="addMonthTag()" class="bg-white/5 hover:bg-white/10 text-white h-full px-3 flex items-center justify-center transition border-l border-white/5"><i class="fa-solid fa-plus text-[10px]"></i></button>
                         </div>
                         <div id="monthlyTagsContainer" class="flex flex-wrap gap-2 min-h-[24px] content-center"></div>
                     </div>
@@ -226,17 +218,37 @@ const favoritesOrdered = db.favorites
             
             <button onclick="closeCharEditor()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20 backdrop-blur-md"><i class="fa-solid fa-xmark"></i></button>
 
-            <div class="p-6 flex flex-col gap-4 bg-[#0c0c0e]">
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Nombre</label>
-                    <input type="text" id="charNameInput" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-3 text-white font-bold outline-none text-sm">
+            <div class="p-6 flex flex-col gap-5 bg-[#0c0c0e]">
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-600 uppercase mb-1 block">Nombre</label>
+                        <input type="text" id="charNameInput" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-2.5 text-white font-bold outline-none text-xs focus:border-white/20 transition">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-600 uppercase mb-1 block">Origen</label>
+                        <input type="text" id="charSourceInput" placeholder="Juego / Anime" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-2.5 text-white text-xs outline-none focus:border-white/20 transition">
+                    </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Origen</label>
-                    <input type="text" id="charSourceInput" placeholder="Juego / Anime" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-3 text-white text-sm outline-none">
+
+                <div class="pt-4 border-t border-white/5">
+                    <label class="text-[9px] font-bold text-gray-600 uppercase mb-2 block">Historial Mensual</label>
+                    <div class="flex items-center bg-[#121215] border border-white/10 rounded-lg overflow-hidden h-8 w-full mb-2">
+                        <div class="relative flex-1">
+                            <select id="charTagMonth" class="appearance-none bg-transparent text-gray-300 text-[10px] font-bold py-1 pl-3 pr-6 outline-none cursor-pointer uppercase w-full">
+                                <option value="01">Ene</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Abr</option>
+                                <option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option>
+                                <option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
+                            </select>
+                        </div>
+                        <div class="w-px h-4 bg-white/10"></div>
+                        <input type="number" id="charTagYear" class="bg-transparent text-gray-300 text-[10px] font-bold py-1 px-2 w-12 text-center outline-none" placeholder="Año">
+                        <button onclick="addCharMonthTag()" class="bg-white/10 hover:bg-white/20 text-white h-full px-3 transition border-l border-white/10"><i class="fa-solid fa-plus text-[9px]"></i></button>
+                    </div>
+                    <div id="charTagsContainer" class="flex flex-wrap gap-2 min-h-[20px]"></div>
                 </div>
+
                 <div class="flex gap-2 mt-2">
-                    <button id="deleteCharBtn" class="bg-red-500/10 text-red-500 h-10 w-10 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash text-sm"></i></button>
+                    <button id="deleteCharBtn" class="bg-red-500/10 text-red-500 h-10 w-10 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button>
                     <button onclick="saveCharacter()" class="flex-1 bg-white text-black h-10 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg active:scale-95 text-xs uppercase">Guardar</button>
                 </div>
             </div>
@@ -249,6 +261,7 @@ const favoritesOrdered = db.favorites
         window.favoritesTitles = db.favorites || []; 
         window.monthlyPicksGlobal = db.monthlyPicks || []; 
         window.charactersGlobal = db.characters || [];
+        window.monthlyCharsGlobal = db.monthlyChars || [];
     </script>
 
     <script is:inline>
@@ -257,6 +270,7 @@ const favoritesOrdered = db.favorites
         let isFavorite = false;
         
         document.getElementById('tagYear').value = new Date().getFullYear();
+        document.getElementById('charTagYear').value = new Date().getFullYear();
 
         // --- SISTEMA DE MODOS ---
         window.switchMode = (mode) => {
@@ -273,10 +287,9 @@ const favoritesOrdered = db.favorites
         }
         switchMode('search'); 
 
-        // --- RENDER GRID (DENSE) ---
+        // --- RENDER GRID ---
         function renderCard(item, onclickFunc, isChar = false) {
             const isFav = window.favoritesTitles.includes(item.title);
-            // Grid denso: Cards con aspect ratio y cover full
             return `
             <div onclick='${onclickFunc}(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="group relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer bg-[#18181b] ring-1 ring-white/5 hover:ring-white/20 hover:scale-[1.03] transition-all duration-300 shadow-lg">
                 <img src="${item.cover}" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity ${isChar ? 'object-top' : ''}">
@@ -291,7 +304,7 @@ const favoritesOrdered = db.favorites
         }
         document.getElementById('localFilter').addEventListener('input', (e) => renderLocalLibrary(e.target.value));
 
-        // --- BUSCADOR OBRAS ---
+        // --- BUSCADORES ---
         document.getElementById('searchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const query = document.getElementById('searchInput').value;
@@ -306,7 +319,6 @@ const favoritesOrdered = db.favorites
             } catch (e) { document.getElementById('searchResults').innerHTML = `<p class="col-span-full text-center text-red-400 text-xs">Error</p>`; }
         });
 
-        // --- BUSCADOR PERSONAJES ---
         document.getElementById('charSearchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const query = document.getElementById('charInput').value;
@@ -323,9 +335,7 @@ const favoritesOrdered = db.favorites
             document.getElementById('savedCharsGrid').innerHTML = window.charactersGlobal.map(item => renderCard(item, 'openCharEditor', true)).join('');
         }
 
-        // ==========================================
-        // EDITOR OBRAS
-        // ==========================================
+        // --- EDITOR OBRAS ---
         window.openEditorSearch = (idx) => {
             const item = window.lastSearchResults[idx];
             if(!item.id) item.id = Date.now();
@@ -343,7 +353,6 @@ const favoritesOrdered = db.favorites
             
             const statusToSelect = data.status || 'Jugando';
             document.querySelectorAll('input[name="status"]').forEach(r => { r.checked = (r.value === statusToSelect); });
-            
             updateStarsVisual(data.score || 0);
             isFavorite = window.favoritesTitles.includes(data.title);
             updateFavBtn();
@@ -352,32 +361,87 @@ const favoritesOrdered = db.favorites
         }
         window.closeEditor = () => document.getElementById('editor').classList.add('hidden');
 
-        // ==========================================
-        // EDITOR PERSONAJES
-        // ==========================================
+        // --- EDITOR PERSONAJES ---
         let currentCharSelection = null;
         window.openCharEditor = (item) => {
             currentCharSelection = item;
             document.getElementById('charEditor').classList.remove('hidden');
             document.getElementById('charCover').src = item.cover || item.img;
-            document.getElementById('charNameDisplay').innerText = item.title || item.name;
-            document.getElementById('charNameInput').value = item.title || item.name;
+            const name = item.title || item.name;
+            document.getElementById('charNameDisplay').innerText = name;
+            document.getElementById('charNameInput').value = name;
             document.getElementById('charSourceInput').value = item.source || '';
-            const exists = window.charactersGlobal.some(c => c.title === (item.title || item.name));
+            const exists = window.charactersGlobal.some(c => c.title === name);
             document.getElementById('deleteCharBtn').style.display = exists ? 'flex' : 'none';
+            renderCharMonthTags();
         };
         window.closeCharEditor = () => document.getElementById('charEditor').classList.add('hidden');
 
+        // --- TAGS MENSUALES OBRAS ---
+        window.addMonthTag = () => {
+            const m = document.getElementById('tagMonth').value; const y = document.getElementById('tagYear').value;
+            if(!m || !y) return;
+            const dateStr = `${y}-${m}`;
+            const exists = window.monthlyPicksGlobal.some(entry => entry.month === dateStr && entry.title === currentSelection.title);
+            if(!exists) {
+                window.monthlyPicksGlobal.push({ month: dateStr, title: currentSelection.title, cover: currentSelection.cover });
+                window.monthlyPicksGlobal.sort((a,b) => b.month.localeCompare(a.month)); 
+                renderMonthTags();
+            }
+        };
+        window.removeMonthTag = (dateStr) => {
+            window.monthlyPicksGlobal = window.monthlyPicksGlobal.filter(entry => !(entry.month === dateStr && entry.title === currentSelection.title));
+            renderMonthTags();
+        };
+        function renderMonthTags() {
+            const container = document.getElementById('monthlyTagsContainer');
+            const tags = window.monthlyPicksGlobal.filter(entry => entry.title === currentSelection.title);
+            if(tags.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-700 italic pl-1">Sin historial</span>'; return; }
+            container.innerHTML = tags.map(tag => {
+                const [y, m] = tag.month.split('-');
+                return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
+            }).join('');
+        }
+
+        // --- TAGS MENSUALES PERSONAJES ---
+        window.addCharMonthTag = () => {
+            const m = document.getElementById('charTagMonth').value; const y = document.getElementById('charTagYear').value;
+            const name = document.getElementById('charNameInput').value;
+            if(!m || !y || !name) return;
+            const dateStr = `${y}-${m}`;
+            const exists = window.monthlyCharsGlobal.some(entry => entry.month === dateStr && entry.name === name);
+            if(!exists) {
+                window.monthlyCharsGlobal.push({ month: dateStr, name: name, cover: document.getElementById('charCover').src });
+                window.monthlyCharsGlobal.sort((a,b) => b.month.localeCompare(a.month));
+                renderCharMonthTags();
+            }
+        };
+        window.removeCharMonthTag = (dateStr) => {
+            const name = document.getElementById('charNameInput').value;
+            window.monthlyCharsGlobal = window.monthlyCharsGlobal.filter(entry => !(entry.month === dateStr && entry.name === name));
+            renderCharMonthTags();
+        };
+        function renderCharMonthTags() {
+            const container = document.getElementById('charTagsContainer');
+            const name = document.getElementById('charNameInput').value;
+            const tags = window.monthlyCharsGlobal.filter(entry => entry.name === name);
+            if(tags.length === 0) { container.innerHTML = '<span class="text-[9px] text-gray-600 italic">Sin historial</span>'; return; }
+            container.innerHTML = tags.map(tag => {
+                const [y, m] = tag.month.split('-');
+                return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeCharMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
+            }).join('');
+        }
+
+        // --- GUARDADO ---
         window.saveCharacter = async () => {
             const name = document.getElementById('charNameInput').value;
             const source = document.getElementById('charSourceInput').value;
+            const cover = document.getElementById('charCover').src;
             const index = window.charactersGlobal.findIndex(c => c.title === (currentCharSelection.title || currentCharSelection.name));
-            
-            const newChar = { title: name, cover: currentCharSelection.cover || currentCharSelection.img, source: source };
-            if(index >= 0) window.charactersGlobal[index] = newChar;
-            else window.charactersGlobal.push(newChar);
+            const newChar = { title: name, cover: cover, source: source };
+            if(index >= 0) window.charactersGlobal[index] = newChar; else window.charactersGlobal.push(newChar);
 
-            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', characters: window.charactersGlobal }) });
+            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', characters: window.charactersGlobal, monthlyChars: window.monthlyCharsGlobal }) });
             closeCharEditor();
             renderCharacterPanel();
         };
@@ -385,14 +449,27 @@ const favoritesOrdered = db.favorites
         document.getElementById('deleteCharBtn').addEventListener('click', async () => {
             if(!confirm("¿Borrar?")) return;
             window.charactersGlobal = window.charactersGlobal.filter(c => c.title !== (currentCharSelection.title || currentCharSelection.name));
-            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', characters: window.charactersGlobal }) });
+            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', characters: window.charactersGlobal, monthlyChars: window.monthlyCharsGlobal }) });
             closeCharEditor();
             renderCharacterPanel();
         });
 
-        // ==========================================
-        // UTILIDADES (Estrellas, Fechas, Fav)
-        // ==========================================
+        document.getElementById('saveMediaBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('saveMediaBtn');
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`; btn.disabled = true;
+            const status = document.querySelector('input[name="status"]:checked').value;
+            const finalScore = status === 'Completado' ? Number(document.getElementById('scoreRange').value) : 0;
+            if (isFavorite && !window.favoritesTitles.includes(currentSelection.title)) window.favoritesTitles.push(currentSelection.title);
+            else if (!isFavorite) window.favoritesTitles = window.favoritesTitles.filter(t => t !== currentSelection.title);
+
+            const payloadFile = { ...currentSelection, status, score: finalScore };
+            const payloadDB = { type: 'update_db', favorites: window.favoritesTitles, monthlyPicks: window.monthlyPicksGlobal };
+            await Promise.all([ fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadFile) }), fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadDB) }) ]);
+            closeEditor();
+            btn.innerText = "Guardar Cambios"; btn.disabled = false;
+        });
+
+        // --- HELPERS ---
         function updateStarsVisual(value) {
             document.getElementById('scoreRange').value = value;
             const visualScore = value / 2;
@@ -424,50 +501,6 @@ const favoritesOrdered = db.favorites
             else { btn.innerHTML = `<i class="fa-regular fa-heart"></i>`; btn.classList.remove('scale-110'); }
         }
 
-        window.addMonthTag = () => {
-            const m = document.getElementById('tagMonth').value; const y = document.getElementById('tagYear').value;
-            if(!m || !y) return;
-            const dateStr = `${y}-${m}`;
-            const exists = window.monthlyPicksGlobal.some(entry => entry.month === dateStr && entry.title === currentSelection.title);
-            if(!exists) {
-                window.monthlyPicksGlobal.push({ month: dateStr, title: currentSelection.title, cover: currentSelection.cover });
-                window.monthlyPicksGlobal.sort((a,b) => b.month.localeCompare(a.month)); 
-                renderMonthTags();
-            }
-        };
-        window.removeMonthTag = (dateStr) => {
-            window.monthlyPicksGlobal = window.monthlyPicksGlobal.filter(entry => !(entry.month === dateStr && entry.title === currentSelection.title));
-            renderMonthTags();
-        };
-        function renderMonthTags() {
-            const container = document.getElementById('monthlyTagsContainer');
-            const tags = window.monthlyPicksGlobal.filter(entry => entry.title === currentSelection.title);
-            if(tags.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-700 italic pl-1">Sin historial</span>'; return; }
-            container.innerHTML = tags.map(tag => {
-                const [y, m] = tag.month.split('-');
-                return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
-            }).join('');
-        }
-
-        document.getElementById('saveMediaBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('saveMediaBtn');
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`; btn.disabled = true;
-            const status = document.querySelector('input[name="status"]:checked').value;
-            const finalScore = status === 'Completado' ? Number(document.getElementById('scoreRange').value) : 0;
-
-            if (isFavorite && !window.favoritesTitles.includes(currentSelection.title)) window.favoritesTitles.push(currentSelection.title);
-            else if (!isFavorite) window.favoritesTitles = window.favoritesTitles.filter(t => t !== currentSelection.title);
-
-            const payloadFile = { ...currentSelection, status, score: finalScore };
-            const payloadDB = { type: 'update_db', favorites: window.favoritesTitles, monthlyPicks: window.monthlyPicksGlobal };
-
-            try {
-                await Promise.all([ fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadFile) }), fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadDB) }) ]);
-                closeEditor();
-            } catch (e) { console.error(e); }
-            btn.innerText = "Guardar"; btn.disabled = false;
-        });
-
         function renderFavoritesSortable() {
             const container = document.getElementById('favList');
             const favObjects = window.favoritesTitles.map(title => window.localLibrary.find(item => item.title === title)).filter(Boolean);
@@ -477,7 +510,6 @@ const favoritesOrdered = db.favorites
         document.getElementById('saveOrderBtn').addEventListener('click', async () => {
             const btn = document.getElementById('saveOrderBtn'); btn.innerText = "...";
             const newOrderTitles = [];
-            // DOM Fix
             document.querySelectorAll('#favList .group p').forEach(el => newOrderTitles.push(el.innerText));
             window.favoritesTitles = newOrderTitles;
             await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', favorites: newOrderTitles }) });
