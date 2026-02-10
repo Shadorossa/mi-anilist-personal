@@ -1,11 +1,196 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import { getCollection } from "astro:content";
+const games = await getCollection("games");
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// Calculamos estadísticas simples
+const playingCount = games.filter((g) => g.data.status === "Jugando").length;
+const completedCount = games.filter(
+	(g) => g.data.status === "Completado",
+).length;
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Mi Perfil</title>
+		<style>
+			:root {
+				--bg: #161b22;
+				--card: #22272e;
+				--accent: #4a9eff;
+			}
+			body {
+				background: var(--bg);
+				color: #c9d1d9;
+				font-family: "Segoe UI", sans-serif;
+				margin: 0;
+			}
+
+			/* HEADER PROFILE */
+			.profile-header {
+				background: linear-gradient(to bottom, #0d1117, var(--bg));
+				padding: 4rem 2rem;
+				text-align: center;
+				border-bottom: 1px solid #30363d;
+			}
+			.stats {
+				display: flex;
+				justify-content: center;
+				gap: 2rem;
+				margin-top: 1rem;
+			}
+			.stat-box {
+				text-align: center;
+			}
+			.stat-number {
+				font-size: 1.5rem;
+				font-weight: bold;
+				color: white;
+				display: block;
+			}
+			.stat-label {
+				font-size: 0.8rem;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+
+			/* GRID ESTILO BACKLOGGD */
+			.container {
+				max-width: 1100px;
+				margin: 2rem auto;
+				padding: 0 1rem;
+			}
+			h2 {
+				border-bottom: 2px solid #30363d;
+				padding-bottom: 0.5rem;
+				margin-bottom: 1.5rem;
+			}
+
+			.media-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+				gap: 16px;
+			}
+
+			.poster-card {
+				position: relative;
+				border-radius: 8px;
+				overflow: hidden;
+				aspect-ratio: 2/3;
+				transition: transform 0.2s;
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+				cursor: pointer;
+			}
+
+			.poster-card:hover {
+				transform: scale(1.05);
+				z-index: 10;
+			}
+
+			.poster-card img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
+
+			/* HOVER OVERLAY INFO */
+			.overlay {
+				position: absolute;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.8);
+				opacity: 0;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				transition: opacity 0.2s;
+				padding: 10px;
+				text-align: center;
+			}
+			.poster-card:hover .overlay {
+				opacity: 1;
+			}
+
+			.score-circle {
+				width: 40px;
+				height: 40px;
+				border: 3px solid var(--accent);
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: bold;
+				font-size: 1.1rem;
+				color: white;
+				margin-bottom: 10px;
+			}
+
+			.status-badge {
+				font-size: 0.75rem;
+				padding: 4px 8px;
+				border-radius: 10px;
+				background: #333;
+				margin-top: 5px;
+			}
+			.status-Playing {
+				background: #238636;
+				color: white;
+			}
+			.status-Completed {
+				background: #8957e5;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="profile-header">
+			<img
+				src="https://github.com/tu-usuario.png"
+				style="width:100px; border-radius:50%; border: 3px solid #30363d;"
+			/>
+			<h1>Tu Nombre</h1>
+			<div class="stats">
+				<div class="stat-box">
+					<span class="stat-number">{playingCount}</span>
+					<span class="stat-label">Jugando</span>
+				</div>
+				<div class="stat-box">
+					<span class="stat-number">{completedCount}</span>
+					<span class="stat-label">Completados</span>
+				</div>
+				<div class="stat-box">
+					<span class="stat-number">{games.length}</span>
+					<span class="stat-label">Total</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<h2>🎮 Biblioteca</h2>
+			<div class="media-grid">
+				{
+					games.map((game) => (
+						<div class="poster-card">
+							<img
+								src={game.data.cover}
+								alt={game.data.title}
+								loading="lazy"
+							/>
+							<div class="overlay">
+								<div class="score-circle">
+									{game.data.score}
+								</div>
+								<strong>{game.data.title}</strong>
+								<span
+									class={`status-badge status-${game.data.status}`}
+								>
+									{game.data.status}
+								</span>
+							</div>
+						</div>
+					))
+				}
+			</div>
+		</div>
+	</body>
+</html>

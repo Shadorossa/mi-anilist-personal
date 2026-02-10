@@ -1,0 +1,153 @@
+---
+// src/pages/admin.astro
+---
+
+<html lang="es">
+    <head>
+        <title>Admin Dashboard</title>
+        <style>
+            body {
+                background: #111;
+                color: white;
+                font-family: sans-serif;
+                display: flex;
+                justify-content: center;
+                padding: 50px;
+            }
+            .container {
+                width: 600px;
+            }
+            input,
+            select {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 10px;
+                background: #222;
+                border: 1px solid #444;
+                color: white;
+            }
+            .result-item {
+                display: flex;
+                gap: 10px;
+                background: #1a1a1a;
+                padding: 10px;
+                margin-bottom: 5px;
+                cursor: pointer;
+                border: 1px solid transparent;
+            }
+            .result-item:hover {
+                border-color: #66f;
+            }
+            img {
+                width: 50px;
+                height: 70px;
+                object-fit: cover;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Agregar Nueva Obra</h1>
+
+            <select id="typeSelector">
+                <option value="game">Videojuego (IGDB)</option>
+                <option value="anime">Anime (Anilist)</option>
+            </select>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Buscar título..."
+            />
+            <div id="results"></div>
+
+            <div
+                id="detailsForm"
+                style="display:none; margin-top:20px; border-top:1px solid #333; padding-top:20px;"
+            >
+                <h3>Editando: <span id="selectedTitle"></span></h3>
+                <select id="statusSelect">
+                    <option value="Jugando">Jugando</option>
+                    <option value="Completado">Completado</option>
+                    <option value="Pendiente">Pendiente</option>
+                </select>
+                <input
+                    type="number"
+                    id="scoreInput"
+                    placeholder="Nota (0-10)"
+                    max="10"
+                    min="0"
+                />
+                <button
+                    id="saveBtn"
+                    style="background: green; color: white; padding: 10px; border: none; width: 100%;"
+                    >GUARDAR Y COMMIT</button
+                >
+            </div>
+        </div>
+
+        <script>
+            const searchInput = document.getElementById("searchInput");
+            const resultsDiv = document.getElementById("results");
+            let selectedData = null;
+
+            // BÚSQUEDA
+            searchInput.addEventListener("keypress", async (e) => {
+                if (e.key === "Enter") {
+                    const type = document.getElementById("typeSelector").value;
+                    const res = await fetch(
+                        `/api/search.json?q=${e.target.value}&type=${type}`,
+                    );
+                    const data = await res.json();
+
+                    resultsDiv.innerHTML = data
+                        .map(
+                            (item) => `
+                <div class="result-item" onclick='selectItem(${JSON.stringify(item)})'>
+                    <img src="${item.cover}">
+                    <div>
+                        <strong>${item.title}</strong><br>
+                        <span>⭐ ${item.score}</span>
+                    </div>
+                </div>
+            `,
+                        )
+                        .join("");
+                }
+            });
+
+            // SELECCIÓN
+            window.selectItem = (item) => {
+                selectedData = item;
+                document.getElementById("detailsForm").style.display = "block";
+                document.getElementById("selectedTitle").innerText = item.title;
+                document.getElementById("scoreInput").value = item.score;
+                resultsDiv.innerHTML = ""; // Limpiar resultados
+            };
+
+            // GUARDADO
+            document
+                .getElementById("saveBtn")
+                .addEventListener("click", async () => {
+                    const type =
+                        document.getElementById("typeSelector").value + "s"; // 'games' o 'animes'
+                    const payload = {
+                        ...selectedData,
+                        type: type,
+                        status: document.getElementById("statusSelect").value,
+                        score: Number(
+                            document.getElementById("scoreInput").value,
+                        ),
+                    };
+
+                    const res = await fetch("/api/save.json", {
+                        method: "POST",
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (res.ok) alert("¡Guardado y subido a GitHub!");
+                    else alert("Error al guardar");
+                });
+        </script>
+    </body>
+</html>
