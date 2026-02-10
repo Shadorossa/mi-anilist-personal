@@ -4,7 +4,7 @@
 
 <html lang="es" class="dark">
     <head>
-        <title>Nexus Command</title>
+        <title>Nexus Admin</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link
@@ -12,38 +12,18 @@
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
         <style>
-            /* Base */
             body {
-                background-color: #050505;
+                background-color: #0f0f12;
                 color: #e4e4e7;
-                font-family: "Segoe UI", system-ui, sans-serif;
             }
-
-            /* Utilidades */
+            .glass-panel {
+                background: rgba(30, 30, 35, 0.5);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
             .hide-scroll::-webkit-scrollbar {
                 display: none;
             }
-            .glass-panel {
-                background: rgba(20, 20, 23, 0.6);
-                backdrop-filter: blur(16px);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-            }
-
-            /* Inputs bonitos */
-            .input-dark {
-                background: #121215;
-                border: 1px solid #27272a;
-                color: white;
-                transition: all 0.2s;
-            }
-            .input-dark:focus {
-                border-color: #6366f1;
-                box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-                outline: none;
-                background: #18181b;
-            }
-
-            /* Animaciones */
             @keyframes slideUp {
                 from {
                     opacity: 0;
@@ -54,425 +34,248 @@
                     transform: translateY(0);
                 }
             }
-            .animate-enter {
-                animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            .card-enter {
+                animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
             }
         </style>
     </head>
     <body
-        class="h-screen flex overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200"
+        class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white"
     >
-        <aside
-            class="w-20 lg:w-72 bg-[#0a0a0c] border-r border-white/5 flex flex-col z-30 shadow-2xl"
-        >
-            <div
-                class="h-24 flex items-center justify-center lg:justify-start lg:px-8 border-b border-white/5"
-            >
-                <div
-                    class="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20"
-                >
-                    <i class="fa-solid fa-cube text-white text-xl"></i>
-                </div>
-                <div class="hidden lg:block ml-4">
-                    <h1 class="font-bold text-white text-lg tracking-wide">
-                        NEXUS
-                    </h1>
-                    <p
-                        class="text-xs text-gray-500 font-medium tracking-widest uppercase"
-                    >
-                        Admin Console
-                    </p>
-                </div>
-            </div>
-
-            <nav class="flex-1 py-8 px-3 space-y-2">
-                <p
-                    class="hidden lg:block px-4 text-xs font-bold text-gray-600 uppercase tracking-wider mb-2"
-                >
-                    Menu
-                </p>
-
+        <header class="pt-8 pb-4 px-4 text-center max-w-7xl mx-auto">
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-6">
+                <i class="fa-solid fa-robot text-indigo-500 mr-2"></i> Panel de Control
+            </h1>
+            <nav class="flex justify-center gap-3 mb-8">
                 <button
                     onclick="switchTab('media')"
-                    class="nav-btn active w-full flex items-center p-3.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all group relative overflow-hidden"
+                    class="tab-btn active px-8 py-2.5 rounded-full text-sm font-bold text-white bg-white/10 hover:bg-white/20 ring-1 ring-white/10 shadow-lg"
                 >
-                    <div
-                        class="absolute inset-0 bg-indigo-500/10 opacity-0 transition-opacity group-[.active]:opacity-100"
-                    >
-                    </div>
-                    <i
-                        class="fa-solid fa-layer-group w-6 text-center text-lg z-10 group-[.active]:text-indigo-400"
-                    ></i>
-                    <span class="hidden lg:block ml-3 font-medium text-sm z-10"
-                        >Biblioteca</span
-                    >
-                    <div
-                        class="hidden lg:block ml-auto opacity-0 group-[.active]:opacity-100 text-indigo-500 z-10"
-                    >
-                        ●
-                    </div>
+                    <i class="fa-solid fa-search mr-2"></i> Buscador
                 </button>
-
                 <button
                     onclick="switchTab('profile')"
-                    class="nav-btn w-full flex items-center p-3.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all group relative overflow-hidden"
+                    class="tab-btn px-8 py-2.5 rounded-full text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-white/5"
                 >
-                    <div
-                        class="absolute inset-0 bg-indigo-500/10 opacity-0 transition-opacity group-[.active]:opacity-100"
-                    >
-                    </div>
-                    <i
-                        class="fa-solid fa-sliders w-6 text-center text-lg z-10 group-[.active]:text-indigo-400"
-                    ></i>
-                    <span class="hidden lg:block ml-3 font-medium text-sm z-10"
-                        >Configuración</span
-                    >
+                    <i class="fa-solid fa-user-pen mr-2"></i> Perfil
                 </button>
-            </nav>
-
-            <div class="p-4 border-t border-white/5">
                 <a
                     href="/"
-                    class="flex items-center justify-center lg:justify-start gap-3 text-gray-500 hover:text-white p-3.5 rounded-xl hover:bg-white/5 transition group"
+                    class="px-4 py-2.5 rounded-full text-sm font-bold text-red-400 hover:bg-red-500/10 border border-transparent ml-4 transition"
                 >
-                    <i
-                        class="fa-solid fa-arrow-right-from-bracket group-hover:text-red-400 transition-colors"
-                    ></i>
-                    <span class="hidden lg:inline text-sm font-semibold"
-                        >Cerrar Sesión</span
-                    >
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Salir
                 </a>
-            </div>
-        </aside>
+            </nav>
+        </header>
 
-        <main class="flex-1 relative flex flex-col bg-[#050505]">
-            <div id="media" class="panel flex-1 flex flex-col h-full">
-                <header
-                    class="h-24 px-8 flex items-center justify-between border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-20"
-                >
-                    <div>
-                        <h2 class="text-2xl font-bold text-white">
-                            Gestor de Contenido
-                        </h2>
-                        <p class="text-sm text-gray-500">
-                            Busca en bases de datos externas y añade a tu
-                            colección.
-                        </p>
-                    </div>
-                </header>
-
-                <div class="px-8 py-6 bg-[#0a0a0c] border-b border-white/5">
-                    <form id="searchForm" class="flex gap-4 max-w-5xl">
-                        <div class="relative min-w-[140px]">
-                            <select
-                                id="mediaType"
-                                class="w-full h-14 pl-4 pr-10 bg-[#121215] border border-[#27272a] rounded-xl text-white appearance-none cursor-pointer focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition font-medium"
+        <main class="px-4 max-w-7xl mx-auto">
+            <div id="media-panel" class="panel">
+                <div class="max-w-4xl mx-auto mb-12 sticky top-4 z-20">
+                    <form
+                        id="searchForm"
+                        class="glass-panel p-2 rounded-2xl flex gap-2 shadow-2xl relative z-10 bg-[#0f0f12]/90"
+                    >
+                        <select
+                            id="mediaType"
+                            class="bg-transparent text-white font-bold px-4 pr-8 py-3 rounded-xl cursor-pointer outline-none hover:bg-white/5 transition appearance-none"
+                        >
+                            <option value="game" class="bg-[#1a1a1e]"
+                                >🎮 Juegos</option
                             >
-                                <option value="game">🎮 Juegos</option>
-                                <option value="anime">📺 Anime</option>
-                                <option value="manga">📖 Manga</option>
-                            </select>
-                            <i
-                                class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"
-                            ></i>
-                        </div>
+                            <option value="anime" class="bg-[#1a1a1e]"
+                                >📺 Anime</option
+                            >
+                            <option value="manga" class="bg-[#1a1a1e]"
+                                >📖 Manga</option
+                            >
+                        </select>
 
-                        <div class="relative flex-1">
-                            <input
-                                type="text"
-                                id="searchInput"
-                                placeholder="Escribe el nombre de la obra (ej: Elden Ring, Berserk)..."
-                                autocomplete="off"
-                                class="w-full h-14 pl-12 pr-4 bg-[#121215] border border-[#27272a] rounded-xl text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition text-lg"
-                            />
-                            <i
-                                class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg"
-                            ></i>
-                        </div>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Buscar título (Elden Ring, One Piece...)"
+                            autocomplete="off"
+                            class="flex-1 bg-transparent text-white text-lg placeholder-gray-500 px-4 py-3 outline-none border-l border-white/10"
+                        />
 
                         <button
                             type="submit"
-                            class="h-14 px-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 rounded-xl transition-transform active:scale-95 font-bold"
                         >
-                            <span>Buscar</span>
-                            <i class="fa-solid fa-arrow-right"></i>
+                            Buscar
                         </button>
                     </form>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div
+                    id="searchResults"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 md:gap-7 pb-20"
+                >
                     <div
-                        id="searchResults"
-                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-6 pb-20"
+                        class="col-span-full flex flex-col items-center justify-center py-32 text-gray-700 opacity-50 select-none"
                     >
-                        <div
-                            class="col-span-full flex flex-col items-center justify-center h-64 text-gray-700 select-none"
-                        >
-                            <div
-                                class="w-20 h-20 rounded-full bg-[#121215] flex items-center justify-center mb-4"
-                            >
-                                <i
-                                    class="fa-solid fa-search text-3xl opacity-20"
-                                ></i>
-                            </div>
-                            <p class="font-medium">
-                                Los resultados aparecerán aquí
-                            </p>
-                        </div>
+                        <i class="fa-solid fa-magnifying-glass text-6xl mb-4"
+                        ></i>
+                        <p class="text-lg font-medium">
+                            Resultados aparecerán aquí
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div
-                id="profile"
-                class="panel hidden flex-1 overflow-y-auto p-8 lg:p-16"
-            >
-                <div class="max-w-3xl mx-auto">
-                    <h2
-                        class="text-3xl font-bold text-white mb-8 pb-4 border-b border-white/5"
-                    >
-                        Editar Perfil
-                    </h2>
-
-                    <div
-                        class="bg-[#0a0a0c] p-8 rounded-2xl border border-white/5 shadow-xl space-y-8"
-                    >
-                        <div class="flex gap-6 items-start">
-                            <div
-                                class="w-20 h-20 rounded-full bg-[#18181b] flex items-center justify-center border border-white/10 shrink-0"
-                            >
-                                <i
-                                    class="fa-solid fa-user text-3xl text-gray-600"
-                                ></i>
-                            </div>
-                            <div class="flex-1 space-y-6">
-                                <div>
-                                    <label
-                                        class="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-2"
-                                        >Nombre de Usuario</label
-                                    >
-                                    <input
-                                        type="text"
-                                        id="usernameInput"
-                                        class="input-dark w-full rounded-lg p-3.5"
-                                    />
-                                </div>
-                                <div>
-                                    <label
-                                        class="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-2"
-                                        >Biografía / Estado</label
-                                    >
-                                    <textarea
-                                        id="bioInput"
-                                        rows="3"
-                                        class="input-dark w-full rounded-lg p-3.5 resize-none"
-                                    ></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            class="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4 flex gap-4 items-center"
-                        >
-                            <i
-                                class="fa-solid fa-circle-info text-indigo-400 text-xl ml-2"
-                            ></i>
-                            <p class="text-sm text-indigo-200">
-                                Las imágenes se gestionan automáticamente.
-                                Simplemente reemplaza los archivos
-                                <code
-                                    class="bg-black/30 px-1 rounded text-white"
-                                    >pic.png</code
-                                > y
-                                <code
-                                    class="bg-black/30 px-1 rounded text-white"
-                                    >banner.png</code
-                                >
-                                en tu carpeta <code
-                                    class="bg-black/30 px-1 rounded text-white"
-                                    >public/img/profile</code
-                                >.
-                            </p>
-                        </div>
-
-                        <div class="pt-4 flex justify-end">
-                            <button
-                                id="saveProfileBtn"
-                                class="px-8 py-3.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-lg shadow-white/5 active:scale-95"
-                            >
-                                Guardar Cambios
-                            </button>
+            <div id="profile-panel" class="panel hidden max-w-2xl mx-auto">
+                <div class="glass-panel p-8 rounded-3xl space-y-8 shadow-xl">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-6">
+                            Personalización
+                        </h2>
+                        <div class="space-y-4">
+                            <input
+                                type="text"
+                                id="usernameInput"
+                                placeholder="Nombre de usuario"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-indigo-500 transition"
+                            />
+                            <textarea
+                                id="bioInput"
+                                rows="3"
+                                placeholder="Biografía corta"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-indigo-500 transition resize-none"
+                            ></textarea>
                         </div>
                     </div>
+                    <div
+                        class="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex gap-4 items-center"
+                    >
+                        <i
+                            class="fa-solid fa-info-circle text-indigo-400 text-2xl ml-2"
+                        ></i>
+                        <p class="text-sm text-indigo-200">
+                            Reemplaza <b>pic.png</b> y <b>banner.png</b> en <code
+                                >public/img/profile</code
+                            > para cambiar las imágenes.
+                        </p>
+                    </div>
+                    <button
+                        id="saveProfileBtn"
+                        class="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-gray-200 transition"
+                        >Guardar Cambios</button
+                    >
                 </div>
             </div>
         </main>
 
         <div
             id="editor"
-            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm transition-opacity duration-300"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm"
         >
             <div
-                class="bg-[#0f0f12] border border-white/10 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] animate-enter"
+                class="bg-[#18181b] border border-white/10 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
             >
                 <div
-                    class="w-full md:w-[350px] bg-[#050505] relative h-64 md:h-auto shrink-0 group overflow-hidden"
+                    class="w-full md:w-2/5 bg-black relative h-56 md:h-auto group shrink-0"
                 >
                     <img
                         id="editorCover"
                         src=""
-                        class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105"
+                        class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700"
                     />
                     <div
-                        class="absolute inset-0 bg-gradient-to-t from-[#0f0f12] via-transparent to-transparent md:bg-gradient-to-r"
+                        class="absolute inset-0 bg-gradient-to-t from-[#18181b] to-transparent md:bg-gradient-to-r"
                     >
                     </div>
                 </div>
-
-                <div
-                    class="flex-1 p-8 flex flex-col overflow-y-auto custom-scrollbar"
-                >
-                    <div class="flex justify-between items-start mb-8">
+                <div class="flex-1 p-8 flex flex-col overflow-y-auto">
+                    <div class="flex justify-between items-start mb-6">
                         <div>
-                            <div class="flex items-center gap-2 mb-2">
-                                <span
-                                    class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-                                    >Nuevo</span
-                                >
-                                <span
-                                    id="editorYear"
-                                    class="text-gray-500 text-xs font-bold"
-                                    >202X</span
-                                >
-                            </div>
                             <h2
                                 id="editorTitle"
-                                class="text-3xl font-bold text-white leading-tight"
+                                class="text-2xl font-bold text-white leading-tight line-clamp-2"
                             >
-                                Título de la Obra
+                                Título
                             </h2>
+                            <p
+                                id="editorYear"
+                                class="text-gray-500 text-sm mt-1 font-bold"
+                            >
+                                202X
+                            </p>
                         </div>
                         <button
                             onclick="closeEditor()"
-                            class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition"
+                            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
+                            ><i class="fa-solid fa-xmark"></i></button
                         >
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
                     </div>
 
-                    <div class="space-y-8 flex-1">
+                    <div class="space-y-6 flex-1">
                         <div>
                             <label
-                                class="text-xs font-bold text-gray-500 uppercase mb-3 block tracking-wider"
-                                >Estado Actual</label
+                                class="text-xs font-bold text-gray-500 uppercase mb-3 block"
+                                >Estado</label
                             >
                             <div class="grid grid-cols-2 gap-3">
-                                <label class="cursor-pointer group relative">
-                                    <input
+                                <label class="cursor-pointer"
+                                    ><input
                                         type="radio"
                                         name="status"
                                         value="Jugando"
                                         class="peer hidden"
                                         checked
-                                    />
-                                    <div
-                                        class="peer-checked:bg-indigo-600 peer-checked:border-indigo-500 peer-checked:text-white border border-white/10 bg-[#18181b] p-4 rounded-xl transition-all hover:bg-[#202025] flex items-center gap-3 opacity-70 peer-checked:opacity-100 peer-checked:shadow-lg peer-checked:shadow-indigo-500/20"
+                                    /><div
+                                        class="peer-checked:bg-indigo-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-sm hover:bg-white/5"
                                     >
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center peer-checked:bg-white/20"
-                                        >
-                                            <i class="fa-solid fa-play text-sm"
-                                            ></i>
-                                        </div>
-                                        <div class="font-bold text-sm">
-                                            Jugando
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <label class="cursor-pointer group relative">
-                                    <input
+                                        <i class="fa-solid fa-play mr-1"></i> Jugando
+                                    </div></label
+                                >
+                                <label class="cursor-pointer"
+                                    ><input
                                         type="radio"
                                         name="status"
                                         value="Completado"
                                         class="peer hidden"
-                                    />
-                                    <div
-                                        class="peer-checked:bg-emerald-600 peer-checked:border-emerald-500 peer-checked:text-white border border-white/10 bg-[#18181b] p-4 rounded-xl transition-all hover:bg-[#202025] flex items-center gap-3 opacity-70 peer-checked:opacity-100 peer-checked:shadow-lg peer-checked:shadow-emerald-500/20"
+                                    /><div
+                                        class="peer-checked:bg-emerald-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-sm hover:bg-white/5"
                                     >
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center peer-checked:bg-white/20"
-                                        >
-                                            <i class="fa-solid fa-check text-sm"
-                                            ></i>
-                                        </div>
-                                        <div class="font-bold text-sm">
-                                            Terminado
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <label class="cursor-pointer group relative">
-                                    <input
+                                        <i class="fa-solid fa-check mr-1"></i> Terminado
+                                    </div></label
+                                >
+                                <label class="cursor-pointer"
+                                    ><input
                                         type="radio"
                                         name="status"
                                         value="Pendiente"
                                         class="peer hidden"
-                                    />
-                                    <div
-                                        class="peer-checked:bg-amber-600 peer-checked:border-amber-500 peer-checked:text-white border border-white/10 bg-[#18181b] p-4 rounded-xl transition-all hover:bg-[#202025] flex items-center gap-3 opacity-70 peer-checked:opacity-100 peer-checked:shadow-lg peer-checked:shadow-amber-500/20"
+                                    /><div
+                                        class="peer-checked:bg-amber-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-sm hover:bg-white/5"
                                     >
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center peer-checked:bg-white/20"
-                                        >
-                                            <i
-                                                class="fa-regular fa-clock text-sm"
-                                            ></i>
-                                        </div>
-                                        <div class="font-bold text-sm">
-                                            Pendiente
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <label class="cursor-pointer group relative">
-                                    <input
+                                        <i class="fa-regular fa-clock mr-1"></i> Pendiente
+                                    </div></label
+                                >
+                                <label class="cursor-pointer"
+                                    ><input
                                         type="radio"
                                         name="status"
                                         value="Abandonado"
                                         class="peer hidden"
-                                    />
-                                    <div
-                                        class="peer-checked:bg-rose-600 peer-checked:border-rose-500 peer-checked:text-white border border-white/10 bg-[#18181b] p-4 rounded-xl transition-all hover:bg-[#202025] flex items-center gap-3 opacity-70 peer-checked:opacity-100 peer-checked:shadow-lg peer-checked:shadow-rose-500/20"
+                                    /><div
+                                        class="peer-checked:bg-rose-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-sm hover:bg-white/5"
                                     >
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center peer-checked:bg-white/20"
-                                        >
-                                            <i class="fa-solid fa-ban text-sm"
-                                            ></i>
-                                        </div>
-                                        <div class="font-bold text-sm">
-                                            Dropped
-                                        </div>
-                                    </div>
-                                </label>
+                                        <i class="fa-solid fa-ban mr-1"></i> Dropped
+                                    </div></label
+                                >
                             </div>
                         </div>
-
-                        <div
-                            class="bg-[#18181b] p-5 rounded-xl border border-white/5"
-                        >
-                            <div class="flex justify-between items-center mb-4">
+                        <div class="bg-white/5 p-4 rounded-xl">
+                            <div class="flex justify-between mb-2">
                                 <label
-                                    class="text-xs font-bold text-gray-500 uppercase tracking-wider"
-                                    >Tu Valoración</label
+                                    class="text-xs font-bold text-gray-500 uppercase"
+                                    >Nota</label
                                 >
                                 <span
                                     id="scoreValue"
-                                    class="text-2xl font-bold text-white font-mono"
-                                    >5<span class="text-sm text-gray-500"
-                                        >/10</span
-                                    ></span
+                                    class="text-white font-black text-lg bg-indigo-600 px-2 rounded"
+                                    >5</span
                                 >
                             </div>
                             <input
@@ -482,25 +285,16 @@
                                 max="10"
                                 step="1"
                                 value="5"
-                                class="w-full h-2 bg-black rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all"
+                                class="w-full h-2 bg-black/50 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                             />
-                            <div
-                                class="flex justify-between text-[10px] text-gray-600 mt-2 font-bold uppercase tracking-widest"
-                            >
-                                <span>Horrible</span><span>Normal</span><span
-                                    >Masterpiece</span
-                                >
-                            </div>
                         </div>
                     </div>
-
-                    <div class="mt-8 pt-6 border-t border-white/5">
+                    <div class="mt-8">
                         <button
                             id="saveMediaBtn"
-                            class="w-full bg-white text-black h-14 rounded-xl font-bold hover:bg-indigo-50 hover:text-indigo-900 transition shadow-xl shadow-white/5 flex items-center justify-center gap-3 active:scale-[0.98]"
+                            class="w-full bg-white text-black h-12 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg flex items-center justify-center gap-2"
                         >
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>Añadir a la Biblioteca</span>
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Guardar
                         </button>
                     </div>
                 </div>
@@ -511,28 +305,24 @@
             let currentSelection = null;
             let lastResults = [];
 
-            // --- SISTEMA DE PESTAÑAS ---
             window.switchTab = (id) => {
                 document
                     .querySelectorAll(".panel")
                     .forEach((p) => p.classList.add("hidden"));
-                // Reset botones nav
-                document.querySelectorAll(".nav-btn").forEach((b) => {
-                    b.classList.remove("active", "text-white");
-                    b.classList.add("text-gray-400");
+                document.querySelectorAll(".tab-btn").forEach((b) => {
+                    b.className =
+                        "tab-btn px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5 border border-white/5";
                 });
-
-                document.getElementById(id).classList.remove("hidden");
-
-                // Activar botón actual
+                document
+                    .getElementById(`${id}-panel`)
+                    .classList.remove("hidden");
                 const btn = document.querySelector(
                     `button[onclick="switchTab('${id}')"]`,
                 );
-                btn.classList.add("active", "text-white");
-                btn.classList.remove("text-gray-400");
+                btn.className =
+                    "tab-btn active px-8 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 ring-1 ring-white/10 shadow-lg";
             };
 
-            // --- BÚSQUEDA ---
             document
                 .getElementById("searchForm")
                 .addEventListener("submit", async (e) => {
@@ -543,41 +333,28 @@
 
                     if (!query) return;
 
-                    // Loading State Limpio
-                    container.innerHTML = `
-                <div class="col-span-full flex flex-col items-center justify-center py-32 animate-pulse">
-                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
-                    <p class="text-gray-500 font-medium">Consultando base de datos...</p>
-                </div>`;
+                    container.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-32 animate-pulse"><i class="fa-solid fa-circle-notch fa-spin text-5xl text-indigo-500 mb-4"></i><p class="text-gray-400 font-bold">Buscando...</p></div>`;
 
                     try {
-                        // NOTA: Para obtener MÁS resultados, deberías editar api/search.json.ts y cambiar "limit 6" por "limit 20"
                         const res = await fetch(
                             `/api/search.json?q=${encodeURIComponent(query)}&type=${type}`,
                         );
                         const data = await res.json();
-
                         if (data.error) throw new Error(data.error);
-                        if (!data.length)
-                            throw new Error("No se encontraron resultados");
+                        if (!data.length) throw new Error("Sin resultados.");
 
                         lastResults = data;
-
-                        // Renderizado de Resultados (Grid Responsive)
                         container.innerHTML = data
                             .map(
                                 (item, idx) => `
-                    <div onclick="openEditor(${idx})" class="animate-enter group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer bg-[#121215] shadow-lg ring-1 ring-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 hover:ring-indigo-500/40" style="animation-delay: ${idx * 50}ms">
-                        <img src="${item.cover}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
-                        
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                        
-                        <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1 border border-white/10 shadow-lg">
+                    <div onclick="openEditor(${idx})" class="card-enter group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer bg-[#18181b] shadow-lg ring-1 ring-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/30 hover:ring-indigo-500/50" style="animation-delay: ${idx * 30}ms">
+                        <img src="${item.cover}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                        <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold text-white border border-white/10">
                             <i class="fa-solid fa-star text-yellow-500 text-[10px]"></i> ${item.score}
                         </div>
-
                         <div class="absolute bottom-0 p-4 w-full translate-y-2 group-hover:translate-y-0 transition-transform">
-                            <h3 class="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow-md group-hover:text-indigo-300 transition-colors">${item.title}</h3>
+                            <h3 class="text-white font-bold text-sm leading-tight line-clamp-2 group-hover:text-indigo-300 transition-colors">${item.title}</h3>
                             <p class="text-[10px] uppercase font-bold text-gray-500 mt-1 tracking-wider">${item.year}</p>
                         </div>
                     </div>
@@ -585,31 +362,23 @@
                             )
                             .join("");
                     } catch (err) {
-                        container.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-red-400">
-                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
-                        <p class="font-medium">${err.message}</p>
-                    </div>`;
+                        container.innerHTML = `<div class="col-span-full text-center py-20 text-red-400 font-bold">${err.message}</div>`;
                     }
                 });
 
-            // --- EDITOR MODAL ---
             window.openEditor = (idx) => {
                 currentSelection = lastResults[idx];
                 document.getElementById("editor").classList.remove("hidden");
-
                 document.getElementById("editorTitle").innerText =
                     currentSelection.title;
                 document.getElementById("editorYear").innerText =
-                    currentSelection.year || "N/A";
+                    currentSelection.year;
                 document.getElementById("editorCover").src =
                     currentSelection.cover;
-
-                // Reset
                 document.getElementById("scoreRange").value =
                     currentSelection.score || 5;
                 document.getElementById("scoreValue").innerText =
-                    (currentSelection.score || 5) + "/10";
+                    currentSelection.score || 5;
                 document.querySelector(
                     'input[name="status"][value="Jugando"]',
                 ).checked = true;
@@ -617,21 +386,21 @@
 
             window.closeEditor = () =>
                 document.getElementById("editor").classList.add("hidden");
-
             document
                 .getElementById("scoreRange")
-                .addEventListener("input", (e) => {
-                    document.getElementById("scoreValue").innerHTML =
-                        `${e.target.value}<span class="text-sm text-gray-500">/10</span>`;
-                });
+                .addEventListener(
+                    "input",
+                    (e) =>
+                        (document.getElementById("scoreValue").innerText =
+                            e.target.value),
+                );
 
-            // --- GUARDADO ---
             document
                 .getElementById("saveMediaBtn")
                 .addEventListener("click", async () => {
                     const btn = document.getElementById("saveMediaBtn");
                     const originalHTML = btn.innerHTML;
-                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Guardando...</span>`;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
                     btn.disabled = true;
 
                     const status = document.querySelector(
@@ -653,27 +422,14 @@
                             document.getElementById("scoreRange").value,
                         ),
                     };
-
                     try {
                         await fetch("/api/save.json", {
                             method: "POST",
                             body: JSON.stringify(payload),
                         });
                         closeEditor();
-                        // Feedback sutil en vez de alert
-                        const searchBtn = document.querySelector(
-                            'button[type="submit"]',
-                        );
-                        const oldColor = searchBtn.className;
-                        searchBtn.className =
-                            "h-14 px-8 bg-green-600 text-white rounded-xl font-bold flex items-center gap-2";
-                        searchBtn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Guardado</span>`;
-                        setTimeout(() => {
-                            searchBtn.className = oldColor;
-                            searchBtn.innerHTML = `<span>Buscar</span> <i class="fa-solid fa-arrow-right"></i>`;
-                        }, 2000);
                     } catch (e) {
-                        alert("Error al guardar. Revisa la consola.");
+                        alert("Error");
                     }
                     btn.innerHTML = originalHTML;
                     btn.disabled = false;
@@ -694,8 +450,8 @@
                         method: "POST",
                         body: JSON.stringify(payload),
                     });
-                    btn.innerText = "¡Guardado!";
-                    setTimeout(() => (btn.innerText = "Guardar Cambios"), 2000);
+                    btn.innerText = "Guardado";
+                    setTimeout(() => (btn.innerText = "Guardar Cambios"), 1500);
                 });
         </script>
     </body>
