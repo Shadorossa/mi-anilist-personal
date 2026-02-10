@@ -4,268 +4,407 @@
 
 <html lang="es" class="dark">
     <head>
-        <title>Admin Dashboard</title>
+        <title>Admin Command Center</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
+        <style>
+            /* Ocultar scrollbar */
+            .hide-scroll::-webkit-scrollbar {
+                display: none;
+            }
+            .hide-scroll {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+
+            /* Animación suave para el modal */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+            .modal-animate {
+                animation: fadeIn 0.2s ease-out forwards;
+            }
+        </style>
     </head>
     <body
-        class="bg-gray-950 text-gray-200 font-sans h-screen flex overflow-hidden"
+        class="bg-[#0f0f12] text-gray-200 font-sans h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white"
     >
         <aside
-            class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col p-6 gap-2"
+            class="w-20 lg:w-64 bg-[#151518] border-r border-gray-800 flex flex-col items-center lg:items-stretch py-6 gap-2 transition-all z-20"
         >
-            <h1
-                class="text-xl font-bold text-white mb-8 tracking-wider flex items-center gap-2"
+            <div
+                class="mb-8 flex justify-center lg:justify-start lg:px-6 text-indigo-500 text-2xl"
             >
-                <i class="fa-solid fa-terminal text-indigo-500"></i> SYSTEM
-            </h1>
+                <i class="fa-solid fa-layer-group"></i>
+                <span
+                    class="hidden lg:inline ml-3 font-bold text-white tracking-widest text-sm uppercase"
+                    >Nexus</span
+                >
+            </div>
 
             <button
                 onclick="switchTab('media')"
-                class="nav-btn active w-full text-left px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition flex items-center gap-3"
+                class="nav-btn active group relative flex items-center lg:px-6 py-3 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
             >
-                <i class="fa-solid fa-gamepad"></i> Añadir Contenido
-            </button>
-            <button
-                onclick="switchTab('profile')"
-                class="nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition flex items-center gap-3"
-            >
-                <i class="fa-solid fa-user"></i> Editar Perfil
+                <div
+                    class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 opacity-0 group-[.active]:opacity-100 transition"
+                >
+                </div>
+                <i class="fa-solid fa-gamepad text-xl w-8 text-center"></i>
+                <span class="hidden lg:block ml-2 font-medium">Biblioteca</span>
             </button>
 
-            <div class="mt-auto">
+            <button
+                onclick="switchTab('profile')"
+                class="nav-btn group relative flex items-center lg:px-6 py-3 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+            >
+                <div
+                    class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 opacity-0 group-[.active]:opacity-100 transition"
+                >
+                </div>
+                <i class="fa-solid fa-user-astronaut text-xl w-8 text-center"
+                ></i>
+                <span class="hidden lg:block ml-2 font-medium">Perfil</span>
+            </button>
+
+            <div class="mt-auto flex flex-col gap-2 px-2 lg:px-6">
                 <a
                     href="/"
-                    class="block w-full text-center px-4 py-3 rounded-lg border border-gray-700 hover:bg-gray-800 transition text-sm"
+                    class="flex items-center justify-center lg:justify-start gap-3 text-gray-500 hover:text-white p-3 rounded-lg hover:bg-white/5 transition"
                 >
-                    <i class="fa-solid fa-arrow-left"></i> Volver a la Web
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span class="hidden lg:inline text-sm">Salir</span>
                 </a>
             </div>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-8 lg:p-12 relative">
-            <div id="media" class="panel max-w-4xl mx-auto">
-                <h2 class="text-3xl font-bold text-white mb-2">
-                    Base de Datos
-                </h2>
-                <p class="text-gray-500 mb-8">
-                    Busca en IGDB (Juegos) o Anilist (Anime/Manga) para añadir a
-                    tu perfil.
-                </p>
+        <main class="flex-1 overflow-y-auto relative bg-[#0f0f12]">
+            <div id="media" class="panel p-6 lg:p-10 max-w-7xl mx-auto">
+                <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">
+                        Añadir Contenido
+                    </h1>
+                    <p class="text-gray-500 text-sm">
+                        Busca y añade nuevas obras a tu colección personal.
+                    </p>
+                </header>
 
                 <div
-                    class="bg-gray-900 p-4 rounded-xl border border-gray-800 shadow-xl mb-8"
+                    class="sticky top-0 z-10 bg-[#0f0f12]/95 backdrop-blur-md py-4 mb-6 border-b border-gray-800"
                 >
-                    <form
-                        id="searchForm"
-                        class="flex flex-col md:flex-row gap-4"
-                    >
-                        <select
-                            id="mediaType"
-                            class="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500"
-                        >
-                            <option value="game">Videojuego</option>
-                            <option value="anime">Anime</option>
-                            <option value="manga">Manga</option>
-                        </select>
-                        <div class="flex-1 relative">
+                    <form id="searchForm" class="flex gap-2 max-w-3xl">
+                        <div class="relative group">
+                            <select
+                                id="mediaType"
+                                class="appearance-none bg-[#1a1a1e] text-white border border-gray-700 rounded-xl px-4 py-3 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer font-medium hover:bg-[#222]"
+                            >
+                                <option value="game">Juegos</option>
+                                <option value="anime">Anime</option>
+                                <option value="manga">Manga</option>
+                            </select>
+                            <i
+                                class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"
+                            ></i>
+                        </div>
+
+                        <div class="relative flex-1">
                             <input
                                 type="text"
                                 id="searchInput"
-                                placeholder="Escribe el título (ej: Elden Ring)..."
+                                placeholder="Buscar título (ej: Cyberpunk, Naruto)..."
                                 autocomplete="off"
-                                class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-indigo-500"
+                                class="w-full bg-[#1a1a1e] text-white border border-gray-700 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-indigo-500 placeholder-gray-600 transition-all focus:ring-1 focus:ring-indigo-500/50"
                             />
                             <i
-                                class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                                class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
                             ></i>
                         </div>
+
                         <button
                             type="submit"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold transition shadow-lg shadow-indigo-500/20"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
                         >
-                            Buscar
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </form>
                 </div>
 
                 <div
                     id="searchResults"
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                >
-                </div>
-
-                <div
-                    id="editor"
-                    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 pb-20"
                 >
                     <div
-                        class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative"
+                        class="col-span-full flex flex-col items-center justify-center py-20 text-gray-600 opacity-50"
                     >
-                        <button
-                            onclick="closeEditor()"
-                            class="absolute top-4 right-4 text-gray-500 hover:text-white"
-                            ><i class="fa-solid fa-times text-xl"></i></button
-                        >
-
-                        <h3
-                            class="text-xl font-bold text-white mb-6 flex items-center gap-2"
-                        >
-                            <i class="fa-solid fa-pen-to-square text-indigo-500"
-                            ></i> Detalles
-                        </h3>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    class="block text-xs uppercase text-gray-500 font-bold mb-2"
-                                    >Título</label
-                                >
-                                <input
-                                    type="text"
-                                    id="editorTitle"
-                                    disabled
-                                    class="w-full bg-gray-800 border border-gray-700 text-gray-400 rounded-lg px-3 py-2"
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-xs uppercase text-gray-500 font-bold mb-2"
-                                    >Estado</label
-                                >
-                                <select
-                                    id="statusInput"
-                                    class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2"
-                                >
-                                    <option value="Jugando"
-                                        >Jugando / Viendo</option
-                                    >
-                                    <option value="Completado"
-                                        >Completado</option
-                                    >
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Abandonado"
-                                        >Abandonado</option
-                                    >
-                                </select>
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-xs uppercase text-gray-500 font-bold mb-2"
-                                    >Puntuación (0-10)</label
-                                >
-                                <div class="flex items-center gap-4">
-                                    <input
-                                        type="range"
-                                        id="scoreRange"
-                                        min="0"
-                                        max="10"
-                                        step="1"
-                                        value="5"
-                                        class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                    />
-                                    <span
-                                        id="scoreValue"
-                                        class="text-xl font-bold text-indigo-400 w-8"
-                                        >5</span
-                                    >
-                                </div>
-                            </div>
-
-                            <button
-                                id="saveMediaBtn"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold mt-4 transition flex justify-center items-center gap-2"
-                            >
-                                <i class="fa-solid fa-save"></i> Guardar
-                            </button>
-                        </div>
+                        <i class="fa-solid fa-ghost text-6xl mb-4"></i>
+                        <p>Esperando búsqueda...</p>
                     </div>
                 </div>
             </div>
 
-            <div id="profile" class="panel hidden max-w-2xl mx-auto">
-                <h2 class="text-3xl font-bold text-white mb-8">
-                    Editar Perfil
-                </h2>
+            <div
+                id="profile"
+                class="panel hidden p-6 lg:p-10 max-w-3xl mx-auto"
+            >
+                <h1
+                    class="text-3xl font-bold text-white mb-8 border-b border-gray-800 pb-4"
+                >
+                    Personalización
+                </h1>
 
                 <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-2"
-                            >Username</label
-                        >
-                        <input
-                            type="text"
-                            id="usernameInput"
-                            class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
-                        />
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                                >Usuario</label
+                            >
+                            <input
+                                type="text"
+                                id="usernameInput"
+                                class="w-full bg-[#1a1a1e] border border-gray-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                                >Avatar URL</label
+                            >
+                            <input
+                                type="text"
+                                id="avatarUrlInput"
+                                class="w-full bg-[#1a1a1e] border border-gray-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none"
+                            />
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2"
-                            >Bio</label
-                        >
-                        <textarea
-                            id="bioInput"
-                            rows="3"
-                            class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
-                        ></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-2"
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase mb-2"
                             >Banner URL</label
                         >
                         <input
-                            type="url"
+                            type="text"
                             id="bannerUrlInput"
-                            class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
+                            class="w-full bg-[#1a1a1e] border border-gray-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none"
                         />
                     </div>
+
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2"
-                            >Avatar URL</label
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                            >Biografía</label
                         >
-                        <input
-                            type="url"
-                            id="avatarUrlInput"
-                            class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-indigo-500 outline-none"
-                        />
+                        <textarea
+                            id="bioInput"
+                            rows="4"
+                            class="w-full bg-[#1a1a1e] border border-gray-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none resize-none"
+                        ></textarea>
                     </div>
-                    <button
-                        id="saveProfileBtn"
-                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition"
-                    >
-                        Actualizar Perfil
-                    </button>
+
+                    <div class="pt-4">
+                        <button
+                            id="saveProfileBtn"
+                            class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98]"
+                        >
+                            Guardar Cambios
+                        </button>
+                    </div>
                 </div>
             </div>
         </main>
 
+        <div
+            id="editor"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        >
+            <div
+                class="modal-animate bg-[#151518] border border-gray-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+            >
+                <div class="w-full md:w-1/3 bg-black relative h-48 md:h-auto">
+                    <img
+                        id="editorCover"
+                        src=""
+                        class="absolute inset-0 w-full h-full object-cover opacity-80"
+                    />
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-[#151518] to-transparent md:bg-gradient-to-r"
+                    >
+                    </div>
+                </div>
+
+                <div class="flex-1 p-6 md:p-8 flex flex-col">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span
+                                class="text-xs font-bold text-indigo-400 uppercase tracking-wider"
+                                >Añadir a la colección</span
+                            >
+                            <h2
+                                id="editorTitle"
+                                class="text-2xl font-bold text-white leading-tight mt-1"
+                            >
+                                Título de la Obra
+                            </h2>
+                            <p
+                                id="editorYear"
+                                class="text-sm text-gray-500 mt-1"
+                            >
+                                2024
+                            </p>
+                        </div>
+                        <button
+                            onclick="closeEditor()"
+                            class="text-gray-500 hover:text-white transition"
+                            ><i class="fa-solid fa-xmark text-xl"></i></button
+                        >
+                    </div>
+
+                    <div class="space-y-6 flex-1 overflow-y-auto hide-scroll">
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase mb-2"
+                                >Estado</label
+                            >
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="status"
+                                        value="Jugando"
+                                        class="peer hidden"
+                                        checked
+                                    />
+                                    <div
+                                        class="text-center py-2 rounded-lg bg-[#1e1e24] border border-gray-700 text-gray-400 peer-checked:bg-green-500/20 peer-checked:border-green-500 peer-checked:text-green-400 transition-all hover:bg-white/5"
+                                    >
+                                        <i class="fa-solid fa-play text-xs mr-1"
+                                        ></i> Jugando
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="status"
+                                        value="Completado"
+                                        class="peer hidden"
+                                    />
+                                    <div
+                                        class="text-center py-2 rounded-lg bg-[#1e1e24] border border-gray-700 text-gray-400 peer-checked:bg-blue-500/20 peer-checked:border-blue-500 peer-checked:text-blue-400 transition-all hover:bg-white/5"
+                                    >
+                                        <i
+                                            class="fa-solid fa-check text-xs mr-1"
+                                        ></i> Completado
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="status"
+                                        value="Pendiente"
+                                        class="peer hidden"
+                                    />
+                                    <div
+                                        class="text-center py-2 rounded-lg bg-[#1e1e24] border border-gray-700 text-gray-400 peer-checked:bg-yellow-500/20 peer-checked:border-yellow-500 peer-checked:text-yellow-400 transition-all hover:bg-white/5"
+                                    >
+                                        <i
+                                            class="fa-regular fa-clock text-xs mr-1"
+                                        ></i> Pendiente
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="status"
+                                        value="Abandonado"
+                                        class="peer hidden"
+                                    />
+                                    <div
+                                        class="text-center py-2 rounded-lg bg-[#1e1e24] border border-gray-700 text-gray-400 peer-checked:bg-red-500/20 peer-checked:border-red-500 peer-checked:text-red-400 transition-all hover:bg-white/5"
+                                    >
+                                        <i class="fa-solid fa-ban text-xs mr-1"
+                                        ></i> Abandonado
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <label
+                                    class="text-xs font-bold text-gray-500 uppercase"
+                                    >Puntuación</label
+                                >
+                                <span
+                                    id="scoreValue"
+                                    class="text-indigo-400 font-bold">5/10</span
+                                >
+                            </div>
+                            <input
+                                type="range"
+                                id="scoreRange"
+                                min="0"
+                                max="10"
+                                step="1"
+                                value="5"
+                                class="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-4 border-t border-gray-800">
+                        <button
+                            id="saveMediaBtn"
+                            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 shadow-lg shadow-indigo-500/20"
+                        >
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Guardar en
+                            Biblioteca
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script is:inline>
+            // --- ESTADO Y UTILS ---
             let currentSelection = null;
             let lastResults = [];
 
-            // UI TABS
+            // Cambiar pestañas sidebar
             window.switchTab = (id) => {
                 document
                     .querySelectorAll(".panel")
-                    .forEach((el) => el.classList.add("hidden"));
+                    .forEach((p) => p.classList.add("hidden"));
+                document
+                    .querySelectorAll(".nav-btn")
+                    .forEach((b) =>
+                        b.classList.remove(
+                            "active",
+                            "bg-white/5",
+                            "text-white",
+                        ),
+                    );
                 document.getElementById(id).classList.remove("hidden");
+
+                // Highlight botón activo
+                const activeBtn = document.querySelector(
+                    `button[onclick="switchTab('${id}')"]`,
+                );
+                if (activeBtn) activeBtn.classList.add("active", "text-white");
             };
 
-            // RANGE SLIDER UI
-            const range = document.getElementById("scoreRange");
-            const val = document.getElementById("scoreValue");
-            range.addEventListener(
-                "input",
-                (e) => (val.innerText = e.target.value),
-            );
-
-            // BÚSQUEDA
+            // --- BÚSQUEDA ---
             document
                 .getElementById("searchForm")
                 .addEventListener("submit", async (e) => {
@@ -274,8 +413,14 @@
                     const type = document.getElementById("mediaType").value;
                     const container = document.getElementById("searchResults");
 
-                    container.innerHTML =
-                        '<div class="text-center col-span-full py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-indigo-500"></i></div>';
+                    if (!query) return;
+
+                    // Loading state bonito
+                    container.innerHTML = `
+                <div class="col-span-full flex justify-center py-20">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+            `;
 
                     try {
                         const res = await fetch(
@@ -285,55 +430,99 @@
 
                         if (data.error) throw new Error(data.error);
                         if (data.length === 0)
-                            throw new Error("No se encontraron resultados");
+                            throw new Error("No encontramos nada...");
 
                         lastResults = data;
+
+                        // RENDERIZADO ESTILO "PERFIL"
                         container.innerHTML = data
                             .map(
                                 (item, idx) => `
-                    <div onclick="openEditor(${idx})" class="bg-gray-800 rounded-lg p-3 flex gap-4 cursor-pointer hover:bg-gray-700 border border-transparent hover:border-indigo-500 transition group">
-                        <img src="${item.cover}" class="w-16 h-24 object-cover rounded bg-gray-900">
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-white truncate group-hover:text-indigo-400">${item.title}</h4>
-                            <p class="text-sm text-gray-500">${item.year}</p>
-                            <div class="mt-2 text-xs font-bold text-yellow-500">⭐ ${item.score}</div>
+                    <div onclick="openEditor(${idx})" class="media-card group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer bg-[#1e1e24] shadow-lg ring-1 ring-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 hover:ring-indigo-500/50">
+                        
+                        <img src="${item.cover}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+                        
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                        
+                        <div class="absolute top-2 right-2 backdrop-blur-md bg-black/30 border border-white/10 px-2 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1">
+                            <i class="fa-solid fa-star text-yellow-400 text-[10px]"></i> ${item.score}
                         </div>
+
+                        <div class="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                            <h3 class="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow-md">${item.title}</h3>
+                            <p class="text-xs text-gray-400 mt-1">${item.year}</p>
+                        </div>
+
+                        <div class="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                     </div>
                 `,
                             )
                             .join("");
                     } catch (err) {
-                        container.innerHTML = `<div class="col-span-full bg-red-900/20 border border-red-800 text-red-200 p-4 rounded-lg text-center">❌ ${err.message}</div>`;
+                        container.innerHTML = `
+                    <div class="col-span-full text-center py-10 text-red-400">
+                        <i class="fa-solid fa-circle-exclamation text-3xl mb-2"></i>
+                        <p>${err.message}</p>
+                    </div>
+                `;
                     }
                 });
 
-            // EDITOR
+            // --- EDITOR MODAL ---
             window.openEditor = (idx) => {
                 currentSelection = lastResults[idx];
-                document.getElementById("editor").classList.remove("hidden");
-                document.getElementById("editorTitle").value =
+                const modal = document.getElementById("editor");
+
+                // Rellenar datos
+                document.getElementById("editorTitle").innerText =
                     currentSelection.title;
+                document.getElementById("editorYear").innerText =
+                    currentSelection.year || "Año desconocido";
+                document.getElementById("editorCover").src =
+                    currentSelection.cover;
+
+                // Valores por defecto
                 document.getElementById("scoreRange").value =
-                    currentSelection.score;
+                    currentSelection.score || 5;
                 document.getElementById("scoreValue").innerText =
-                    currentSelection.score;
+                    (currentSelection.score || 5) + "/10";
+
+                // Reset radio buttons (por defecto Jugando)
+                const radios = document.getElementsByName("status");
+                radios[0].checked = true;
+
+                modal.classList.remove("hidden");
             };
 
             window.closeEditor = () => {
                 document.getElementById("editor").classList.add("hidden");
             };
 
-            // GUARDAR
+            // UI Range Slider
+            document
+                .getElementById("scoreRange")
+                .addEventListener("input", (e) => {
+                    document.getElementById("scoreValue").innerText =
+                        e.target.value + "/10";
+                });
+
+            // --- GUARDADO ---
             document
                 .getElementById("saveMediaBtn")
                 .addEventListener("click", async () => {
                     const btn = document.getElementById("saveMediaBtn");
-                    const originalText = btn.innerHTML;
+                    const originalHTML = btn.innerHTML;
+
                     btn.innerHTML =
-                        '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+                        '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
                     btn.disabled = true;
 
+                    // Obtener estado seleccionado
+                    const status = document.querySelector(
+                        'input[name="status"]:checked',
+                    ).value;
                     const type = document.getElementById("mediaType").value;
+                    // Pluralizar nombre carpeta
                     const folder =
                         type === "game"
                             ? "games"
@@ -344,30 +533,35 @@
                     const payload = {
                         ...currentSelection,
                         type: folder,
-                        status: document.getElementById("statusInput").value,
+                        status: status,
                         score: Number(
                             document.getElementById("scoreRange").value,
                         ),
                     };
 
                     try {
-                        await fetch("/api/save.json", {
+                        const res = await fetch("/api/save.json", {
                             method: "POST",
                             body: JSON.stringify(payload),
                         });
-                        closeEditor();
-                        alert("¡Guardado!");
-                        document.getElementById("searchResults").innerHTML = "";
-                        document.getElementById("searchInput").value = "";
+                        if (res.ok) {
+                            closeEditor();
+                            // Efecto de éxito
+                            alert(
+                                `✅ ${currentSelection.title} añadido a tu colección.`,
+                            );
+                        } else {
+                            throw new Error("Error en el servidor");
+                        }
                     } catch (e) {
-                        alert("Error al guardar");
+                        alert("❌ Error al guardar. Revisa la consola.");
                     }
 
-                    btn.innerHTML = originalText;
+                    btn.innerHTML = originalHTML;
                     btn.disabled = false;
                 });
 
-            // GUARDAR PERFIL
+            // --- PERFIL ---
             document
                 .getElementById("saveProfileBtn")
                 .addEventListener("click", async () => {
@@ -381,16 +575,14 @@
                         avatarUrl:
                             document.getElementById("avatarUrlInput").value,
                     };
-
                     const btn = document.getElementById("saveProfileBtn");
                     btn.innerText = "Procesando...";
-
                     await fetch("/api/save.json", {
                         method: "POST",
                         body: JSON.stringify(payload),
                     });
                     alert("Perfil actualizado.");
-                    btn.innerText = "Actualizar Perfil";
+                    btn.innerText = "Guardar Cambios";
                 });
         </script>
     </body>
