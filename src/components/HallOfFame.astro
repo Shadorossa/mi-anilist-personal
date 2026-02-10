@@ -1,0 +1,135 @@
+---
+const { favorites, characters } = Astro.props;
+---
+
+<section>
+    <div class="flex items-center justify-between mb-8">
+        <h2
+            class="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tight"
+        >
+            <span
+                class="bg-yellow-500 text-black w-8 h-8 flex items-center justify-center rounded-lg shadow-lg shadow-yellow-500/20"
+                ><i class="fa-solid fa-crown"></i></span
+            >
+            Hall of Fame
+        </h2>
+
+        <div
+            class="bg-[#1a1a1e] p-1.5 rounded-xl flex text-xs font-bold border border-white/10 shadow-inner"
+        >
+            <button
+                onclick="switchFav('works', this)"
+                class="fav-tab active px-5 py-2 rounded-lg bg-white text-black shadow-sm transition-all flex items-center gap-2"
+            >
+                <i class="fa-solid fa-layer-group"></i> Obras
+            </button>
+            <button
+                onclick="switchFav('chars', this)"
+                class="fav-tab px-5 py-2 rounded-lg text-gray-400 hover:text-white transition-all flex items-center gap-2"
+            >
+                <i class="fa-solid fa-users"></i> Personajes
+            </button>
+        </div>
+    </div>
+
+    <div
+        id="fav-works"
+        class="accordion-container flex justify-start gap-2 w-full overflow-x-auto pb-2"
+    >
+        {
+            favorites.map((item) => (
+                <div class="accordion-item group cursor-pointer relative w-20 h-96 shrink-0 rounded-2xl border border-white/10 overflow-hidden transition-all duration-500 hover:w-80 bg-[#111] filter grayscale brightness-50 hover:filter-none hover:brightness-100 hover:z-10 hover:shadow-2xl">
+                    <img
+                        src={item.data.cover}
+                        class="w-full h-full object-cover"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60" />
+
+                    <div class="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
+                        <span
+                            class="writing-vertical text-white/50 font-black tracking-widest text-xs uppercase truncate h-64 rotate-180"
+                            style="writing-mode: vertical-rl;"
+                        >
+                            {item.data.title}
+                        </span>
+                    </div>
+
+                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 delay-100 min-w-[200px]">
+                        <h3 class="text-2xl font-black text-white leading-none uppercase italic drop-shadow-md line-clamp-2">
+                            {item.data.title}
+                        </h3>
+                        <div class="flex items-center gap-2 mt-3">
+                            <span class="bg-yellow-500 text-black text-xs font-black px-2 py-0.5 rounded">
+                                {item.data.score} / 10
+                            </span>
+                            <span class="text-gray-300 text-xs font-bold border border-white/20 px-2 py-0.5 rounded">
+                                {item.data.year}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            ))
+        }
+    </div>
+
+    <div
+        id="fav-chars"
+        class="accordion-container hidden justify-start gap-2 w-full overflow-x-auto pb-2"
+    >
+        {
+            characters.map((char) => (
+                <div class="accordion-item group cursor-pointer relative w-20 h-96 shrink-0 rounded-2xl border border-white/10 overflow-hidden transition-all duration-500 hover:w-80 bg-[#111] filter grayscale brightness-50 hover:filter-none hover:brightness-100 hover:z-10 hover:shadow-2xl">
+                    <img
+                        src={char.img}
+                        class="w-full h-full object-cover object-top"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90" />
+
+                    <div class="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
+                        <span
+                            class="writing-vertical text-white/50 font-black tracking-widest text-xs uppercase truncate h-64 rotate-180"
+                            style="writing-mode: vertical-rl;"
+                        >
+                            {char.name}
+                        </span>
+                    </div>
+
+                    <div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 delay-100 min-w-[200px]">
+                        <h3 class="text-3xl font-black text-white leading-none uppercase italic drop-shadow-lg">
+                            {char.name}
+                        </h3>
+                        <p class="text-indigo-400 text-sm font-bold mt-1 tracking-wider">
+                            {char.source}
+                        </p>
+                    </div>
+                </div>
+            ))
+        }
+    </div>
+</section>
+
+<script is:inline>
+    function switchFav(type, btn) {
+        document.querySelectorAll(".fav-tab").forEach((b) => {
+            b.classList.remove("bg-white", "text-black");
+            b.classList.add("text-gray-400");
+        });
+        btn.classList.add("bg-white", "text-black");
+        btn.classList.remove("text-gray-400");
+
+        const works = document.getElementById("fav-works");
+        const chars = document.getElementById("fav-chars");
+
+        if (type === "works") {
+            works.classList.remove("hidden");
+            works.classList.add("flex");
+            chars.classList.add("hidden");
+            chars.classList.remove("flex");
+        } else {
+            works.classList.add("hidden");
+            works.classList.remove("flex");
+            chars.classList.remove("hidden");
+            chars.classList.add("flex");
+        }
+    }
+</script>

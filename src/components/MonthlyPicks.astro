@@ -1,0 +1,44 @@
+---
+const { picks } = Astro.props;
+---
+
+<section>
+    <h2
+        class="text-xl font-bold text-white mb-6 flex items-center gap-3 opacity-90"
+    >
+        <i class="fa-regular fa-calendar-check text-indigo-500"></i> Favorito del
+        Mes
+    </h2>
+    <div class="flex gap-4 overflow-x-auto hide-scroll pb-4">
+        {
+            picks.map((pick) => (
+                <div class="flex-shrink-0 group cursor-pointer">
+                    <div class="flex items-center gap-4 bg-[#121215] border border-white/5 pr-6 pl-2 py-2 rounded-full hover:bg-white/5 transition-all group-hover:border-indigo-500/30 group-hover:shadow-lg group-hover:shadow-indigo-500/10">
+                        <div class="w-12 h-12 rounded-full bg-[#1a1a1e] border border-white/5 flex flex-col items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-300 group-hover:border-indigo-500/50">
+                            <span class="text-[9px] text-gray-500 font-bold leading-none">
+                                {pick.year}
+                            </span>
+                            <span class="text-[11px] text-white font-black leading-tight">
+                                {pick.month}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <img
+                                src={pick.cover}
+                                class="w-8 h-10 rounded object-cover opacity-80 group-hover:opacity-100 shadow-md"
+                            />
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-200 group-hover:text-indigo-400 transition-colors">
+                                    {pick.title}
+                                </h4>
+                                <p class="text-[9px] text-gray-600 uppercase font-black tracking-widest">
+                                    Top Pick
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))
+        }
+    </div>
+</section>
