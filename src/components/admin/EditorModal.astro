@@ -1,71 +1,73 @@
 <div id="editor" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-    <div class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl h-[480px] rounded-[2rem] shadow-2xl overflow-hidden flex flex-row relative">
+    <div class="bg-[#0c0c0e] border border-white/10 w-full max-w-2xl h-[420px] rounded-2xl shadow-2xl overflow-hidden flex flex-row relative">
         
-        <div class="w-[260px] bg-black relative shrink-0 overflow-hidden">
+        <div class="w-[220px] bg-black relative shrink-0 overflow-hidden">
             <img id="editorCover" src="" class="absolute inset-0 w-full h-full object-cover opacity-80 mask-fade-right">
-            <div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"></div>
+            <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#0c0c0e] to-transparent"></div>
         </div>
         
-        <div class="flex-1 p-8 flex flex-col relative min-w-0 bg-[#0c0c0e]">
-            <button onclick="closeEditor()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition rounded-full hover:bg-white/5"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="flex-1 p-6 flex flex-col relative min-w-0 bg-[#0c0c0e]">
+            <button onclick="closeEditor()" class="absolute top-4 right-4 text-gray-600 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
 
-            <div class="mb-8 pr-10 pt-2">
-                <h2 id="editorTitle" class="text-2xl font-bold text-white leading-tight line-clamp-2">Título</h2>
-                <p id="editorYear" class="text-xs text-gray-500 font-bold mt-1 tracking-wide">2024</p>
+            <div class="mb-6 pr-8">
+                <h2 id="editorTitle" class="text-xl font-bold text-gray-200 leading-tight line-clamp-1"></h2>
+                <p id="editorYear" class="text-[10px] text-gray-500 font-bold mt-1 tracking-widest uppercase">2024</p>
             </div>
 
-            <div class="flex-1 flex flex-col justify-start space-y-8 pr-4">
+            <div class="flex-1 flex flex-col justify-start space-y-6 pr-2 overflow-y-auto custom-scrollbar">
                 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
                     <div class="flex gap-2">
                         {[{v:'Jugando', i:'play', c:'green'}, {v:'Pausado', i:'pause', c:'orange'}, {v:'Pendiente', i:'clock', c:'yellow'}, {v:'Abandonado', i:'ban', c:'red'}, {v:'Completado', i:'check', c:'blue'}].map(s => (
                             <label class="cursor-pointer group relative" title={s.v}>
                                 <input type="radio" name="status" value={s.v} class="peer hidden" onchange="checkScoreLock()">
-                                <div class={`w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-500 transition-all 
-                                    peer-checked:border-${s.c}-500 peer-checked:text-${s.c}-500 peer-checked:bg-${s.c}-500/10 peer-checked:shadow-[0_0_15px_rgba(0,0,0,0.5)]
-                                    hover:border-white/30 hover:text-gray-300 bg-[#121214]`}>
-                                    <i class={`fa-solid fa-${s.i}`}></i>
+                                <div class={`w-9 h-9 rounded-full border border-white/5 flex items-center justify-center text-gray-600 transition-all 
+                                    peer-checked:border-${s.c}-500 peer-checked:text-${s.c}-500 peer-checked:bg-${s.c}-500/5 peer-checked:scale-110
+                                    hover:border-white/20 hover:text-gray-400 bg-[#121214]`}>
+                                    <i class={`fa-solid fa-${s.i} text-xs`}></i>
                                 </div>
                             </label>
                         ))}
                     </div>
-                    <div class="w-px h-8 bg-white/5 mx-2"></div>
-                    <button id="favBtn" onclick="toggleFav()" class="w-10 h-10 flex items-center justify-center text-gray-600 transition-all hover:scale-110 hover:text-red-500">
-                        <i class="fa-solid fa-heart text-xl"></i>
+
+                    <div class="w-px h-6 bg-white/5 mx-1"></div>
+
+                    <button id="favBtn" onclick="toggleFav()" class="w-9 h-9 flex items-center justify-center text-gray-600 transition-all hover:scale-110 hover:text-red-500">
+                        <i class="fa-solid fa-heart text-lg"></i>
                     </button>
                 </div>
 
-                <div id="scoreContainer" class="flex items-center gap-4 opacity-50 transition-opacity">
-                    <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Nota</span>
-                    <div class="stars-container flex gap-1 text-xl cursor-pointer text-[#222]" id="starsVisual"></div>
-                    <span id="scoreText" class="text-white text-xs font-bold bg-white/5 px-2 py-0.5 rounded ml-auto">0</span>
+                <div id="scoreContainer" class="flex items-center gap-3 opacity-50 transition-opacity pl-1">
+                    <span class="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Nota</span>
+                    <div class="stars-container flex gap-1 text-base cursor-pointer text-[#222]" id="starsVisual"></div>
+                    <span id="scoreText" class="text-gray-400 text-[10px] font-bold bg-white/5 px-1.5 py-0.5 rounded ml-auto">0</span>
                     <input type="range" id="scoreRange" min="0" max="10" step="1" value="0" class="sr-only">
                 </div>
 
-                <div class="space-y-3 pt-4 border-t border-white/5">
-                    <div class="flex items-center bg-[#121214] border border-white/5 rounded-xl overflow-hidden shadow-sm h-10 w-fit">
-                        <div class="relative">
-                            <select id="tagMonth" class="appearance-none bg-transparent text-gray-300 text-[10px] font-bold py-2 pl-3 pr-6 outline-none cursor-pointer uppercase tracking-wider relative z-10 hover:text-white transition">
-                                <option value="01">Ene</option><option value="02">Feb</option><option value="03">Mar</option>
-                                <option value="04">Abr</option><option value="05">May</option><option value="06">Jun</option>
-                                <option value="07">Jul</option><option value="08">Ago</option><option value="09">Sep</option>
-                                <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-gray-600 z-0"></i>
+                <div class="pt-4 border-t border-white/5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[9px] font-bold text-gray-600 uppercase tracking-widest mr-auto">Historial</span>
+                        
+                        <div class="flex items-center bg-[#121214] border border-white/5 rounded-lg overflow-hidden h-7">
+                            <div class="relative">
+                                <select id="tagMonth" class="appearance-none bg-transparent text-gray-400 text-[9px] font-bold py-1 pl-2 pr-4 outline-none cursor-pointer uppercase hover:text-white transition">
+                                    <option value="01">Ene</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
+                                </select>
+                            </div>
+                            <div class="w-px h-3 bg-white/5"></div>
+                            <input type="number" id="tagYear" class="bg-transparent text-gray-400 text-[9px] font-bold py-1 px-1 w-9 text-center outline-none hover:text-white transition" placeholder="Year">
+                            <button onclick="addMonthTag()" class="bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white h-full px-2 flex items-center justify-center transition border-l border-white/5">
+                                <i class="fa-solid fa-plus text-[8px]"></i>
+                            </button>
                         </div>
-                        <div class="w-px h-4 bg-white/5"></div>
-                        <input type="number" id="tagYear" class="bg-transparent text-gray-300 text-[10px] font-bold py-2 px-2 w-12 text-center outline-none hover:text-white transition" placeholder="Year">
-                        <button onclick="addMonthTag()" class="bg-white/5 hover:bg-white/10 text-white h-full px-3 flex items-center justify-center transition border-l border-white/5">
-                            <i class="fa-solid fa-plus text-[10px]"></i>
-                        </button>
                     </div>
-                    <div id="monthlyTagsContainer" class="flex flex-wrap gap-2 min-h-[24px] content-center"></div>
+                    <div id="monthlyTagsContainer" class="flex flex-wrap gap-1.5 min-h-[20px] content-start"></div>
                 </div>
             </div>
 
-            <div class="mt-auto pt-6">
-                <button id="saveMediaBtn" type="button" class="w-full bg-white text-black h-10 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg shadow-white/5 active:scale-[0.98] text-xs uppercase tracking-wide">
-                    Guardar Cambios
+            <div class="mt-auto pt-4 border-t border-white/5">
+                <button id="saveMediaBtn" type="button" class="w-full bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg shadow-white/5 active:scale-[0.98] text-[10px] uppercase tracking-widest">
+                    Guardar
                 </button>
             </div>
         </div>

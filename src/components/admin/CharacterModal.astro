@@ -1,0 +1,34 @@
+<div id="charEditor" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
+    <div class="bg-[#0c0c0e] border border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
+        
+        <div class="h-64 bg-black relative shrink-0 w-full group">
+            <img id="charCover" src="" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500 object-top">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent"></div>
+            
+            <div class="absolute bottom-4 left-6 right-6">
+                <h2 id="charName" class="text-3xl font-black text-white leading-none drop-shadow-lg shadow-black"></h2>
+            </div>
+        </div>
+        
+        <button onclick="closeCharEditor()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20 backdrop-blur-md"><i class="fa-solid fa-xmark"></i></button>
+
+        <div class="p-6 flex flex-col gap-4 bg-[#0c0c0e]">
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Nombre</label>
+                <input type="text" id="charNameInput" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-3 text-white font-bold outline-none focus:border-pink-500/50 transition">
+            </div>
+            
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Origen (Juego/Anime)</label>
+                <input type="text" id="charSourceInput" placeholder="Ej: Elden Ring" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-pink-500/50 transition">
+            </div>
+
+            <div class="flex gap-2 mt-2">
+                <button id="deleteCharBtn" class="bg-red-500/10 text-red-500 h-12 w-12 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="saveCharacter()" class="flex-1 bg-white text-black h-12 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg active:scale-95">
+                    Guardar en Hall of Fame
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

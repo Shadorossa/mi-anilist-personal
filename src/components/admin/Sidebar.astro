@@ -1,9 +1,16 @@
 <aside class="w-16 bg-[#0a0a0c] border-r border-white/5 flex flex-col items-center py-6 z-50 shrink-0">
     <div class="mb-8 text-indigo-500 opacity-80"><i class="fa-solid fa-cube text-xl"></i></div>
     <nav class="flex flex-col gap-4 w-full px-3">
-        <button onclick="switchMode('search')" class="nav-btn active w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-plus"></i></button>
-        <button onclick="switchMode('library')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-layer-group"></i></button>
-        <button onclick="switchMode('favorites')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-heart"></i></button>
+        <button onclick="switchMode('search')" class="nav-btn active w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Añadir Obra"><i class="fa-solid fa-plus"></i></button>
+        <button onclick="switchMode('library')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Biblioteca"><i class="fa-solid fa-layer-group"></i></button>
+        
+        <div class="h-px bg-white/5 w-full mx-auto"></div>
+        
+        <button onclick="switchMode('characters')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Personajes"><i class="fa-solid fa-mask"></i></button>
+        
+        <div class="h-px bg-white/5 w-full mx-auto"></div>
+
+        <button onclick="switchMode('favorites')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Ordenar Favs"><i class="fa-solid fa-heart"></i></button>
     </nav>
     <div class="mt-auto flex flex-col gap-3 w-full px-3">
         <button onclick="switchMode('profile')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-user"></i></button>
