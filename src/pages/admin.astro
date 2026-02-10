@@ -1,6 +1,14 @@
 ---
 import { getCollection } from "astro:content";
 
+// Componentes
+import Sidebar from "../components/admin/Sidebar.astro";
+import SearchPanel from "../components/admin/SearchPanel.astro";
+import LibraryPanel from "../components/admin/LibraryPanel.astro";
+import FavoritesPanel from "../components/admin/FavoritesPanel.astro";
+import ProfilePanel from "../components/admin/ProfilePanel.astro";
+import EditorModal from "../components/admin/EditorModal.astro";
+
 // 1. CARGAR DATOS
 const games = await getCollection("games").catch(() => []);
 const anime = await getCollection("anime").catch(() => []);
@@ -19,817 +27,290 @@ try {
     db = d.default || d;
 } catch (e) {}
 
-// Mapear favoritos para el orden visual
 const favoritesOrdered = db.favorites
-    .map((title) => localLibrary.find((item) => item.title === title))
-    .filter((item) => item !== undefined);
+    .map(title => localLibrary.find(item => item.title === title))
+    .filter(item => item !== undefined);
 ---
 
 <html lang="es" class="dark">
-    <head>
-        <title>Nexus Admin</title>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        />
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"
-        ></script>
-        <style>
-            body {
-                background-color: #050505;
-                color: #e4e4e7;
-                font-family:
-                    system-ui,
-                    -apple-system,
-                    sans-serif;
-                overflow: hidden; /* Evitar scroll body */
-            }
-            .hide-scroll::-webkit-scrollbar {
-                display: none;
-            }
+<head>
+    <title>Nexus Admin</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        /* ESTILOS GLOBALES DEL ADMIN */
+        body { 
+            background-color: #050505; 
+            color: #e4e4e7;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-image: radial-gradient(circle at 50% 0%, #1a1a20 0%, #050505 80%);
+        }
+        .glass-panel { background: rgba(20, 20, 23, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 1.25rem;
+        }
 
-            /* Efecto Hover en Sidebar */
-            .nav-btn.active {
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
-            }
+        .tag-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: #a1a1aa; border-radius: 99px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; }
+        .tag-pill button:hover { color: #f87171; transform: scale(1.1); }
+        
+        .stars-container i { cursor: pointer; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s; }
+        .stars-container i:hover { transform: scale(1.3); }
 
-            /* Grid denso para covers */
-            .mini-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-                gap: 0.5rem;
-            }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .mask-fade-right { mask-image: linear-gradient(to right, black 80%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%); }
+    </style>
+</head>
+<body class="flex h-screen w-full selection:bg-indigo-500/30 selection:text-white">
 
-            /* Estrellas */
-            .stars-container i {
-                cursor: pointer;
-                transition: color 0.1s;
-            }
+    <Sidebar />
 
-            /* Tags */
-            .tag-pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                padding: 2px 6px;
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-                font-size: 0.65rem;
-                font-weight: 600;
-                color: #ccc;
-            }
-            .tag-pill button:hover {
-                color: #f87171;
-            }
-        </style>
-    </head>
-    <body class="flex h-screen w-full">
-        <aside
-            class="w-12 bg-[#0a0a0c] border-r border-white/5 flex flex-col items-center py-4 z-50 shrink-0"
-        >
-            <div class="mb-6 text-indigo-500">
-                <i class="fa-solid fa-cube"></i>
-            </div>
-            <nav class="flex flex-col gap-2 w-full px-1">
-                <button
-                    onclick="switchMode('search')"
-                    class="nav-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    title="Añadir"><i class="fa-solid fa-plus"></i></button
-                >
-                <button
-                    onclick="switchMode('library')"
-                    class="nav-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    title="Biblioteca"
-                    ><i class="fa-solid fa-layer-group"></i></button
-                >
-                <button
-                    onclick="switchMode('favorites')"
-                    class="nav-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    title="Favoritos"><i class="fa-solid fa-heart"></i></button
-                >
-            </nav>
-            <div class="mt-auto flex flex-col gap-2 w-full px-1">
-                <button
-                    onclick="switchMode('profile')"
-                    class="nav-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    ><i class="fa-solid fa-user"></i></button
-                >
-                <a
-                    href="/"
-                    class="w-10 h-10 rounded-lg flex items-center justify-center text-red-900/50 hover:text-red-400 transition-colors"
-                    ><i class="fa-solid fa-power-off"></i></a
-                >
-            </div>
-        </aside>
+    <main class="flex-1 relative flex flex-col min-w-0">
+        <SearchPanel />
+        <LibraryPanel />
+        <FavoritesPanel />
+        <ProfilePanel />
+    </main>
 
-        <main class="flex-1 relative flex flex-col bg-[#050505] min-w-0">
-            <div
-                id="search-panel"
-                class="panel flex-1 flex flex-col p-4 min-h-0"
-            >
-                <form id="searchForm" class="flex gap-2 mb-4 shrink-0">
-                    <select
-                        id="mediaType"
-                        class="bg-[#121214] text-gray-300 text-xs font-bold rounded-lg px-3 outline-none border border-white/10 cursor-pointer"
-                    >
-                        <option value="game">Juegos</option>
-                        <option value="anime">Anime</option>
-                        <option value="manga">Manga</option>
-                    </select>
-                    <input
-                        type="text"
-                        id="searchInput"
-                        placeholder="Buscar título nuevo..."
-                        autocomplete="off"
-                        class="flex-1 bg-[#121214] border border-white/10 text-white text-xs rounded-lg px-4 py-2 outline-none focus:border-indigo-500/50"
-                    />
-                    <button
-                        type="submit"
-                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 rounded-lg text-xs font-bold transition"
-                        >Buscar</button
-                    >
-                </form>
-                <div
-                    id="searchResults"
-                    class="mini-grid overflow-y-auto pr-1 pb-10 custom-scrollbar"
-                >
-                </div>
-            </div>
+    <EditorModal />
 
-            <div
-                id="library-panel"
-                class="panel hidden flex-1 flex flex-col p-4 min-h-0"
-            >
-                <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2
-                        class="text-sm font-bold text-gray-400 uppercase tracking-wider"
-                    >
-                        Biblioteca Local
-                    </h2>
-                    <input
-                        type="text"
-                        id="localFilter"
-                        placeholder="Filtrar..."
-                        class="bg-[#121214] border border-white/10 rounded-lg px-3 py-1 text-xs text-white outline-none w-48"
-                    />
-                </div>
-                <div
-                    id="localGrid"
-                    class="mini-grid overflow-y-auto pr-1 pb-10 custom-scrollbar"
-                >
-                </div>
-            </div>
+    <script define:vars={{ localLibrary, favoritesOrdered, db }}>
+        window.localLibrary = localLibrary;
+        window.favoritesList = favoritesOrdered; 
+        window.favoritesTitles = db.favorites || []; 
+        window.monthlyPicksGlobal = db.monthlyPicks || []; 
+    </script>
 
-            <div
-                id="favorites-panel"
-                class="panel hidden flex-1 flex flex-col p-4 min-h-0"
-            >
-                <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2
-                        class="text-sm font-bold text-gray-400 uppercase tracking-wider"
-                    >
-                        Orden Favoritos
-                    </h2>
-                    <button
-                        id="saveOrderBtn"
-                        class="bg-white/10 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-white/20 transition"
-                        >Guardar Orden</button
-                    >
-                </div>
-                <div id="favList" class="mini-grid overflow-y-auto pr-1 pb-10">
-                </div>
-            </div>
+    <script is:inline>
+        let currentSelection = null;
+        let lastSearchResults = [];
+        let isFavorite = false;
+        
+        document.getElementById('tagYear').value = new Date().getFullYear();
 
-            <div
-                id="profile-panel"
-                class="panel hidden flex-1 flex flex-col items-center justify-center p-4"
-            >
-                <div
-                    class="bg-[#121214] border border-white/10 p-6 rounded-2xl w-full max-w-sm"
-                >
-                    <input
-                        type="text"
-                        id="usernameInput"
-                        class="w-full bg-[#0a0a0c] border border-white/10 rounded-lg p-2 text-white text-xs mb-2"
-                    />
-                    <textarea
-                        id="bioInput"
-                        rows="3"
-                        class="w-full bg-[#0a0a0c] border border-white/10 rounded-lg p-2 text-white text-xs resize-none"
-                    ></textarea>
-                    <button
-                        id="saveProfileBtn"
-                        class="w-full bg-white text-black font-bold py-2 rounded-lg text-xs mt-2 hover:bg-gray-200"
-                        >Guardar</button
-                    >
-                </div>
-            </div>
-        </main>
+        // --- SISTEMA DE MODOS ---
+        window.switchMode = (mode) => {
+            document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-white', 'bg-white/10'));
+            document.getElementById(`${mode}-panel`).classList.remove('hidden');
+            
+            const btn = document.querySelector(`button[onclick="switchMode('${mode}')"]`);
+            if(btn) btn.classList.add('active', 'text-white', 'bg-white/10');
 
-        <div
-            id="editor"
-            class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-        >
-            <div
-                class="bg-[#0f0f11] border border-white/10 w-full max-w-2xl h-[400px] rounded-xl shadow-2xl overflow-hidden flex flex-row"
-            >
-                <div class="w-40 bg-black relative shrink-0">
-                    <img
-                        id="editorCover"
-                        src=""
-                        class="absolute inset-0 w-full h-full object-cover opacity-80"
-                    />
-                    <div
-                        class="absolute inset-0 bg-gradient-to-r from-transparent to-[#0f0f11]"
-                    >
-                    </div>
-                </div>
+            if(mode === 'library') renderLocalLibrary();
+            if(mode === 'favorites') renderFavoritesSortable();
+        }
+        switchMode('search'); 
 
-                <div class="flex-1 p-5 flex flex-col relative min-w-0">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="min-w-0 pr-2">
-                            <h2
-                                id="editorTitle"
-                                class="text-lg font-bold text-white leading-tight truncate"
-                            >
-                                Título
-                            </h2>
-                            <p
-                                id="editorYear"
-                                class="text-[10px] text-gray-500 font-bold mt-0.5"
-                            >
-                                202X
-                            </p>
-                        </div>
-                        <div class="flex gap-1 shrink-0">
-                            <button
-                                id="favBtn"
-                                onclick="toggleFav()"
-                                class="w-7 h-7 rounded border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-gray-500 hover:text-white"
-                                ><i class="fa-solid fa-heart text-xs"
-                                ></i></button
-                            >
-                            <button
-                                onclick="closeEditor()"
-                                class="w-7 h-7 rounded border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-gray-500 hover:text-white"
-                                ><i class="fa-solid fa-xmark text-xs"
-                                ></i></button
-                            >
-                        </div>
-                    </div>
-
-                    <div
-                        class="grid grid-cols-2 gap-6 h-full overflow-y-auto pr-1 custom-scrollbar"
-                    >
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    class="text-[9px] font-bold text-gray-600 uppercase mb-1.5 block"
-                                    >Estado</label
-                                >
-                                <div class="grid grid-cols-2 gap-1.5">
-                                    <label class="cursor-pointer"
-                                        ><input
-                                            type="radio"
-                                            name="status"
-                                            value="Jugando"
-                                            class="peer hidden"
-                                            onchange="checkScoreLock()"
-                                        /><div
-                                            class="peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-transparent border border-white/10 bg-[#18181b] text-gray-400 rounded py-1.5 text-center transition text-[10px] font-bold hover:bg-white/5"
-                                        >
-                                            Activo
-                                        </div></label
-                                    >
-                                    <label class="cursor-pointer"
-                                        ><input
-                                            type="radio"
-                                            name="status"
-                                            value="Pausado"
-                                            class="peer hidden"
-                                            onchange="checkScoreLock()"
-                                        /><div
-                                            class="peer-checked:bg-orange-600 peer-checked:text-white peer-checked:border-transparent border border-white/10 bg-[#18181b] text-gray-400 rounded py-1.5 text-center transition text-[10px] font-bold hover:bg-white/5"
-                                        >
-                                            Pausa
-                                        </div></label
-                                    >
-                                    <label class="cursor-pointer"
-                                        ><input
-                                            type="radio"
-                                            name="status"
-                                            value="Pendiente"
-                                            class="peer hidden"
-                                            onchange="checkScoreLock()"
-                                        /><div
-                                            class="peer-checked:bg-yellow-600 peer-checked:text-white peer-checked:border-transparent border border-white/10 bg-[#18181b] text-gray-400 rounded py-1.5 text-center transition text-[10px] font-bold hover:bg-white/5"
-                                        >
-                                            Pendiente
-                                        </div></label
-                                    >
-                                    <label class="cursor-pointer"
-                                        ><input
-                                            type="radio"
-                                            name="status"
-                                            value="Abandonado"
-                                            class="peer hidden"
-                                            onchange="checkScoreLock()"
-                                        /><div
-                                            class="peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-transparent border border-white/10 bg-[#18181b] text-gray-400 rounded py-1.5 text-center transition text-[10px] font-bold hover:bg-white/5"
-                                        >
-                                            Drop
-                                        </div></label
-                                    >
-                                    <label class="cursor-pointer col-span-2"
-                                        ><input
-                                            type="radio"
-                                            name="status"
-                                            value="Completado"
-                                            class="peer hidden"
-                                            onchange="checkScoreLock()"
-                                        /><div
-                                            class="peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-transparent border border-white/10 bg-[#18181b] text-gray-400 rounded py-1.5 text-center transition text-[10px] font-bold hover:bg-white/5"
-                                        >
-                                            Completado
-                                        </div></label
-                                    >
-                                </div>
-                            </div>
-
-                            <div
-                                id="scoreContainer"
-                                class="opacity-50 transition-opacity"
-                            >
-                                <div
-                                    class="flex justify-between mb-1 items-end"
-                                >
-                                    <label
-                                        class="text-[9px] font-bold text-gray-600 uppercase"
-                                        >Valoración</label
-                                    >
-                                    <span
-                                        id="scoreText"
-                                        class="text-indigo-400 text-xs font-black"
-                                        >0</span
-                                    >
-                                </div>
-                                <div
-                                    class="stars-container flex gap-0.5 text-base cursor-pointer text-gray-700"
-                                    id="starsVisual"
-                                >
-                                </div>
-                                <input
-                                    type="range"
-                                    id="scoreRange"
-                                    min="0"
-                                    max="10"
-                                    step="1"
-                                    value="0"
-                                    class="sr-only"
-                                />
-                            </div>
-                        </div>
-
-                        <div class="border-l border-white/5 pl-4 space-y-3">
-                            <div>
-                                <label
-                                    class="text-[9px] font-bold text-gray-600 uppercase mb-1.5 block"
-                                    >Destacado del Mes</label
-                                >
-                                <div class="flex gap-1 mb-2">
-                                    <select
-                                        id="tagMonth"
-                                        class="bg-[#18181b] text-white text-[10px] font-bold rounded px-1 py-1 outline-none border border-white/10 flex-1"
-                                    >
-                                        <option value="01">ENE</option><option
-                                            value="02">FEB</option
-                                        ><option value="03">MAR</option>
-                                        <option value="04">ABR</option><option
-                                            value="05">MAY</option
-                                        ><option value="06">JUN</option>
-                                        <option value="07">JUL</option><option
-                                            value="08">AGO</option
-                                        ><option value="09">SEP</option>
-                                        <option value="10">OCT</option><option
-                                            value="11">NOV</option
-                                        ><option value="12">DIC</option>
-                                    </select>
-                                    <input
-                                        type="number"
-                                        id="tagYear"
-                                        class="bg-[#18181b] text-white text-[10px] font-bold rounded px-1 w-12 text-center outline-none border border-white/10"
-                                        placeholder="202X"
-                                    />
-                                    <button
-                                        onclick="addMonthTag()"
-                                        type="button"
-                                        class="bg-white/10 text-white rounded w-6 flex items-center justify-center hover:bg-white/20 transition"
-                                        ><i class="fa-solid fa-plus text-[10px]"
-                                        ></i></button
-                                    >
-                                </div>
-                                <div
-                                    id="monthlyTagsContainer"
-                                    class="flex flex-wrap gap-1.5 content-start"
-                                >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-auto pt-4 border-t border-white/5">
-                        <button
-                            id="saveMediaBtn"
-                            type="button"
-                            class="w-full bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow flex items-center justify-center gap-2 text-xs"
-                        >
-                            Guardar Cambios
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script define:vars={{ localLibrary, favoritesOrdered, db }}>
-            window.localLibrary = localLibrary;
-            window.favoritesList = favoritesOrdered;
-            window.favoritesTitles = db.favorites || [];
-            window.monthlyPicksGlobal = db.monthlyPicks || [];
-        </script>
-
-        <script is:inline>
-            let currentSelection = null;
-            let lastSearchResults = [];
-            let isFavorite = false;
-
-            document.getElementById("tagYear").value = new Date().getFullYear();
-
-            // --- SISTEMA MODO ---
-            window.switchMode = (mode) => {
-                document
-                    .querySelectorAll(".panel")
-                    .forEach((p) => p.classList.add("hidden"));
-                document
-                    .getElementById(`${mode}-panel`)
-                    .classList.remove("hidden");
-                if (mode === "library") renderLocalLibrary();
-                if (mode === "favorites") renderFavoritesSortable();
-            };
-
-            // Inicializar
-            switchMode("search");
-
-            // --- RENDERIZADO GRID MINI ---
-            function renderCard(item, onclickFunc) {
-                const isFav = window.favoritesTitles.includes(item.title);
-                return `
-            <div onclick='${onclickFunc}(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="group relative aspect-[2/3] rounded overflow-hidden cursor-pointer bg-[#18181b] ring-1 ring-white/5 hover:ring-indigo-500/50 hover:scale-[1.05] transition-all">
-                <img src="${item.cover}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
-                ${isFav ? '<div class="absolute top-1 left-1 text-red-500 drop-shadow-md text-[10px]"><i class="fa-solid fa-heart"></i></div>' : ""}
-                <div class="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-black/90 to-transparent"><p class="text-[9px] font-bold text-white truncate leading-tight">${item.title}</p></div>
+        // --- RENDER GRID ---
+        function renderCard(item, onclickFunc) {
+            const isFav = window.favoritesTitles.includes(item.title);
+            return `
+            <div onclick='${onclickFunc}(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="group relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer bg-[#18181b] ring-1 ring-white/5 hover:ring-white/20 hover:scale-[1.03] transition-all duration-300">
+                <img src="${item.cover}" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity">
+                ${isFav ? '<div class="absolute top-1.5 left-1.5 text-red-500 drop-shadow-md text-xs"><i class="fa-solid fa-heart"></i></div>' : ''}
+                <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black via-black/80 to-transparent"><p class="text-[9px] font-bold text-white truncate leading-tight">${item.title}</p></div>
             </div>`;
-            }
+        }
 
-            function renderLocalLibrary(filterText = "") {
-                const filtered = window.localLibrary.filter((item) =>
-                    item.title.toLowerCase().includes(filterText.toLowerCase()),
-                );
-                document.getElementById("localGrid").innerHTML = filtered
-                    .map((item) => renderCard(item, "openEditorLocal"))
-                    .join("");
-            }
-            document
-                .getElementById("localFilter")
-                .addEventListener("input", (e) =>
-                    renderLocalLibrary(e.target.value),
-                );
+        function renderLocalLibrary(filterText = '') {
+            const filtered = window.localLibrary.filter(item => item.title.toLowerCase().includes(filterText.toLowerCase()));
+            document.getElementById('localGrid').innerHTML = filtered.map(item => renderCard(item, 'openEditorLocal')).join('');
+        }
+        document.getElementById('localFilter').addEventListener('input', (e) => renderLocalLibrary(e.target.value));
 
-            // --- BUSCADOR ---
-            document
-                .getElementById("searchForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const query = document.getElementById("searchInput").value;
-                    const type = document.getElementById("mediaType").value;
-                    if (!query) return;
+        // --- BUSCADOR ---
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = document.getElementById('searchInput').value;
+            const type = document.getElementById('mediaType').value;
+            if(!query) return;
+            
+            document.getElementById('searchResults').innerHTML = `<div class="col-span-full py-10 text-center text-gray-500 text-xs">Buscando...</div>`;
+            try {
+                const res = await fetch(`/api/search.json?q=${encodeURIComponent(query)}&type=${type}`);
+                const data = await res.json();
+                window.lastSearchResults = data;
+                document.getElementById('searchResults').innerHTML = data.map((item, idx) => renderCard(item, 'openEditorSearch')).join('');
+            } catch (e) { document.getElementById('searchResults').innerHTML = `<p class="col-span-full text-center text-red-400 text-xs">Error</p>`; }
+        });
 
-                    document.getElementById("searchResults").innerHTML =
-                        `<div class="col-span-full py-4 text-center text-xs text-gray-500">Buscando...</div>`;
-                    try {
-                        const res = await fetch(
-                            `/api/search.json?q=${encodeURIComponent(query)}&type=${type}`,
-                        );
-                        const data = await res.json();
-                        window.lastSearchResults = data;
-                        document.getElementById("searchResults").innerHTML =
-                            data
-                                .map(
-                                    (item, idx) => `
-                    <div onclick="openEditorSearch(${idx})" class="group relative aspect-[2/3] rounded overflow-hidden cursor-pointer bg-[#18181b] hover:ring-1 hover:ring-white/20 transition-all">
-                        <img src="${item.cover}" class="w-full h-full object-cover opacity-70 group-hover:opacity-100">
-                        <div class="absolute bottom-0 p-1 w-full bg-gradient-to-t from-black to-transparent"><p class="text-[9px] text-white truncate">${item.title}</p></div>
-                    </div>
-                `,
-                                )
-                                .join("");
-                    } catch (e) {
-                        document.getElementById("searchResults").innerHTML =
-                            `<p class="col-span-full text-center text-red-400 text-xs">Error</p>`;
-                    }
-                });
+        // --- EDITOR ---
+        window.openEditorSearch = (idx) => {
+            const item = window.lastSearchResults[idx];
+            if(!item.id) item.id = Date.now();
+            const type = document.getElementById('mediaType').value;
+            fillEditor({ ...item, type: type === 'game' ? 'games' : (type === 'manga' ? 'manga' : (type === 'character' ? 'character' : 'anime')) });
+        };
+        window.openEditorLocal = (item) => fillEditor(item);
 
-            // --- EDITOR ---
-            window.openEditorSearch = (idx) => {
-                const item = window.lastSearchResults[idx];
-                const type = document.getElementById("mediaType").value;
-                fillEditor({
-                    ...item,
-                    type:
-                        type === "game"
-                            ? "games"
-                            : type === "manga"
-                              ? "manga"
-                              : "anime",
-                });
-            };
-            window.openEditorLocal = (item) => fillEditor(item);
+        function fillEditor(data) {
+            currentSelection = data;
+            document.getElementById('editor').classList.remove('hidden');
+            
+            document.getElementById('editorTitle').innerText = data.title;
+            document.getElementById('editorYear').innerText = data.year || '----';
+            document.getElementById('editorCover').src = data.cover;
+            
+            // Estado
+            const statusToSelect = data.status || 'Jugando';
+            document.querySelectorAll('input[name="status"]').forEach(r => {
+                r.checked = (r.value === statusToSelect);
+            });
+            
+            // Nota
+            const score = data.score || 0;
+            updateStarsVisual(score);
 
-            function fillEditor(data) {
-                currentSelection = data;
-                document.getElementById("editor").classList.remove("hidden");
-                document.getElementById("editorTitle").innerText = data.title;
-                document.getElementById("editorYear").innerText =
-                    data.year || "----";
-                document.getElementById("editorCover").src = data.cover;
+            // Favorito
+            isFavorite = window.favoritesTitles.includes(data.title);
+            updateFavBtn();
 
-                // Estado (Radio Button Logic)
-                const statusToSelect = data.status || "Jugando";
-                const radios = document.getElementsByName("status");
-                for (const r of radios) {
-                    if (r.value === statusToSelect) r.checked = true;
-                }
+            // Mensuales
+            renderMonthTags();
+            checkScoreLock();
+        }
+        window.closeEditor = () => document.getElementById('editor').classList.add('hidden');
 
-                // Nota (0-10 -> 5 stars)
-                const score = data.score || 0;
-                updateStarsVisual(score);
-
-                // Favorito
-                isFavorite = window.favoritesTitles.includes(data.title);
-                updateFavBtn();
-
-                // Mensuales
-                renderMonthTags();
-                checkScoreLock();
-            }
-            window.closeEditor = () =>
-                document.getElementById("editor").classList.add("hidden");
-
-            // --- ESTRELLAS (0-10 internas, 0-5 visuales con medias) ---
-            function updateStarsVisual(value) {
-                // Guardar valor real (0-10) en input oculto
-                document.getElementById("scoreRange").value = value;
-
-                // Visualizar (0-5)
-                const visualScore = value / 2;
-                document.getElementById("scoreText").innerText =
-                    visualScore + " / 5";
-
-                let html = "";
-                for (let i = 1; i <= 5; i++) {
-                    // Lógica de iconos
-                    let iconClass = "fa-regular fa-star text-gray-700"; // Vacía
-                    if (visualScore >= i)
-                        iconClass = "fa-solid fa-star text-yellow-500"; // Llena
-                    else if (visualScore >= i - 0.5)
-                        iconClass =
-                            "fa-solid fa-star-half-stroke text-yellow-500"; // Media
-
-                    // Cada estrella tiene dos zonas de clic: Izquierda (media) y Derecha (entera)
-                    html += `
-                <span class="relative inline-block">
-                    <i class="${iconClass}"></i>
+        // --- ESTRELLAS ---
+        function updateStarsVisual(value) {
+            document.getElementById('scoreRange').value = value;
+            const visualScore = value / 2;
+            document.getElementById('scoreText').innerText = visualScore;
+            
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                let iconClass = "fa-regular fa-star text-[#333]"; 
+                let colorClass = "text-[#333]";
+                if (visualScore >= i) { iconClass = "fa-solid fa-star"; colorClass = "text-white"; } 
+                else if (visualScore >= i - 0.5) { iconClass = "fa-solid fa-star-half-stroke"; colorClass = "text-white"; }
+                
+                html += `<span class="relative inline-block px-0.5 group/star">
+                    <i class="${iconClass} ${colorClass} group-hover/star:text-white"></i>
                     <div class="absolute left-0 top-0 bottom-0 w-1/2 z-10" onclick="setScore(${i * 2 - 1})"></div>
                     <div class="absolute right-0 top-0 bottom-0 w-1/2 z-10" onclick="setScore(${i * 2})"></div>
                 </span>`;
-                }
-                document.getElementById("starsVisual").innerHTML = html;
             }
+            document.getElementById('starsVisual').innerHTML = html;
+        }
+        window.setScore = (val) => { if(!document.getElementById('scoreRange').disabled) updateStarsVisual(val); };
 
-            window.setScore = (val) => {
-                if (document.getElementById("scoreRange").disabled) return;
-                updateStarsVisual(val);
-            };
-
-            window.checkScoreLock = () => {
-                const status = document.querySelector(
-                    'input[name="status"]:checked',
-                ).value;
-                const range = document.getElementById("scoreRange");
-                const container = document.getElementById("scoreContainer");
-
-                if (status === "Completado") {
-                    range.disabled = false;
-                    container.style.opacity = "1";
-                    container.style.pointerEvents = "auto";
-                } else {
-                    range.disabled = true;
-                    container.style.opacity = "0.3";
-                    container.style.pointerEvents = "none";
-                    updateStarsVisual(0);
-                }
-            };
-
-            // --- FAVORITOS ---
-            window.toggleFav = () => {
-                isFavorite = !isFavorite;
-                updateFavBtn();
-            };
-            function updateFavBtn() {
-                const btn = document.getElementById("favBtn");
-                if (isFavorite) {
-                    btn.classList.remove("bg-[#18181b]", "text-gray-500");
-                    btn.classList.add(
-                        "bg-red-500/10",
-                        "text-red-500",
-                        "border-red-500/30",
-                    );
-                } else {
-                    btn.classList.add("bg-[#18181b]", "text-gray-500");
-                    btn.classList.remove(
-                        "bg-red-500/10",
-                        "text-red-500",
-                        "border-red-500/30",
-                    );
-                }
+        window.checkScoreLock = () => {
+            const status = document.querySelector('input[name="status"]:checked').value;
+            const range = document.getElementById('scoreRange');
+            const container = document.getElementById('scoreContainer');
+            if (status === 'Completado') {
+                range.disabled = false;
+                container.style.opacity = '1'; container.style.pointerEvents = 'auto';
+            } else {
+                range.disabled = true;
+                container.style.opacity = '0.3'; container.style.pointerEvents = 'none';
+                updateStarsVisual(0);
             }
+        };
 
-            // --- MENSUALES ---
-            window.addMonthTag = () => {
-                const m = document.getElementById("tagMonth").value;
-                const y = document.getElementById("tagYear").value;
-                if (!m || !y) return;
-                const dateStr = `${y}-${m}`;
+        // --- FAVORITOS ---
+        window.toggleFav = () => { isFavorite = !isFavorite; updateFavBtn(); }
+        function updateFavBtn() {
+            const btn = document.getElementById('favBtn');
+            if(isFavorite) {
+                btn.innerHTML = `<i class="fa-solid fa-heart text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]"></i>`;
+                btn.classList.add('scale-110');
+            } else {
+                btn.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+                btn.classList.remove('scale-110');
+            }
+        }
 
-                const exists = window.monthlyPicksGlobal.some(
-                    (entry) =>
-                        entry.month === dateStr &&
-                        entry.title === currentSelection.title,
-                );
-                if (!exists) {
-                    window.monthlyPicksGlobal.push({
-                        month: dateStr,
-                        title: currentSelection.title,
-                        cover: currentSelection.cover,
-                    });
-                    window.monthlyPicksGlobal.sort((a, b) =>
-                        b.month.localeCompare(a.month),
-                    );
-                    renderMonthTags();
-                }
-            };
-
-            window.removeMonthTag = (dateStr) => {
-                window.monthlyPicksGlobal = window.monthlyPicksGlobal.filter(
-                    (entry) =>
-                        !(
-                            entry.month === dateStr &&
-                            entry.title === currentSelection.title
-                        ),
-                );
+        // --- MENSUALES ---
+        window.addMonthTag = () => {
+            const m = document.getElementById('tagMonth').value;
+            const y = document.getElementById('tagYear').value;
+            if(!m || !y) return;
+            const dateStr = `${y}-${m}`;
+            const exists = window.monthlyPicksGlobal.some(entry => entry.month === dateStr && entry.title === currentSelection.title);
+            if(!exists) {
+                window.monthlyPicksGlobal.push({ 
+                    month: dateStr, 
+                    title: currentSelection.title, 
+                    cover: currentSelection.cover 
+                });
+                window.monthlyPicksGlobal.sort((a,b) => b.month.localeCompare(a.month)); // Ordenar
                 renderMonthTags();
+            }
+        };
+
+        window.removeMonthTag = (dateStr) => {
+            window.monthlyPicksGlobal = window.monthlyPicksGlobal.filter(entry => !(entry.month === dateStr && entry.title === currentSelection.title));
+            renderMonthTags();
+        };
+
+        function renderMonthTags() {
+            const container = document.getElementById('monthlyTagsContainer');
+            const tags = window.monthlyPicksGlobal.filter(entry => entry.title === currentSelection.title);
+            if(tags.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-700 italic pl-1">Sin historial</span>'; return; }
+            container.innerHTML = tags.map(tag => {
+                const [y, m] = tag.month.split('-');
+                return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
+            }).join('');
+        }
+
+        // --- GUARDAR ---
+        document.getElementById('saveMediaBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('saveMediaBtn');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`; btn.disabled = true;
+
+            const status = document.querySelector('input[name="status"]:checked').value;
+            const finalScore = status === 'Completado' ? Number(document.getElementById('scoreRange').value) : 0;
+
+            if (isFavorite && !window.favoritesTitles.includes(currentSelection.title)) window.favoritesTitles.push(currentSelection.title);
+            else if (!isFavorite) window.favoritesTitles = window.favoritesTitles.filter(t => t !== currentSelection.title);
+
+            const payloadFile = { ...currentSelection, status, score: finalScore };
+            const payloadDB = { 
+                type: 'update_db', 
+                favorites: window.favoritesTitles, 
+                monthlyPicks: window.monthlyPicksGlobal 
             };
 
-            function renderMonthTags() {
-                const container = document.getElementById(
-                    "monthlyTagsContainer",
-                );
-                const thisGameTags = window.monthlyPicksGlobal.filter(
-                    (entry) => entry.title === currentSelection.title,
-                );
+            try {
+                await Promise.all([
+                    fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadFile) }),
+                    fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadDB) })
+                ]);
+                closeEditor();
+            } catch (e) { console.error(e); }
+            btn.innerText = originalText; btn.disabled = false;
+        });
 
-                if (thisGameTags.length === 0) {
-                    container.innerHTML =
-                        '<span class="text-[9px] text-gray-600">--</span>';
-                    return;
-                }
-                container.innerHTML = thisGameTags
-                    .map((tag) => {
-                        const [y, m] = tag.month.split("-");
-                        return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
-                    })
-                    .join("");
-            }
+        // --- ORDENAR ---
+        function renderFavoritesSortable() {
+            const container = document.getElementById('favList');
+            const favObjects = window.favoritesTitles.map(title => window.localLibrary.find(item => item.title === title)).filter(Boolean);
+            container.innerHTML = favObjects.map(item => renderCard(item, '')).join('');
+            new Sortable(container, { animation: 150 });
+        }
 
-            // --- GUARDAR ---
-            document
-                .getElementById("saveMediaBtn")
-                .addEventListener("click", async () => {
-                    const btn = document.getElementById("saveMediaBtn");
-                    const originalText = btn.innerText;
-                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-                    btn.disabled = true;
-
-                    const status = document.querySelector(
-                        'input[name="status"]:checked',
-                    ).value;
-                    const finalScore =
-                        status === "Completado"
-                            ? Number(
-                                  document.getElementById("scoreRange").value,
-                              )
-                            : 0;
-
-                    // Actualizar lista global de favoritos
-                    if (
-                        isFavorite &&
-                        !window.favoritesTitles.includes(currentSelection.title)
-                    )
-                        window.favoritesTitles.push(currentSelection.title);
-                    else if (!isFavorite)
-                        window.favoritesTitles = window.favoritesTitles.filter(
-                            (t) => t !== currentSelection.title,
-                        );
-
-                    const payloadFile = {
-                        ...currentSelection,
-                        status,
-                        score: finalScore,
-                    };
-
-                    // IMPORTANTE: Enviamos el array global de mensuales
-                    const payloadDB = {
-                        type: "update_db",
-                        favorites: window.favoritesTitles,
-                        monthlyPicks: window.monthlyPicksGlobal,
-                    };
-
-                    try {
-                        await Promise.all([
-                            fetch("/api/save.json", {
-                                method: "POST",
-                                body: JSON.stringify(payloadFile),
-                            }),
-                            fetch("/api/save.json", {
-                                method: "POST",
-                                body: JSON.stringify(payloadDB),
-                            }),
-                        ]);
-                        closeEditor();
-                    } catch (e) {
-                        console.error(e);
-                    }
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                });
-
-            // --- ORDENAR ---
-            function renderFavoritesSortable() {
-                const container = document.getElementById("favList");
-                const favObjects = window.favoritesTitles
-                    .map((title) =>
-                        window.localLibrary.find(
-                            (item) => item.title === title,
-                        ),
-                    )
-                    .filter(Boolean);
-                container.innerHTML = favObjects
-                    .map(
-                        (item) => `
-                <div class="relative aspect-[2/3] bg-[#18181b] rounded overflow-hidden cursor-grab ring-1 ring-white/10 hover:ring-white/30 fav-item" data-title="${item.title}">
-                    <img src="${item.cover}" class="w-full h-full object-cover pointer-events-none">
-                </div>
-            `,
-                    )
-                    .join("");
-                new Sortable(container, { animation: 150 });
-            }
-
-            document
-                .getElementById("saveOrderBtn")
-                .addEventListener("click", async () => {
-                    const btn = document.getElementById("saveOrderBtn");
-                    btn.innerText = "...";
-                    const newOrderTitles = [];
-                    document
-                        .querySelectorAll("#favList .fav-item")
-                        .forEach((el) => newOrderTitles.push(el.dataset.title));
-                    window.favoritesTitles = newOrderTitles;
-
-                    await fetch("/api/save.json", {
-                        method: "POST",
-                        body: JSON.stringify({
-                            type: "update_db",
-                            favorites: newOrderTitles,
-                        }),
-                    });
-                    btn.innerText = "OK";
-                    setTimeout(() => (btn.innerText = "Guardar Orden"), 1500);
-                });
-        </script>
-    </body>
+        document.getElementById('saveOrderBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('saveOrderBtn');
+            btn.innerText = "...";
+            const newOrderTitles = [];
+            // Fix lectura DOM
+            document.querySelectorAll('#favList .group').forEach(el => {
+                const title = el.querySelector('p').innerText;
+                newOrderTitles.push(title);
+            });
+            window.favoritesTitles = newOrderTitles;
+            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', favorites: newOrderTitles }) });
+            btn.innerText = "Hecho";
+            setTimeout(() => btn.innerText = "Guardar Orden", 1500);
+        });
+    </script>
+</body>
 </html>
