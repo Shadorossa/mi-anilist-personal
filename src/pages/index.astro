@@ -1,196 +1,269 @@
 ---
 import { getCollection } from "astro:content";
-const games = await getCollection("games");
+// Intentamos leer la config, si no existe usamos defaults
+let profile = { username: "Usuario", bio: "Sin bio", banner: "", avatar: "" };
+try {
+	const config = await import("../content/config.json");
+	profile = config.default || config;
+} catch (e) {}
 
-// Calculamos estadísticas simples
-const playingCount = games.filter((g) => g.data.status === "Jugando").length;
-const completedCount = games.filter(
-	(g) => g.data.status === "Completado",
-).length;
+const games = await getCollection("games");
+// Puedes añadir: const anime = await getCollection('anime');
+const allMedia = [...games]; // Aquí concatenarías [...games, ...anime]
+
+// Ordenar
+allMedia.sort((a, b) => b.data.score - a.data.score);
 ---
 
 <html lang="es">
 	<head>
 		<meta charset="UTF-8" />
-		<title>Mi Perfil</title>
-		<style>
-			:root {
-				--bg: #161b22;
-				--card: #22272e;
-				--accent: #4a9eff;
-			}
-			body {
-				background: var(--bg);
-				color: #c9d1d9;
-				font-family: "Segoe UI", sans-serif;
-				margin: 0;
-			}
+		<title>{profile.username}</title></head
+	>'s Library
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<style>
+		:root {
+			--bg: #0b0c0f;
+			--card: #151f2e;
+			--accent: #3db4f2;
+			--text-main: #9fadbd;
+		}
+		body {
+			margin: 0;
+			background: var(--bg);
+			color: var(--text-main);
+			font-family: "Segoe UI", system-ui, sans-serif;
+		}
 
-			/* HEADER PROFILE */
-			.profile-header {
-				background: linear-gradient(to bottom, #0d1117, var(--bg));
-				padding: 4rem 2rem;
-				text-align: center;
-				border-bottom: 1px solid #30363d;
-			}
-			.stats {
-				display: flex;
-				justify-content: center;
-				gap: 2rem;
-				margin-top: 1rem;
-			}
-			.stat-box {
-				text-align: center;
-			}
-			.stat-number {
-				font-size: 1.5rem;
-				font-weight: bold;
-				color: white;
-				display: block;
-			}
-			.stat-label {
-				font-size: 0.8rem;
-				text-transform: uppercase;
-				letter-spacing: 1px;
-			}
+		/* HEADER AREA */
+		.banner {
+			height: 300px;
+			width: 100%;
+			background-color: #1f232d;
+			background-image: url({profile.banner||"https://placehold.co/1200x300/1f232d/FFF?text=Banner"});
+			background-size: cover;
+			background-position: center;
+		}
 
-			/* GRID ESTILO BACKLOGGD */
-			.container {
-				max-width: 1100px;
-				margin: 2rem auto;
-				padding: 0 1rem;
-			}
-			h2 {
-				border-bottom: 2px solid #30363d;
-				padding-bottom: 0.5rem;
-				margin-bottom: 1.5rem;
-			}
+		.nav-bar {
+			background: #151f2e;
+			padding: 0 2rem;
+			position: sticky;
+			top: 0;
+			z-index: 100;
+			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+			height: 60px;
+			display: flex;
+			align-items: center;
+		}
 
-			.media-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-				gap: 16px;
-			}
+		.container {
+			max-width: 1100px;
+			margin: 0 auto;
+			position: relative;
+			padding: 0 20px;
+		}
 
-			.poster-card {
-				position: relative;
-				border-radius: 8px;
-				overflow: hidden;
-				aspect-ratio: 2/3;
-				transition: transform 0.2s;
-				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-				cursor: pointer;
-			}
+		.profile-header {
+			display: flex;
+			align-items: flex-end;
+			margin-top: -80px;
+			margin-bottom: 20px;
+			position: relative;
+			z-index: 10;
+		}
 
-			.poster-card:hover {
-				transform: scale(1.05);
-				z-index: 10;
-			}
+		.avatar {
+			width: 160px;
+			height: 160px;
+			border-radius: 4px;
+			border: 4px solid var(--bg);
+			background: #333;
+			object-fit: cover;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+		}
 
-			.poster-card img {
-				width: 100%;
-				height: 100%;
-				object-fit: cover;
-			}
+		.user-info {
+			margin-left: 20px;
+			margin-bottom: 10px;
+			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+		}
+		.user-info h1 {
+			margin: 0;
+			color: white;
+			font-size: 2rem;
+		}
+		.user-info p {
+			margin: 5px 0 0;
+			color: #eee;
+			font-size: 1rem;
+		}
 
-			/* HOVER OVERLAY INFO */
-			.overlay {
-				position: absolute;
-				inset: 0;
-				background: rgba(0, 0, 0, 0.8);
-				opacity: 0;
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				transition: opacity 0.2s;
-				padding: 10px;
-				text-align: center;
-			}
-			.poster-card:hover .overlay {
-				opacity: 1;
-			}
+		/* GRID */
+		.content-area {
+			display: flex;
+			gap: 30px;
+			margin-top: 40px;
+		}
+		.sidebar {
+			width: 250px;
+			flex-shrink: 0;
+		}
+		.main-list {
+			flex: 1;
+		}
 
-			.score-circle {
-				width: 40px;
-				height: 40px;
-				border: 3px solid var(--accent);
-				border-radius: 50%;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				font-weight: bold;
-				font-size: 1.1rem;
-				color: white;
-				margin-bottom: 10px;
-			}
+		.stats-card {
+			background: var(--card);
+			padding: 20px;
+			border-radius: 4px;
+			margin-bottom: 20px;
+		}
 
-			.status-badge {
-				font-size: 0.75rem;
-				padding: 4px 8px;
-				border-radius: 10px;
-				background: #333;
-				margin-top: 5px;
-			}
-			.status-Playing {
-				background: #238636;
-				color: white;
-			}
-			.status-Completed {
-				background: #8957e5;
-				color: white;
-			}
-		</style>
-	</head>
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+			gap: 20px;
+		}
+
+		.card {
+			position: relative;
+			transition: transform 0.2s;
+			cursor: pointer;
+		}
+		.card:hover {
+			transform: translateY(-5px);
+		}
+		.card img {
+			width: 100%;
+			border-radius: 4px;
+			aspect-ratio: 2/3;
+			object-fit: cover;
+			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+		}
+		.card-title {
+			font-size: 0.9rem;
+			margin-top: 8px;
+			color: #bad3f2;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.score-tag {
+			position: absolute;
+			top: 5px;
+			right: 5px;
+			background: rgba(0, 0, 0, 0.8);
+			color: var(--accent);
+			font-weight: bold;
+			padding: 2px 6px;
+			border-radius: 4px;
+			font-size: 0.8rem;
+		}
+
+		/* Estado colores */
+		.status-dot {
+			display: inline-block;
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			margin-right: 5px;
+		}
+		.st-Jugando {
+			background: #4caf50;
+		}
+		.st-Completado {
+			background: #2196f3;
+		}
+		.st-Pendiente {
+			background: #ff9800;
+		}
+	</style>
+
 	<body>
-		<div class="profile-header">
-			<img
-				src="https://github.com/tu-usuario.png"
-				style="width:100px; border-radius:50%; border: 3px solid #30363d;"
-			/>
-			<h1>Tu Nombre</h1>
-			<div class="stats">
-				<div class="stat-box">
-					<span class="stat-number">{playingCount}</span>
-					<span class="stat-label">Jugando</span>
-				</div>
-				<div class="stat-box">
-					<span class="stat-number">{completedCount}</span>
-					<span class="stat-label">Completados</span>
-				</div>
-				<div class="stat-box">
-					<span class="stat-number">{games.length}</span>
-					<span class="stat-label">Total</span>
-				</div>
-			</div>
+		<div class="banner"></div>
+
+		<div class="nav-bar">
+			<span
+				style="margin-left:auto; font-size:0.8rem; cursor:pointer;"
+				onclick="window.location.href='/admin'">⚙ Admin</span
+			>
 		</div>
 
 		<div class="container">
-			<h2>🎮 Biblioteca</h2>
-			<div class="media-grid">
-				{
-					games.map((game) => (
-						<div class="poster-card">
-							<img
-								src={game.data.cover}
-								alt={game.data.title}
-								loading="lazy"
-							/>
-							<div class="overlay">
-								<div class="score-circle">
-									{game.data.score}
-								</div>
-								<strong>{game.data.title}</strong>
-								<span
-									class={`status-badge status-${game.data.status}`}
-								>
-									{game.data.status}
-								</span>
-							</div>
+			<div class="profile-header">
+				<img
+					src={profile.avatar || "https://placehold.co/200"}
+					class="avatar"
+				/>
+				<div class="user-info">
+					<h1>{profile.username}</h1>
+					<p>{profile.bio}</p>
+				</div>
+			</div>
+
+			<div class="content-area">
+				<div class="sidebar">
+					<div class="stats-card">
+						<h3 style="margin-top:0; color:white;">Estadísticas</h3>
+						<div
+							style="display:flex; justify-content:space-between; margin-bottom:10px;"
+						>
+							<span>Total</span>
+							<span>{allMedia.length}</span>
 						</div>
-					))
-				}
+						<div
+							style="display:flex; justify-content:space-between; color:#4caf50"
+						>
+							<span>Jugando</span>
+							<span
+								>{
+									allMedia.filter(
+										(g) => g.data.status === "Jugando",
+									).length
+								}</span
+							>
+						</div>
+						<div
+							style="display:flex; justify-content:space-between; color:#2196f3"
+						>
+							<span>Completado</span>
+							<span
+								>{
+									allMedia.filter(
+										(g) => g.data.status === "Completado",
+									).length
+								}</span
+							>
+						</div>
+					</div>
+				</div>
+
+				<div class="main-list">
+					<h2
+						style="color:white; border-bottom:1px solid #333; padding-bottom:10px;"
+					>
+						Biblioteca
+					</h2>
+					<div class="grid">
+						{
+							allMedia.map((item) => (
+								<div class="card">
+									<span class="score-tag">
+										{item.data.score}
+									</span>
+									<img src={item.data.cover} loading="lazy" />
+									<div class="card-title">
+										{item.data.title}
+									</div>
+								</div>
+							))
+						}
+					</div>
+				</div>
 			</div>
 		</div>
 	</body>
+
 </html>
