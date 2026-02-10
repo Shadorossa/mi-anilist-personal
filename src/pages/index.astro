@@ -22,16 +22,13 @@ const allContent = [
 	...manga.map((i) => ({ ...i, type: "manga" })),
 ];
 
-// Ordenar por Puntuación para los favoritos automáticos
+// Ordenar por Puntuación para los favoritos (Top 10)
 const favorites = allContent
 	.filter((i) => i.data.score >= 9)
 	.sort((a, b) => b.data.score - a.data.score)
-	.slice(0, 5);
+	.slice(0, 10);
 
-// --- DATOS MANUALES (PARA EL DISEÑO) ---
-// Como tu backend actual no soporta esto aun, lo simulamos aquí para el diseño visual.
-// En el futuro, esto podría venir de un archivo json.
-
+// --- DATOS MOCKUP (Edita esto a mano para cambiar Personajes o Timeline) ---
 const monthlyPicks = [
 	{
 		month: "OCT",
@@ -98,22 +95,16 @@ const customCharacters = [
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 		/>
 		<style>
-			/* FONDO ELEGANTE */
+			/* FONDO */
 			body {
 				background-color: #050505;
 				color: #e4e4e7;
-				/* Patrón de rejilla muy sutil */
-				background-image:
-					linear-gradient(
-						rgba(255, 255, 255, 0.03) 1px,
-						transparent 1px
-					),
-					linear-gradient(
-						90deg,
-						rgba(255, 255, 255, 0.03) 1px,
-						transparent 1px
-					);
-				background-size: 40px 40px;
+				/* Degradado radial sutil */
+				background-image: radial-gradient(
+					circle at 50% 0%,
+					#1a1a20 0%,
+					#050505 70%
+				);
 			}
 
 			.glass {
@@ -125,41 +116,72 @@ const customCharacters = [
 				display: none;
 			}
 
-			/* ACORDEÓN DE FAVORITOS */
-			.accordion-item {
-				flex: 1;
-				transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-				filter: grayscale(0.6);
+			/* --- ESTILOS DEL ACORDEÓN --- */
+			.accordion-container {
+				display: flex; /* Flexbox para alinear ítems */
+				justify-content: flex-start; /* Alineación a la izquierda */
+				gap: 8px;
+				width: 100%;
+				overflow-x: auto; /* Scroll si hay muchos */
+				padding-bottom: 10px; /* Espacio para scrollbar oculta */
 			}
-			.accordion-item:hover {
-				flex: 3;
-				filter: grayscale(0);
-				cursor: pointer;
+			/* Ocultar barra scroll en acordeón también */
+			.accordion-container::-webkit-scrollbar {
+				display: none;
 			}
-			.accordion-item img {
-				object-position: center 20%;
-			} /* Enfocar la parte superior de las covers */
 
-			/* TEXTO VERTICAL */
+			.accordion-item {
+				/* ESTADO REPOSO: Estrecho */
+				width: 80px;
+				height: 400px;
+				flex-shrink: 0; /* NO encogerse */
+				flex-grow: 0; /* NO estirarse para llenar hueco */
+
+				position: relative;
+				overflow: hidden;
+				border-radius: 16px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+				filter: grayscale(100%) brightness(0.6); /* Apagado por defecto */
+				background: #111;
+			}
+
+			/* ESTADO HOVER: Expandido */
+			.accordion-item:hover {
+				width: 320px; /* Ancho al abrirse */
+				filter: grayscale(0) brightness(1);
+				border-color: rgba(255, 255, 255, 0.4);
+				box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+				z-index: 10;
+			}
+
+			.accordion-item img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
+
+			/* Texto Vertical */
 			.vertical-text {
 				writing-mode: vertical-rl;
 				text-orientation: mixed;
 				transform: rotate(180deg);
+				white-space: nowrap;
 			}
 		</style>
 	</head>
 	<body
 		class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white"
 	>
-		<header class="relative w-full mb-16">
+		<header class="relative w-full mb-12">
 			<div class="h-80 w-full overflow-hidden relative">
 				<img
 					src={bannerPath}
 					onerror="this.src='https://placehold.co/1500x500/111/333?text=Banner'"
-					class="w-full h-full object-cover opacity-50 mask-image-gradient"
+					class="w-full h-full object-cover opacity-50"
 				/>
 				<div
-					class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent"
+					class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent"
 				>
 				</div>
 
@@ -168,16 +190,16 @@ const customCharacters = [
 					class="absolute top-6 right-6 glass px-4 py-2 rounded-full text-xs font-bold text-white hover:bg-white/10 transition border border-white/5 flex items-center gap-2 z-20"
 				>
 					<i class="fa-solid fa-gear"></i>
-					<span>Setup</span>
+					<span>Admin</span>
 				</a>
 			</div>
 
 			<div
-				class="absolute -bottom-10 left-0 w-full px-6 md:px-12 flex flex-col md:flex-row items-end gap-6 z-10 max-w-7xl mx-auto"
+				class="absolute -bottom-10 left-0 w-full px-4 md:px-12 flex flex-col md:flex-row items-end gap-6 z-10 max-w-7xl mx-auto"
 			>
 				<div class="relative group">
 					<div
-						class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-500"
+						class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-500"
 					>
 					</div>
 					<img
@@ -188,34 +210,35 @@ const customCharacters = [
 				</div>
 				<div class="mb-4 flex-1">
 					<h1
-						class="text-4xl md:text-5xl font-black text-white tracking-tighter"
+						class="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-2xl"
 					>
 						{profile.username}
 					</h1>
 					<p
-						class="text-gray-400 text-sm md:text-base font-medium flex items-center gap-2 mt-1"
+						class="text-gray-400 text-sm font-medium mt-1 inline-flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-white/5 backdrop-blur-md"
 					>
 						<span
-							class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
+							class="w-2 h-2 rounded-full bg-green-500 animate-pulse"
 						></span>
 						{profile.bio}
 					</p>
 				</div>
 
 				<div
-					class="hidden md:flex gap-8 mb-6 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 backdrop-blur-md"
+					class="hidden md:flex gap-8 mb-6 bg-[#0f0f12]/90 px-8 py-4 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl"
 				>
 					<div class="text-center">
-						<span class="block text-2xl font-bold text-white"
+						<span class="block text-2xl font-black text-white"
 							>{allContent.length}</span
 						>
 						<span
-							class="text-[10px] text-gray-500 uppercase font-bold"
+							class="text-[10px] text-gray-500 uppercase font-bold tracking-widest"
 							>Total</span
 						>
 					</div>
+					<div class="w-px bg-white/10"></div>
 					<div class="text-center">
-						<span class="block text-2xl font-bold text-indigo-400"
+						<span class="block text-2xl font-black text-indigo-400"
 							>{
 								allContent.filter(
 									(i) => i.data.status === "Jugando",
@@ -223,17 +246,18 @@ const customCharacters = [
 							}</span
 						>
 						<span
-							class="text-[10px] text-gray-500 uppercase font-bold"
-							>Activos</span
+							class="text-[10px] text-gray-500 uppercase font-bold tracking-widest"
+							>Jugando</span
 						>
 					</div>
+					<div class="w-px bg-white/10"></div>
 					<div class="text-center">
-						<span class="block text-2xl font-bold text-yellow-400"
+						<span class="block text-2xl font-black text-yellow-500"
 							>{favorites.length}</span
 						>
 						<span
-							class="text-[10px] text-gray-500 uppercase font-bold"
-							>Favs</span
+							class="text-[10px] text-gray-500 uppercase font-bold tracking-widest"
+							>Top</span
 						>
 					</div>
 				</div>
@@ -242,61 +266,61 @@ const customCharacters = [
 
 		<main class="max-w-7xl mx-auto px-4 md:px-8 space-y-16">
 			<section>
-				<div class="flex items-center justify-between mb-6">
+				<div class="flex items-center justify-between mb-8">
 					<h2
-						class="text-2xl font-bold text-white flex items-center gap-2"
+						class="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tight"
 					>
-						<i class="fa-solid fa-crown text-yellow-500"></i> Hall of
-						Fame
+						<span
+							class="bg-yellow-500 text-black w-8 h-8 flex items-center justify-center rounded-lg shadow-lg shadow-yellow-500/20"
+							><i class="fa-solid fa-crown"></i></span
+						>
+						Hall of Fame
 					</h2>
+
 					<div
-						class="bg-white/5 p-1 rounded-lg flex text-xs font-bold"
+						class="bg-[#1a1a1e] p-1.5 rounded-xl flex text-xs font-bold border border-white/10 shadow-inner"
 					>
 						<button
 							onclick="switchFav('works', this)"
-							class="fav-tab active px-4 py-1.5 rounded-md bg-white text-black shadow-sm transition-all"
-							>Obras</button
+							class="fav-tab active px-5 py-2 rounded-lg bg-white text-black shadow-sm transition-all flex items-center gap-2"
 						>
+							<i class="fa-solid fa-layer-group"></i> Obras
+						</button>
 						<button
 							onclick="switchFav('chars', this)"
-							class="fav-tab px-4 py-1.5 rounded-md text-gray-400 hover:text-white transition-all"
-							>Personajes</button
+							class="fav-tab px-5 py-2 rounded-lg text-gray-400 hover:text-white transition-all flex items-center gap-2"
 						>
+							<i class="fa-solid fa-users"></i> Personajes
+						</button>
 					</div>
 				</div>
 
-				<div
-					id="fav-works"
-					class="h-[400px] flex gap-1.5 w-full overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10"
-				>
+				<div id="fav-works" class="accordion-container">
 					{
 						favorites.map((item) => (
-							<div class="accordion-item relative group overflow-hidden">
-								<img
-									src={item.data.cover}
-									class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-								/>
+							<div class="accordion-item group cursor-pointer">
+								<img src={item.data.cover} loading="lazy" />
 
-								<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+								<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60" />
 
-								<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 hidden md:block">
-									<h3 class="text-2xl font-black text-white leading-none uppercase italic">
+								<div class="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300">
+									<span class="vertical-text text-white/40 font-black tracking-[0.2em] text-xs uppercase truncate h-[300px]">
+										{item.data.title}
+									</span>
+								</div>
+
+								<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 delay-75 min-w-[200px]">
+									<h3 class="text-2xl font-black text-white leading-none uppercase italic drop-shadow-md line-clamp-2">
 										{item.data.title}
 									</h3>
-									<div class="flex items-center gap-2 mt-2">
-										<span class="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded">
-											{item.data.score}/10
+									<div class="flex items-center gap-2 mt-3">
+										<span class="bg-yellow-500 text-black text-xs font-black px-2 py-0.5 rounded">
+											{item.data.score} / 10
 										</span>
-										<span class="text-gray-400 text-xs font-bold">
+										<span class="text-gray-300 text-xs font-bold border border-white/20 px-2 py-0.5 rounded">
 											{item.data.year}
 										</span>
 									</div>
-								</div>
-
-								<div class="absolute bottom-4 left-1/2 -translate-x-1/2 group-hover:opacity-0 transition-opacity duration-300 md:block hidden">
-									<span class="vertical-text text-white/50 font-bold tracking-widest text-xs uppercase truncate max-h-[200px]">
-										{item.data.title}
-									</span>
 								</div>
 							</div>
 						))
@@ -304,31 +328,36 @@ const customCharacters = [
 
 					{
 						favorites.length === 0 && (
-							<div class="w-full flex items-center justify-center text-gray-500 bg-white/5">
-								Sin favoritos aún
+							<div class="w-full h-64 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-gray-500">
+								<i class="fa-regular fa-star text-4xl mb-4 opacity-50" />
+								<p>No tienes obras con nota 9 o 10.</p>
 							</div>
 						)
 					}
 				</div>
 
-				<div
-					id="fav-chars"
-					class="hidden h-[400px] flex gap-1.5 w-full overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10"
-				>
+				<div id="fav-chars" class="accordion-container hidden">
 					{
 						customCharacters.map((char) => (
-							<div class="accordion-item relative group overflow-hidden">
+							<div class="accordion-item group cursor-pointer">
 								<img
 									src={char.img}
-									class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity"
+									loading="lazy"
+									style="object-position: top center;"
 								/>
 								<div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90" />
 
-								<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 hidden md:block">
-									<h3 class="text-3xl font-black text-white leading-none uppercase">
+								<div class="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300">
+									<span class="vertical-text text-white/40 font-black tracking-[0.2em] text-xs uppercase truncate h-[300px]">
+										{char.name}
+									</span>
+								</div>
+
+								<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 delay-75 min-w-[200px]">
+									<h3 class="text-3xl font-black text-white leading-none uppercase italic drop-shadow-lg">
 										{char.name}
 									</h3>
-									<p class="text-indigo-400 text-sm font-bold mt-1">
+									<p class="text-indigo-400 text-sm font-bold mt-1 tracking-wider">
 										{char.source}
 									</p>
 								</div>
@@ -340,20 +369,21 @@ const customCharacters = [
 
 			<section>
 				<h2
-					class="text-xl font-bold text-white mb-4 flex items-center gap-2 opacity-80"
+					class="text-xl font-bold text-white mb-6 flex items-center gap-3 opacity-90"
 				>
-					<i class="fa-regular fa-calendar-check"></i> Favorito del Mes
+					<i class="fa-regular fa-calendar-check text-indigo-500"></i> Favorito
+					del Mes
 				</h2>
 				<div class="flex gap-4 overflow-x-auto hide-scroll pb-4">
 					{
 						monthlyPicks.map((pick) => (
 							<div class="flex-shrink-0 group cursor-pointer">
-								<div class="flex items-center gap-3 bg-[#121215] border border-white/5 pr-4 rounded-full hover:bg-white/5 transition-colors group-hover:border-indigo-500/30">
-									<div class="w-14 h-14 rounded-full bg-[#1a1a1e] border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-										<span class="text-[10px] text-gray-500 font-bold leading-none">
+								<div class="flex items-center gap-4 bg-[#121215] border border-white/5 pr-6 pl-2 py-2 rounded-full hover:bg-white/5 transition-all group-hover:border-indigo-500/30 group-hover:shadow-lg group-hover:shadow-indigo-500/10">
+									<div class="w-12 h-12 rounded-full bg-[#1a1a1e] border border-white/5 flex flex-col items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-300 group-hover:border-indigo-500/50">
+										<span class="text-[9px] text-gray-500 font-bold leading-none">
 											{pick.year}
 										</span>
-										<span class="text-xs text-white font-black leading-tight">
+										<span class="text-[11px] text-white font-black leading-tight">
 											{pick.month}
 										</span>
 									</div>
@@ -361,13 +391,13 @@ const customCharacters = [
 									<div class="flex items-center gap-3">
 										<img
 											src={pick.cover}
-											class="w-8 h-10 rounded object-cover opacity-80 group-hover:opacity-100"
+											class="w-8 h-10 rounded object-cover opacity-80 group-hover:opacity-100 shadow-md"
 										/>
 										<div>
 											<h4 class="text-sm font-bold text-gray-200 group-hover:text-indigo-400 transition-colors">
 												{pick.title}
 											</h4>
-											<p class="text-[10px] text-gray-600 uppercase font-bold tracking-wider">
+											<p class="text-[9px] text-gray-600 uppercase font-black tracking-widest">
 												Top Pick
 											</p>
 										</div>
@@ -376,42 +406,40 @@ const customCharacters = [
 							</div>
 						))
 					}
-
-					<div
-						class="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-full border border-dashed border-gray-700 text-gray-700 hover:text-gray-500 hover:border-gray-500 transition cursor-pointer"
-					>
-						<i class="fa-solid fa-plus"></i>
-					</div>
 				</div>
 			</section>
 
-			<section>
+			<section class="border-t border-white/5 pt-10">
 				<div
-					class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-t border-white/5 pt-8"
+					class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
 				>
-					<h2 class="text-xl font-bold text-white opacity-80">
-						Biblioteca Completa
+					<h2
+						class="text-xl font-bold text-white opacity-80 flex items-center gap-2"
+					>
+						<i class="fa-solid fa-book-bookmark text-gray-600"></i> Biblioteca
 					</h2>
 
-					<nav class="flex gap-2 bg-black/20 p-1 rounded-xl w-fit">
+					<nav
+						class="flex gap-1 bg-[#121215] p-1.5 rounded-xl border border-white/5 w-fit overflow-x-auto"
+					>
 						<button
 							onclick="filter('all', this)"
-							class="grid-tab active px-4 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-white shadow-sm transition-all"
+							class="grid-tab active px-5 py-2 rounded-lg text-xs font-bold bg-white/10 text-white shadow-sm transition-all whitespace-nowrap"
 							>Todo</button
 						>
 						<button
 							onclick="filter('game', this)"
-							class="grid-tab px-4 py-1.5 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all"
+							class="grid-tab px-5 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all whitespace-nowrap"
 							>Juegos</button
 						>
 						<button
 							onclick="filter('anime', this)"
-							class="grid-tab px-4 py-1.5 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all"
+							class="grid-tab px-5 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all whitespace-nowrap"
 							>Anime</button
 						>
 						<button
 							onclick="filter('manga', this)"
-							class="grid-tab px-4 py-1.5 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all"
+							class="grid-tab px-5 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all whitespace-nowrap"
 							>Manga</button
 						>
 					</nav>
@@ -419,32 +447,34 @@ const customCharacters = [
 
 				<div
 					id="grid"
-					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4"
+					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4 md:gap-6"
 				>
 					{
 						allContent.map((item) => (
 							<div
-								class="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer group bg-[#121215]"
+								class="relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer group bg-[#121215] ring-1 ring-white/5 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all hover:-translate-y-1"
 								data-type={item.type}
 							>
 								<img
 									src={item.data.cover}
 									loading="lazy"
-									class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-70 group-hover:opacity-100"
+									class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
 								/>
 
 								<div
-									class={`absolute top-2 right-2 w-2 h-2 rounded-full shadow-lg ${item.data.status === "Jugando" ? "bg-green-500 shadow-green-500/50" : item.data.status === "Completado" ? "bg-blue-500" : "bg-gray-500"}`}
+									class={`absolute top-2 right-2 w-2 h-2 rounded-full shadow-lg ${item.data.status === "Jugando" ? "bg-green-500 shadow-green-500/50 animate-pulse" : item.data.status === "Completado" ? "bg-blue-500" : "bg-gray-500"}`}
 								/>
 
-								<div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+								<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
 									<div>
 										<h3 class="text-white text-xs font-bold leading-tight line-clamp-2">
 											{item.data.title}
 										</h3>
-										<div class="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
-											<i class="fa-solid fa-star text-yellow-600" />{" "}
-											{item.data.score}
+										<div class="flex items-center gap-2 text-[10px] text-gray-400 mt-1 font-bold">
+											<span class="text-yellow-500">
+												<i class="fa-solid fa-star" />{" "}
+												{item.data.score}
+											</span>
 										</div>
 									</div>
 								</div>
@@ -455,52 +485,51 @@ const customCharacters = [
 
 				<div
 					id="empty-state"
-					class="hidden py-20 text-center text-gray-600"
+					class="hidden py-32 text-center text-gray-600"
 				>
-					No hay contenido aquí.
+					<i class="fa-solid fa-ghost text-4xl mb-4 opacity-20"></i>
+					<p>No se encontraron obras en esta categoría.</p>
 				</div>
 			</section>
 		</main>
 
 		<script is:inline>
-			// Lógica de Tabs de Favoritos
+			// --- LÓGICA DE FAVORITOS (SWITCHER) ---
 			function switchFav(type, btn) {
+				// 1. Resetear estilos botones
 				document.querySelectorAll(".fav-tab").forEach((b) => {
-					b.classList.remove("bg-white", "text-black");
-					b.classList.add("text-gray-400");
+					b.classList.remove("bg-white", "text-black"); // Estilo Activo
+					b.classList.add("text-gray-400"); // Estilo Inactivo
 				});
+				// 2. Activar botón clickado
 				btn.classList.add("bg-white", "text-black");
 				btn.classList.remove("text-gray-400");
 
+				// 3. Mostrar/Ocultar Contenedores
+				const worksContainer = document.getElementById("fav-works");
+				const charsContainer = document.getElementById("fav-chars");
+
 				if (type === "works") {
-					document
-						.getElementById("fav-works")
-						.classList.remove("hidden");
-					document
-						.getElementById("fav-chars")
-						.classList.add("hidden");
-					document.getElementById("fav-works").classList.add("flex");
+					worksContainer.classList.remove("hidden");
+					worksContainer.classList.add("flex"); // Asegurar flex para el acordeón
+					charsContainer.classList.add("hidden");
+					charsContainer.classList.remove("flex");
 				} else {
-					document
-						.getElementById("fav-works")
-						.classList.add("hidden");
-					document
-						.getElementById("fav-works")
-						.classList.remove("flex");
-					document
-						.getElementById("fav-chars")
-						.classList.remove("hidden");
+					worksContainer.classList.add("hidden");
+					worksContainer.classList.remove("flex");
+					charsContainer.classList.remove("hidden");
+					charsContainer.classList.add("flex");
 				}
 			}
 
-			// Lógica de Filtro Grid
+			// --- LÓGICA DE FILTRO BIBLIOTECA ---
 			function filter(cat, btn) {
 				document.querySelectorAll(".grid-tab").forEach((b) => {
 					b.className =
-						"grid-tab px-4 py-1.5 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all";
+						"grid-tab px-5 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all whitespace-nowrap";
 				});
 				btn.className =
-					"grid-tab active px-4 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-white shadow-sm transition-all";
+					"grid-tab active px-5 py-2 rounded-lg text-xs font-bold bg-white/10 text-white shadow-sm transition-all whitespace-nowrap";
 
 				const items = document.querySelectorAll("#grid > div");
 				let count = 0;
