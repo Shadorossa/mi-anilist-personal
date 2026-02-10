@@ -7,16 +7,25 @@ import HallOfFame from "../components/HallOfFame.astro";
 import MonthlyPicks from "../components/MonthlyPicks.astro";
 import LibraryGrid from "../components/LibraryGrid.astro";
 
-// --- DATOS ---
+// 1. CARGAR CONFIGURACIÓN PERFIL
 let profile = { username: "Admin", bio: "Cargando..." };
 try {
 	const config = await import("../content/config.json");
 	profile = config.default || config;
 } catch (e) {}
 
+// 2. CARGAR BASE DE DATOS CENTRAL (Aquí está la magia ahora)
+let db = { favorites: [], monthlyPicks: [] };
+try {
+	// Leemos el archivo database.json que crea el admin
+	const d = await import("../content/database.json");
+	db = d.default || d;
+} catch (e) {}
+
 const bannerPath = "/img/profile/banner.png";
 const avatarPath = "/img/profile/pic.png";
 
+// 3. CARGAR OBRAS
 const games = await getCollection("games").catch(() => []);
 const anime = await getCollection("anime").catch(() => []);
 const manga = await getCollection("manga").catch(() => []);
@@ -31,36 +40,39 @@ const allContent = [
 const stats = {
 	total: allContent.length,
 	playing: allContent.filter((i) => i.data.status === "Jugando").length,
-	favs: allContent.filter((i) => i.data.score >= 9).length,
+	favs: db.favorites.length, // Ahora contamos desde la DB central
 };
 
-// AHORA: Filtramos por booleano y ordenamos por índice
-const favorites = allContent
-	.filter((i) => i.data.favorite === true)
-	.sort((a, b) => (a.data.favIndex || 999) - (b.data.favIndex || 999));
+// 4. PROCESAR FAVORITOS (Desde database.json)
+// Mapeamos los títulos guardados en orden a los objetos reales
+const favorites = db.favorites
+	.map((title) => allContent.find((item) => item.data.title === title))
+	.filter((item) => item !== undefined); // Evita errores si borraste un juego
 
-// DATOS MOCKUP (Editables aquí)
-const monthlyPicks = [
-	{
-		month: "OCT",
-		year: "2023",
-		title: "Cyberpunk 2077",
-		cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2mjs.jpg",
-	},
-	{
-		month: "NOV",
-		year: "2023",
-		title: "Pluto",
-		cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx140352-Rh4fC7Zz9g5C.jpg",
-	},
-	{
-		month: "DIC",
-		year: "2023",
-		title: "Baldur's Gate 3",
-		cover: "https://images.igdb.com/igdb/image/upload/t_cover_big/co670h.jpg",
-	},
-];
+// 5. PROCESAR MENSUALES (Desde database.json)
+const monthlyTimeline = (db.monthlyPicks || [])
+	.map((pick) => {
+		// pick.month viene como "2026-02" del Admin
+		const [y, m] = pick.month.split("-");
 
+		// Formatear nombre del mes (02 -> FEB)
+		const dateObj = new Date(parseInt(y), parseInt(m) - 1);
+		const monthName = dateObj
+			.toLocaleString("es-ES", { month: "short" })
+			.toUpperCase()
+			.replace(".", "");
+
+		return {
+			title: pick.title,
+			cover: pick.cover,
+			year: y,
+			month: monthName,
+			rawDate: pick.month, // Usado solo para ordenar
+		};
+	})
+	.sort((a, b) => b.rawDate.localeCompare(a.rawDate)); // Ordenar: Más reciente primero
+
+// Personajes (Hardcoded o podrías meterlos en db.json en el futuro)
 const customCharacters = [
 	{
 		name: "Malenia",
@@ -122,7 +134,7 @@ const customCharacters = [
 		<main class="max-w-7xl mx-auto px-4 md:px-8 space-y-16">
 			<HallOfFame favorites={favorites} characters={customCharacters} />
 
-			<MonthlyPicks picks={monthlyPicks} />
+			<MonthlyPicks picks={monthlyTimeline} />
 
 			<LibraryGrid items={allContent} />
 		</main>

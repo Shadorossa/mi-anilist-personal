@@ -12,9 +12,10 @@ const mediaCollection = defineCollection({
         id: z.number().optional(),
         type: z.string().optional(),
 
-        // --- NUEVOS CAMPOS ---
-        favorite: z.boolean().optional(), // ¿Es favorito?
-        favIndex: z.number().optional()   // ¿En qué posición está? (1, 2, 3...)
+        // --- ESTOS SON LOS IMPORTANTES ---
+        favorite: z.boolean().optional(),
+        favIndex: z.number().optional(),
+        monthlyPicks: z.array(z.string()).optional() // Array de fechas "YYYY-MM"
     }),
 });
 

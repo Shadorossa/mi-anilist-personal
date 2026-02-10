@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 
-// CARGAR BIBLIOTECA
+// 1. CARGAR BIBLIOTECA LOCAL
 const games = await getCollection("games").catch(() => []);
 const anime = await getCollection("anime").catch(() => []);
 const manga = await getCollection("manga").catch(() => []);
@@ -12,10 +12,16 @@ const localLibrary = [
     ...manga.map((i) => ({ ...i.data, id: i.id, type: "manga" })),
 ];
 
-// Separar favoritos para pasarlos al JS
-const currentFavorites = localLibrary
-    .filter((i) => i.favorite === true)
-    .sort((a, b) => (a.favIndex || 999) - (b.favIndex || 999));
+// 2. CARGAR DB CENTRAL (JSON)
+let db = { favorites: [], monthlyPicks: [] };
+try {
+    const d = await import("../content/database.json");
+    db = d.default || d;
+} catch (e) {}
+
+const favoritesOrdered = db.favorites
+    .map((title) => localLibrary.find((item) => item.title === title))
+    .filter((item) => item !== undefined);
 ---
 
 <html lang="es" class="dark">
@@ -30,7 +36,6 @@ const currentFavorites = localLibrary
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"
         ></script>
-
         <style>
             body {
                 background-color: #0f0f12;
@@ -58,17 +63,31 @@ const currentFavorites = localLibrary
                 animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
             }
 
-            /* Estilo del elemento siendo arrastrado */
-            .sortable-ghost {
-                opacity: 0.4;
-                background: #2a2a30;
+            /* Tags de Meses */
+            .tag-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 12px;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                color: #a5b4fc;
+                border-radius: 8px;
+                font-size: 0.8rem;
+                font-weight: bold;
             }
-            .sortable-drag {
-                cursor: grabbing;
-                opacity: 1;
-                background: #1a1a1e;
-                transform: scale(1.05);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            .tag-pill button:hover {
+                color: white;
+                transform: scale(1.1);
+            }
+
+            /* Custom Select */
+            select.custom-input {
+                appearance: none;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 0.5rem center;
+                background-size: 1em;
             }
         </style>
     </head>
@@ -76,42 +95,32 @@ const currentFavorites = localLibrary
         class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white"
     >
         <header class="pt-8 pb-4 px-4 text-center max-w-7xl mx-auto">
-            <h1 class="text-3xl font-bold text-white tracking-tight mb-6">
-                <i class="fa-solid fa-user-secret text-indigo-500 mr-2"></i> Zona
-                de Gestión
-            </h1>
-
-            <nav class="flex justify-center gap-3 mb-8">
+            <nav class="flex justify-center gap-2 mb-8 flex-wrap">
                 <button
                     onclick="switchMode('search')"
-                    class="mode-btn active px-5 py-2 rounded-full text-xs font-bold text-white bg-white/10 ring-1 ring-white/10 shadow-lg transition-all flex items-center gap-2"
+                    class="mode-btn active px-4 py-2 rounded-full text-xs font-bold text-white bg-white/10 ring-1 ring-white/10 shadow-lg transition-all flex items-center gap-2"
+                    ><i class="fa-solid fa-plus"></i> Nuevo</button
                 >
-                    <i class="fa-solid fa-cloud-arrow-down"></i> Nuevo
-                </button>
                 <button
                     onclick="switchMode('library')"
-                    class="mode-btn px-5 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2"
+                    class="mode-btn px-4 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2"
+                    ><i class="fa-solid fa-pen"></i> Editar</button
                 >
-                    <i class="fa-solid fa-pen-to-square"></i> Editar
-                </button>
                 <button
                     onclick="switchMode('favorites')"
-                    class="mode-btn px-5 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2"
+                    class="mode-btn px-4 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2"
+                    ><i class="fa-solid fa-heart"></i> Ordenar Favs</button
                 >
-                    <i class="fa-solid fa-heart"></i> Ordenar Favs
-                </button>
                 <button
                     onclick="switchMode('profile')"
-                    class="mode-btn px-5 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2"
+                    class="mode-btn px-4 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2"
+                    ><i class="fa-solid fa-user"></i> Perfil</button
                 >
-                    <i class="fa-solid fa-user"></i> Perfil
-                </button>
                 <a
                     href="/"
                     class="px-3 py-2 rounded-full text-xs font-bold text-red-400 hover:bg-red-500/10 border border-transparent ml-2 transition"
+                    ><i class="fa-solid fa-arrow-right-from-bracket"></i></a
                 >
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                </a>
             </nav>
         </header>
 
@@ -124,7 +133,7 @@ const currentFavorites = localLibrary
                     >
                         <select
                             id="mediaType"
-                            class="bg-transparent text-white font-bold px-4 pr-8 py-3 rounded-xl cursor-pointer outline-none hover:bg-white/5 transition appearance-none"
+                            class="bg-transparent text-white font-bold px-4 pr-8 py-3 rounded-xl cursor-pointer outline-none hover:bg-white/5 transition appearance-none custom-input"
                         >
                             <option value="game" class="bg-[#1a1a1e]"
                                 >🎮 Juegos</option
@@ -139,7 +148,7 @@ const currentFavorites = localLibrary
                         <input
                             type="text"
                             id="searchInput"
-                            placeholder="Buscar título nuevo..."
+                            placeholder="Buscar para añadir..."
                             autocomplete="off"
                             class="flex-1 bg-transparent text-white text-lg placeholder-gray-500 px-4 py-3 outline-none border-l border-white/10"
                         />
@@ -152,7 +161,7 @@ const currentFavorites = localLibrary
                 </div>
                 <div
                     id="searchResults"
-                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 pb-20"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5 pb-20"
                 >
                     <div
                         class="col-span-full text-center py-20 text-gray-700 opacity-50"
@@ -168,7 +177,7 @@ const currentFavorites = localLibrary
                     <input
                         type="text"
                         id="localFilter"
-                        placeholder="Filtrar por nombre..."
+                        placeholder="Filtrar..."
                         class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-indigo-500 transition w-64"
                     />
                 </div>
@@ -180,47 +189,36 @@ const currentFavorites = localLibrary
             </div>
 
             <div id="favorites-panel" class="panel hidden max-w-5xl mx-auto">
-                <div class="flex justify-between items-end mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white mb-2">
-                            <i
-                                class="fa-solid fa-ranking-star text-yellow-500 mr-2"
-                            ></i> Ordenar Hall of Fame
-                        </h2>
-                        <p class="text-gray-400 text-sm">
-                            Arrastra las carátulas para cambiar el orden. El
-                            primero será el nº1.
-                        </p>
-                    </div>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-white">
+                        Arrastra para Ordenar
+                    </h2>
                     <button
                         id="saveOrderBtn"
-                        class="bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-gray-200 transition shadow-lg active:scale-95 flex items-center gap-2"
+                        class="bg-white text-black font-bold px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm"
+                        >Guardar Orden</button
                     >
-                        <i class="fa-solid fa-floppy-disk"></i> Guardar Orden
-                    </button>
                 </div>
-
                 <div
                     id="favList"
-                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"
                 >
                 </div>
             </div>
 
             <div id="profile-panel" class="panel hidden max-w-2xl mx-auto">
                 <div class="glass-panel p-8 rounded-3xl space-y-6 shadow-xl">
-                    <h2 class="text-2xl font-bold text-white">Editar Perfil</h2>
                     <input
                         type="text"
                         id="usernameInput"
                         placeholder="Usuario"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-indigo-500"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white"
                     />
                     <textarea
                         id="bioInput"
                         rows="3"
                         placeholder="Biografía"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-indigo-500 resize-none"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white resize-none"
                     ></textarea>
                     <button
                         id="saveProfileBtn"
@@ -252,9 +250,11 @@ const currentFavorites = localLibrary
                     </div>
                 </div>
 
-                <div class="flex-1 p-8 flex flex-col overflow-y-auto">
+                <div
+                    class="flex-1 p-8 flex flex-col overflow-y-auto custom-scrollbar"
+                >
                     <div class="flex justify-between items-start mb-6">
-                        <div>
+                        <div class="pr-4">
                             <h2
                                 id="editorTitle"
                                 class="text-2xl font-bold text-white leading-tight line-clamp-2"
@@ -268,14 +268,14 @@ const currentFavorites = localLibrary
                                 202X
                             </p>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 shrink-0">
                             <button
                                 id="favBtn"
                                 onclick="toggleFav()"
-                                class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all hover:scale-110 active:scale-95 bg-[#202025] text-gray-500"
+                                class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#202025] text-gray-500 hover:text-white"
+                                ><i class="fa-solid fa-heart text-lg"
+                                ></i></button
                             >
-                                <i class="fa-solid fa-heart text-lg"></i>
-                            </button>
                             <button
                                 onclick="closeEditor()"
                                 class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
@@ -299,7 +299,7 @@ const currentFavorites = localLibrary
                                         class="peer hidden"
                                         onchange="checkScoreLock()"
                                     /><div
-                                        class="peer-checked:bg-indigo-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
+                                        class="peer-checked:bg-indigo-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-lg py-2 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
                                     >
                                         <i class="fa-solid fa-play"></i> Activo
                                     </div></label
@@ -312,9 +312,9 @@ const currentFavorites = localLibrary
                                         class="peer hidden"
                                         onchange="checkScoreLock()"
                                     /><div
-                                        class="peer-checked:bg-orange-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
+                                        class="peer-checked:bg-orange-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-lg py-2 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
                                     >
-                                        <i class="fa-solid fa-pause"></i> En Pausa
+                                        <i class="fa-solid fa-pause"></i> Pausa
                                     </div></label
                                 >
                                 <label class="cursor-pointer"
@@ -325,7 +325,7 @@ const currentFavorites = localLibrary
                                         class="peer hidden"
                                         onchange="checkScoreLock()"
                                     /><div
-                                        class="peer-checked:bg-yellow-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
+                                        class="peer-checked:bg-yellow-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-lg py-2 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
                                     >
                                         <i class="fa-regular fa-clock"></i> Pendiente
                                     </div></label
@@ -338,9 +338,9 @@ const currentFavorites = localLibrary
                                         class="peer hidden"
                                         onchange="checkScoreLock()"
                                     /><div
-                                        class="peer-checked:bg-red-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
+                                        class="peer-checked:bg-red-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-lg py-2 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
                                     >
-                                        <i class="fa-solid fa-ban"></i> Droppeado
+                                        <i class="fa-solid fa-ban"></i> Drop
                                     </div></label
                                 >
                                 <label class="cursor-pointer col-span-2"
@@ -351,7 +351,7 @@ const currentFavorites = localLibrary
                                         class="peer hidden"
                                         onchange="checkScoreLock()"
                                     /><div
-                                        class="peer-checked:bg-emerald-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-xl py-3 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
+                                        class="peer-checked:bg-emerald-600 peer-checked:text-white border border-white/10 bg-[#202025] text-gray-400 rounded-lg py-2 text-center transition font-bold text-xs hover:bg-white/5 flex items-center justify-center gap-2"
                                     >
                                         <i class="fa-solid fa-check-double"></i> Terminado
                                     </div></label
@@ -386,48 +386,110 @@ const currentFavorites = localLibrary
                                 class="w-full h-2 bg-black/50 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                             />
                         </div>
+
+                        <div class="border-t border-white/10 pt-4">
+                            <label
+                                class="text-xs font-bold text-gray-500 uppercase mb-3 block"
+                                >Mes Destacado</label
+                            >
+                            <div
+                                class="flex gap-2 mb-3 bg-[#202025] p-2 rounded-lg border border-white/10"
+                            >
+                                <select
+                                    id="tagMonth"
+                                    class="bg-transparent text-white text-xs font-bold outline-none cursor-pointer custom-input pr-4"
+                                >
+                                    <option value="01">Enero</option><option
+                                        value="02">Febrero</option
+                                    ><option value="03">Marzo</option>
+                                    <option value="04">Abril</option><option
+                                        value="05">Mayo</option
+                                    ><option value="06">Junio</option>
+                                    <option value="07">Julio</option><option
+                                        value="08">Agosto</option
+                                    ><option value="09">Septiembre</option>
+                                    <option value="10">Octubre</option><option
+                                        value="11">Noviembre</option
+                                    ><option value="12">Diciembre</option>
+                                </select>
+                                <span class="text-white/20">|</span>
+                                <input
+                                    type="number"
+                                    id="tagYear"
+                                    placeholder="2026"
+                                    class="bg-transparent text-white text-xs font-bold outline-none w-16"
+                                    min="1900"
+                                    max="2100"
+                                />
+
+                                <button
+                                    onclick="addMonthTag()"
+                                    class="ml-auto bg-indigo-600 hover:bg-indigo-500 text-white w-6 h-6 rounded flex items-center justify-center transition"
+                                >
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                </button>
+                            </div>
+
+                            <div
+                                id="monthlyTagsContainer"
+                                class="flex flex-wrap gap-2"
+                            >
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mt-8">
                         <button
                             id="saveMediaBtn"
                             class="w-full bg-white text-black h-12 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg flex items-center justify-center gap-2"
+                            >Guardar Cambios</button
                         >
-                            <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script define:vars={{ localLibrary, currentFavorites }}>
+        <script define:vars={{ localLibrary, favoritesOrdered, db }}>
             window.localLibrary = localLibrary;
-            window.favoritesList = currentFavorites;
+            window.favoritesList = favoritesOrdered;
+            window.favoritesTitles = db.favorites || [];
+            window.monthlyPicksGlobal = db.monthlyPicks || [];
         </script>
 
         <script is:inline>
             let currentSelection = null;
             let lastSearchResults = [];
-            let isFavorite = false; // Estado temporal del editor
+            let isFavorite = false;
+
+            // --- INICIALIZAR INPUT AÑO ---
+            document.getElementById("tagYear").value = new Date().getFullYear();
 
             // --- GESTIÓN DE MODOS ---
             window.switchMode = (mode) => {
                 document
                     .querySelectorAll(".panel")
                     .forEach((p) => p.classList.add("hidden"));
-                document.querySelectorAll(".mode-btn").forEach((b) => {
-                    b.className =
-                        "mode-btn px-5 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white border border-white/5 transition-all flex items-center gap-2";
-                });
+                document
+                    .querySelectorAll(".mode-btn")
+                    .forEach((b) =>
+                        b.classList.remove(
+                            "active",
+                            "text-white",
+                            "bg-white/10",
+                            "ring-1",
+                        ),
+                    );
                 document
                     .getElementById(`${mode}-panel`)
                     .classList.remove("hidden");
-                const btn = document.querySelector(
-                    `button[onclick="switchMode('${mode}')"]`,
-                );
-                btn.className =
-                    "mode-btn active px-5 py-2 rounded-full text-xs font-bold text-white bg-white/10 ring-1 ring-white/10 shadow-lg transition-all flex items-center gap-2";
-
+                document
+                    .querySelector(`button[onclick="switchMode('${mode}')"]`)
+                    .classList.add(
+                        "active",
+                        "text-white",
+                        "bg-white/10",
+                        "ring-1",
+                    );
                 if (mode === "library") renderLocalLibrary();
                 if (mode === "favorites") renderFavoritesSortable();
             };
@@ -439,15 +501,17 @@ const currentFavorites = localLibrary
                     item.title.toLowerCase().includes(filterText.toLowerCase()),
                 );
                 container.innerHTML = filtered
-                    .map(
-                        (item) => `
+                    .map((item) => {
+                        const isFav = window.favoritesTitles.includes(
+                            item.title,
+                        );
+                        return `
                 <div onclick='openEditorLocal(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="card-enter group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer bg-[#18181b] ring-1 ring-white/5 hover:ring-indigo-500/50 hover:shadow-xl transition-all hover:-translate-y-1">
                     <img src="${item.cover}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
-                    ${item.favorite ? '<div class="absolute top-2 left-2 text-yellow-500 drop-shadow-md"><i class="fa-solid fa-heart"></i></div>' : ""}
+                    ${isFav ? '<div class="absolute top-2 left-2 text-yellow-500 drop-shadow-md text-lg"><i class="fa-solid fa-heart"></i></div>' : ""}
                     <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/90 to-transparent"><p class="text-xs font-bold text-white truncate">${item.title}</p></div>
-                </div>
-            `,
-                    )
+                </div>`;
+                    })
                     .join("");
             }
             document
@@ -455,37 +519,6 @@ const currentFavorites = localLibrary
                 .addEventListener("input", (e) =>
                     renderLocalLibrary(e.target.value),
                 );
-
-            // --- RENDER ORDENAR FAVORITOS (DRAG & DROP) ---
-            function renderFavoritesSortable() {
-                const container = document.getElementById("favList");
-                container.innerHTML = window.favoritesList
-                    .map(
-                        (item) => `
-                <div class="fav-item relative aspect-[2/3] bg-[#18181b] rounded-xl overflow-hidden cursor-grab ring-1 ring-white/10 hover:ring-white/30" data-id="${item.title}" data-full='${JSON.stringify(item).replace(/'/g, "&#39;")}' >
-                    <img src="${item.cover}" class="w-full h-full object-cover pointer-events-none">
-                    <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white border border-white/10 index-badge"></div>
-                </div>
-            `,
-                    )
-                    .join("");
-
-                // Inicializar Sortable
-                new Sortable(container, {
-                    animation: 150,
-                    ghostClass: "sortable-ghost",
-                    dragClass: "sortable-drag",
-                    onEnd: updateIndexes, // Actualizar números visualmente al soltar
-                });
-                updateIndexes();
-            }
-
-            function updateIndexes() {
-                const badges = document.querySelectorAll(".index-badge");
-                badges.forEach((badge, index) => {
-                    badge.innerText = index + 1;
-                });
-            }
 
             // --- BUSCADOR API ---
             document
@@ -541,42 +574,106 @@ const currentFavorites = localLibrary
                     data.year || "----";
                 document.getElementById("editorCover").src = data.cover;
 
-                // Estado
                 const statusToSelect = data.status || "Jugando";
                 const radios = document.getElementsByName("status");
                 for (const r of radios) {
                     if (r.value === statusToSelect) r.checked = true;
                 }
 
-                // Nota
                 const score = data.score || 0;
                 document.getElementById("scoreRange").value = score;
                 document.getElementById("scoreValue").innerText = score;
 
-                // Favorito
-                isFavorite = data.favorite || false;
+                // Favorito (Miramos en la lista global)
+                isFavorite = window.favoritesTitles.includes(data.title);
                 updateFavBtn();
 
+                // Mensuales
+                renderMonthTags();
                 checkScoreLock();
             }
-
             window.closeEditor = () =>
                 document.getElementById("editor").classList.add("hidden");
 
-            // --- LOGICA FAVORITO ---
+            // --- TAGS MENSUALES (NUEVA LÓGICA) ---
+            window.addMonthTag = () => {
+                const m = document.getElementById("tagMonth").value; // "01"
+                const y = document.getElementById("tagYear").value; // "2026"
+                if (!m || !y) return;
+
+                const dateStr = `${y}-${m}`; // "2026-01"
+
+                // Añadir al array global si no existe esa fecha para este juego
+                const exists = window.monthlyPicksGlobal.some(
+                    (entry) =>
+                        entry.month === dateStr &&
+                        entry.title === currentSelection.title,
+                );
+
+                if (!exists) {
+                    window.monthlyPicksGlobal.push({
+                        month: dateStr,
+                        title: currentSelection.title,
+                        cover: currentSelection.cover,
+                    });
+                    // Ordenar globalmente por fecha (opcional, pero limpio)
+                    window.monthlyPicksGlobal.sort((a, b) =>
+                        b.month.localeCompare(a.month),
+                    );
+                    renderMonthTags();
+                }
+            };
+
+            window.removeMonthTag = (dateStr) => {
+                window.monthlyPicksGlobal = window.monthlyPicksGlobal.filter(
+                    (entry) =>
+                        !(
+                            entry.month === dateStr &&
+                            entry.title === currentSelection.title
+                        ),
+                );
+                renderMonthTags();
+            };
+
+            function renderMonthTags() {
+                const container = document.getElementById(
+                    "monthlyTagsContainer",
+                );
+                // Filtrar tags de ESTE juego
+                const thisGameTags = window.monthlyPicksGlobal.filter(
+                    (entry) => entry.title === currentSelection.title,
+                );
+
+                if (thisGameTags.length === 0) {
+                    container.innerHTML =
+                        '<span class="text-xs text-gray-500 italic">No ha sido juego del mes.</span>';
+                    return;
+                }
+
+                container.innerHTML = thisGameTags
+                    .map((tag) => {
+                        const [y, m] = tag.month.split("-");
+                        const display = `${m}/${y.slice(2)}`; // 01/26
+                        return `
+                    <div class="tag-pill">
+                        ${display}
+                        <button onclick="removeMonthTag('${tag.month}')" class="text-indigo-400 hover:text-white transition"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                `;
+                    })
+                    .join("");
+            }
+
+            // --- FAVORITO ---
             window.toggleFav = () => {
                 isFavorite = !isFavorite;
                 updateFavBtn();
             };
             function updateFavBtn() {
                 const btn = document.getElementById("favBtn");
-                if (isFavorite) {
-                    btn.className =
-                        "w-10 h-10 rounded-full border border-red-500/50 flex items-center justify-center transition-all bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]";
-                } else {
-                    btn.className =
-                        "w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#202025] text-gray-500 hover:text-white";
-                }
+                btn.className = isFavorite
+                    ? "w-10 h-10 rounded-full border border-red-500/50 flex items-center justify-center transition-all bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                    : "w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#202025] text-gray-500 hover:text-white";
             }
 
             window.checkScoreLock = () => {
@@ -584,16 +681,17 @@ const currentFavorites = localLibrary
                     'input[name="status"]:checked',
                 ).value;
                 const range = document.getElementById("scoreRange");
-                const container = document.getElementById("scoreContainer");
                 if (status === "Completado") {
                     range.disabled = false;
-                    container.style.opacity = "1";
+                    document.getElementById("scoreContainer").style.opacity =
+                        "1";
                     if (document.getElementById("scoreValue").innerText === "-")
                         document.getElementById("scoreValue").innerText =
                             range.value;
                 } else {
                     range.disabled = true;
-                    container.style.opacity = "0.5";
+                    document.getElementById("scoreContainer").style.opacity =
+                        "0.5";
                     document.getElementById("scoreValue").innerText = "-";
                 }
             };
@@ -606,77 +704,125 @@ const currentFavorites = localLibrary
                             e.target.value),
                 );
 
-            // --- GUARDAR INDIVIDUAL ---
+            // --- GUARDAR (SIN POPUPS, SOLO FEEDBACK VISUAL) ---
             document
                 .getElementById("saveMediaBtn")
                 .addEventListener("click", async () => {
                     const btn = document.getElementById("saveMediaBtn");
-                    btn.innerText = "Guardando...";
+                    const originalText = btn.innerText;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
                     btn.disabled = true;
+
                     const status = document.querySelector(
                         'input[name="status"]:checked',
                     ).value;
-                    const payload = {
-                        ...currentSelection,
-                        status: status,
-                        score:
-                            status === "Completado"
-                                ? Number(
-                                      document.getElementById("scoreRange")
-                                          .value,
-                                  )
-                                : 0,
-                        favorite: isFavorite, // Guardamos el estado del corazón
-                    };
-                    try {
-                        await fetch("/api/save.json", {
-                            method: "POST",
-                            body: JSON.stringify(payload),
-                        });
-                        closeEditor();
-                        alert("✅ Guardado.");
-                        window.location.reload(); // Recargar para actualizar listas
-                    } catch (e) {
-                        alert("Error");
+                    const finalScore =
+                        status === "Completado"
+                            ? Number(
+                                  document.getElementById("scoreRange").value,
+                              )
+                            : 0;
+
+                    // 1. Actualizar Favs Globales
+                    if (
+                        isFavorite &&
+                        !window.favoritesTitles.includes(currentSelection.title)
+                    ) {
+                        window.favoritesTitles.push(currentSelection.title);
+                    } else if (!isFavorite) {
+                        window.favoritesTitles = window.favoritesTitles.filter(
+                            (t) => t !== currentSelection.title,
+                        );
                     }
-                    btn.innerText = "Guardar Cambios";
+
+                    // 2. Payloads
+                    const payloadFile = {
+                        ...currentSelection,
+                        status,
+                        score: finalScore,
+                    };
+
+                    // Enviamos los favoritos y los mensuales globales
+                    const payloadDB = {
+                        type: "update_db",
+                        favorites: window.favoritesTitles,
+                        monthlyPicks: window.monthlyPicksGlobal,
+                    };
+
+                    try {
+                        await Promise.all([
+                            fetch("/api/save.json", {
+                                method: "POST",
+                                body: JSON.stringify(payloadFile),
+                            }),
+                            fetch("/api/save.json", {
+                                method: "POST",
+                                body: JSON.stringify(payloadDB),
+                            }),
+                        ]);
+
+                        closeEditor();
+
+                        // Feedback visual sutil: cambiar el texto del botón "Nuevo" o "Editar" temporalmente
+                        // (Para simplificar, el botón del modal ya ha hecho su función)
+                    } catch (e) {
+                        console.error(e);
+                    }
+
+                    btn.innerText = originalText;
                     btn.disabled = false;
                 });
 
-            // --- GUARDAR ORDEN FAVORITOS ---
+            // --- ORDENAR FAVORITOS ---
+            function renderFavoritesSortable() {
+                const container = document.getElementById("favList");
+                const favObjects = window.favoritesTitles
+                    .map((title) =>
+                        window.localLibrary.find(
+                            (item) => item.title === title,
+                        ),
+                    )
+                    .filter((item) => item !== undefined);
+
+                container.innerHTML = favObjects
+                    .map(
+                        (item) => `
+                <div class="fav-item relative aspect-[2/3] bg-[#18181b] rounded-xl overflow-hidden cursor-grab ring-1 ring-white/10 hover:ring-white/30" data-title="${item.title}">
+                    <img src="${item.cover}" class="w-full h-full object-cover pointer-events-none">
+                </div>
+            `,
+                    )
+                    .join("");
+
+                new Sortable(container, { animation: 150, onEnd: () => {} });
+            }
+
             document
                 .getElementById("saveOrderBtn")
                 .addEventListener("click", async () => {
                     const btn = document.getElementById("saveOrderBtn");
-                    btn.innerText = "Procesando...";
+                    btn.innerText = "Guardando...";
 
-                    // Obtener el nuevo orden del DOM
-                    const newOrder = [];
+                    const newOrderTitles = [];
                     document
                         .querySelectorAll("#favList .fav-item")
-                        .forEach((el, index) => {
-                            const itemData = JSON.parse(el.dataset.full);
-                            // Actualizamos su favIndex
-                            itemData.favIndex = index + 1;
-                            newOrder.push(itemData);
-                        });
+                        .forEach((el) => newOrderTitles.push(el.dataset.title));
+                    window.favoritesTitles = newOrderTitles;
 
-                    // Enviar petición para CADA elemento (Esto es rápido en local)
-                    // Se podría optimizar con un endpoint 'batch', pero reutilizamos save.json por simplicidad
-                    try {
-                        const promises = newOrder.map((item) =>
-                            fetch("/api/save.json", {
-                                method: "POST",
-                                body: JSON.stringify(item),
-                            }),
-                        );
-                        await Promise.all(promises);
-                        alert("✅ Orden actualizado.");
-                    } catch (e) {
-                        alert("Error guardando orden");
-                    }
+                    await fetch("/api/save.json", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            type: "update_db",
+                            favorites: newOrderTitles,
+                        }),
+                    });
 
-                    btn.innerText = "Guardar Orden";
+                    btn.innerText = "¡Guardado!";
+                    btn.classList.add("bg-green-600", "text-white");
+                    setTimeout(() => {
+                        btn.innerText = "Guardar Orden";
+                        btn.classList.remove("bg-green-600", "text-white");
+                    }, 2000);
                 });
         </script>
     </body>
