@@ -1,269 +1,252 @@
 ---
 import { getCollection } from "astro:content";
-// Intentamos leer la config, si no existe usamos defaults
-let profile = { username: "Usuario", bio: "Sin bio", banner: "", avatar: "" };
+
+// 1. Cargar datos
+let profile = {
+	username: "Admin",
+	bio: "Bienvenido a mi colección.",
+	banner: "",
+	avatar: "",
+};
 try {
 	const config = await import("../content/config.json");
 	profile = config.default || config;
 } catch (e) {}
 
-const games = await getCollection("games");
-// Puedes añadir: const anime = await getCollection('anime');
-const allMedia = [...games]; // Aquí concatenarías [...games, ...anime]
+// Cargar colecciones (si no existen carpetas aun, devuelve array vacío)
+const games = await getCollection("games").catch(() => []);
+const anime = await getCollection("anime").catch(() => []);
+const manga = await getCollection("manga").catch(() => []);
 
-// Ordenar
-allMedia.sort((a, b) => b.data.score - a.data.score);
+// Unificar todo y marcar el tipo
+const allContent = [
+	...games.map((i) => ({ ...i, type: "game" })),
+	...anime.map((i) => ({ ...i, type: "anime" })),
+	...manga.map((i) => ({ ...i, type: "manga" })),
+];
+
+// Favoritos (Obras con nota 10 o 9)
+const favorites = allContent.filter((i) => i.data.score >= 9);
 ---
 
-<html lang="es">
+<html lang="es" class="dark">
 	<head>
 		<meta charset="UTF-8" />
-		<title>{profile.username}</title></head
-	>'s Library
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<style>
-		:root {
-			--bg: #0b0c0f;
-			--card: #151f2e;
-			--accent: #3db4f2;
-			--text-main: #9fadbd;
-		}
-		body {
-			margin: 0;
-			background: var(--bg);
-			color: var(--text-main);
-			font-family: "Segoe UI", system-ui, sans-serif;
-		}
-
-		/* HEADER AREA */
-		.banner {
-			height: 300px;
-			width: 100%;
-			background-color: #1f232d;
-			background-image: url({profile.banner||"https://placehold.co/1200x300/1f232d/FFF?text=Banner"});
-			background-size: cover;
-			background-position: center;
-		}
-
-		.nav-bar {
-			background: #151f2e;
-			padding: 0 2rem;
-			position: sticky;
-			top: 0;
-			z-index: 100;
-			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-			height: 60px;
-			display: flex;
-			align-items: center;
-		}
-
-		.container {
-			max-width: 1100px;
-			margin: 0 auto;
-			position: relative;
-			padding: 0 20px;
-		}
-
-		.profile-header {
-			display: flex;
-			align-items: flex-end;
-			margin-top: -80px;
-			margin-bottom: 20px;
-			position: relative;
-			z-index: 10;
-		}
-
-		.avatar {
-			width: 160px;
-			height: 160px;
-			border-radius: 4px;
-			border: 4px solid var(--bg);
-			background: #333;
-			object-fit: cover;
-			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-		}
-
-		.user-info {
-			margin-left: 20px;
-			margin-bottom: 10px;
-			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-		}
-		.user-info h1 {
-			margin: 0;
-			color: white;
-			font-size: 2rem;
-		}
-		.user-info p {
-			margin: 5px 0 0;
-			color: #eee;
-			font-size: 1rem;
-		}
-
-		/* GRID */
-		.content-area {
-			display: flex;
-			gap: 30px;
-			margin-top: 40px;
-		}
-		.sidebar {
-			width: 250px;
-			flex-shrink: 0;
-		}
-		.main-list {
-			flex: 1;
-		}
-
-		.stats-card {
-			background: var(--card);
-			padding: 20px;
-			border-radius: 4px;
-			margin-bottom: 20px;
-		}
-
-		.grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-			gap: 20px;
-		}
-
-		.card {
-			position: relative;
-			transition: transform 0.2s;
-			cursor: pointer;
-		}
-		.card:hover {
-			transform: translateY(-5px);
-		}
-		.card img {
-			width: 100%;
-			border-radius: 4px;
-			aspect-ratio: 2/3;
-			object-fit: cover;
-			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-		}
-		.card-title {
-			font-size: 0.9rem;
-			margin-top: 8px;
-			color: #bad3f2;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
-		}
-
-		.score-tag {
-			position: absolute;
-			top: 5px;
-			right: 5px;
-			background: rgba(0, 0, 0, 0.8);
-			color: var(--accent);
-			font-weight: bold;
-			padding: 2px 6px;
-			border-radius: 4px;
-			font-size: 0.8rem;
-		}
-
-		/* Estado colores */
-		.status-dot {
-			display: inline-block;
-			width: 10px;
-			height: 10px;
-			border-radius: 50%;
-			margin-right: 5px;
-		}
-		.st-Jugando {
-			background: #4caf50;
-		}
-		.st-Completado {
-			background: #2196f3;
-		}
-		.st-Pendiente {
-			background: #ff9800;
-		}
-	</style>
-
-	<body>
-		<div class="banner"></div>
-
-		<div class="nav-bar">
-			<span
-				style="margin-left:auto; font-size:0.8rem; cursor:pointer;"
-				onclick="window.location.href='/admin'">⚙ Admin</span
+		<title>{profile.username} | Biblioteca</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<style>
+			/* Efecto Glassmorphism */
+			.glass {
+				background: rgba(30, 30, 35, 0.7);
+				backdrop-filter: blur(10px);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+			}
+			/* Ocultar scrollbar pero permitir scroll */
+			.hide-scroll::-webkit-scrollbar {
+				display: none;
+			}
+			.hide-scroll {
+				-ms-overflow-style: none;
+				scrollbar-width: none;
+			}
+		</style>
+	</head>
+	<body class="bg-[#0f0f12] text-gray-200 font-sans min-h-screen">
+		<header class="relative w-full">
+			<div
+				class="h-64 md:h-80 w-full bg-gray-800 overflow-hidden relative"
 			>
-		</div>
-
-		<div class="container">
-			<div class="profile-header">
 				<img
-					src={profile.avatar || "https://placehold.co/200"}
-					class="avatar"
+					src={profile.banner ||
+						"https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=2000&q=80"}
+					class="w-full h-full object-cover opacity-80"
+					alt="banner"
 				/>
-				<div class="user-info">
-					<h1>{profile.username}</h1>
-					<p>{profile.bio}</p>
+				<div
+					class="absolute inset-0 bg-gradient-to-t from-[#0f0f12] to-transparent"
+				>
 				</div>
+
+				<a
+					href="/admin"
+					class="absolute top-4 right-4 bg-black/50 hover:bg-white/20 text-white px-3 py-1 rounded-full text-xs backdrop-blur-md transition"
+				>
+					<i class="fa-solid fa-gear"></i> Admin
+				</a>
 			</div>
 
-			<div class="content-area">
-				<div class="sidebar">
-					<div class="stats-card">
-						<h3 style="margin-top:0; color:white;">Estadísticas</h3>
-						<div
-							style="display:flex; justify-content:space-between; margin-bottom:10px;"
-						>
-							<span>Total</span>
-							<span>{allMedia.length}</span>
-						</div>
-						<div
-							style="display:flex; justify-content:space-between; color:#4caf50"
-						>
-							<span>Jugando</span>
-							<span
-								>{
-									allMedia.filter(
-										(g) => g.data.status === "Jugando",
-									).length
-								}</span
-							>
-						</div>
-						<div
-							style="display:flex; justify-content:space-between; color:#2196f3"
-						>
-							<span>Completado</span>
-							<span
-								>{
-									allMedia.filter(
-										(g) => g.data.status === "Completado",
-									).length
-								}</span
-							>
-						</div>
-					</div>
-				</div>
-
-				<div class="main-list">
-					<h2
-						style="color:white; border-bottom:1px solid #333; padding-bottom:10px;"
+			<div
+				class="absolute -bottom-16 left-0 right-0 flex flex-col items-center px-4"
+			>
+				<div class="relative group">
+					<img
+						src={profile.avatar ||
+							"https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
+						class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#0f0f12] shadow-2xl object-cover bg-gray-700"
+					/>
+					<div
+						class="absolute bottom-2 right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-[#0f0f12]"
+						title="Online"
 					>
-						Biblioteca
-					</h2>
-					<div class="grid">
-						{
-							allMedia.map((item) => (
-								<div class="card">
-									<span class="score-tag">
-										{item.data.score}
-									</span>
-									<img src={item.data.cover} loading="lazy" />
-									<div class="card-title">
-										{item.data.title}
-									</div>
-								</div>
-							))
-						}
 					</div>
 				</div>
-			</div>
-		</div>
-	</body>
 
+				<div class="text-center mt-4">
+					<h1 class="text-3xl font-bold text-white tracking-tight">
+						{profile.username}
+					</h1>
+					<p
+						class="text-gray-400 max-w-md mx-auto mt-1 text-sm md:text-base"
+					>
+						{profile.bio}
+					</p>
+				</div>
+			</div>
+		</header>
+
+		<main class="mt-24 px-4 md:px-8 max-w-7xl mx-auto pb-20">
+			<nav
+				class="flex justify-center gap-2 md:gap-6 mb-10 overflow-x-auto hide-scroll py-2"
+			>
+				<button
+					onclick="filter('all')"
+					class="tab-btn active px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 ring-1 ring-white/10"
+				>
+					<i class="fa-solid fa-layer-group"></i> Todo
+				</button>
+				<button
+					onclick="filter('fav')"
+					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+				>
+					<i class="fa-solid fa-heart text-red-500"></i> Favoritos
+				</button>
+				<button
+					onclick="filter('game')"
+					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+				>
+					<i class="fa-solid fa-gamepad text-purple-400"></i> Juegos
+				</button>
+				<button
+					onclick="filter('anime')"
+					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+				>
+					<i class="fa-solid fa-tv text-pink-400"></i> Anime
+				</button>
+				<button
+					onclick="filter('manga')"
+					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+				>
+					<i class="fa-solid fa-book-open text-orange-400"></i> Manga
+				</button>
+			</nav>
+
+			<div
+				id="grid"
+				class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+			>
+				{
+					allContent.map((item) => (
+						<div
+							class="media-card group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer shadow-lg bg-gray-800 transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/20"
+							data-type={item.type}
+							data-fav={item.data.score >= 9 ? "true" : "false"}
+						>
+							<img
+								src={item.data.cover}
+								alt={item.data.title}
+								class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+								loading="lazy"
+							/>
+
+							<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+
+							<div class="absolute top-2 right-2 glass px-2 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1">
+								<i class="fa-solid fa-star text-yellow-400 text-[10px]" />{" "}
+								{item.data.score}
+							</div>
+
+							<div class="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+								<div class="text-[10px] uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-2">
+									<span
+										class={`w-2 h-2 rounded-full ${
+											item.data.status === "Jugando" ||
+											item.data.status === "Viendo"
+												? "bg-green-500 animate-pulse"
+												: item.data.status ===
+													  "Completado"
+													? "bg-blue-500"
+													: item.data.status ===
+														  "Abandonado"
+														? "bg-red-500"
+														: "bg-yellow-500"
+										}`}
+									/>
+									{item.data.status}
+								</div>
+								<h3 class="text-white font-bold leading-tight text-sm md:text-base line-clamp-2">
+									{item.data.title}
+								</h3>
+							</div>
+						</div>
+					))
+				}
+
+				<div
+					id="empty-state"
+					class="hidden col-span-full text-center py-20 text-gray-500"
+				>
+					<i class="fa-regular fa-folder-open text-4xl mb-4"></i>
+					<p>No hay contenido en esta categoría.</p>
+				</div>
+			</div>
+		</main>
+
+		<script is:inline>
+			function filter(category) {
+				// Actualizar botones
+				document.querySelectorAll(".tab-btn").forEach((btn) => {
+					btn.className =
+						"tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5";
+				});
+				event.currentTarget.className =
+					"tab-btn active px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 ring-1 ring-white/10 shadow-lg shadow-purple-500/10";
+
+				// Filtrar cards
+				const cards = document.querySelectorAll(".media-card");
+				let visibleCount = 0;
+
+				cards.forEach((card) => {
+					const type = card.getAttribute("data-type");
+					const isFav = card.getAttribute("data-fav") === "true";
+
+					if (
+						category === "all" ||
+						type === category ||
+						(category === "fav" && isFav)
+					) {
+						card.style.display = "block";
+						// Pequeña animación de entrada
+						card.animate(
+							[
+								{ transform: "scale(0.95)", opacity: 0 },
+								{ transform: "scale(1)", opacity: 1 },
+							],
+							{ duration: 300, easing: "ease-out" },
+						);
+						visibleCount++;
+					} else {
+						card.style.display = "none";
+					}
+				});
+
+				// Mostrar empty state si no hay nada
+				const empty = document.getElementById("empty-state");
+				empty.style.display = visibleCount === 0 ? "block" : "none";
+			}
+		</script>
+	</body>
 </html>
