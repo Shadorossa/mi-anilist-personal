@@ -6,38 +6,33 @@ import path from 'node:path';
 export const POST: APIRoute = async ({ request }) => {
     try {
         const data = await request.json();
+        const dbPath = path.join(process.cwd(), 'src', 'content', 'database.json');
 
-        // CASO 1: ACTUALIZAR DATABASE.JSON (Favoritos y Mensuales)
+        // --- CASO 1: ACTUALIZAR DATABASE.JSON (Favoritos y Mensuales) ---
         if (data.type === 'update_db') {
-            const dbPath = path.join(process.cwd(), 'src', 'content', 'database.json');
-
-            // Leer estado actual
             let currentDb = { favorites: [], monthlyPicks: [] };
             try {
                 const file = await fs.readFile(dbPath, 'utf-8');
                 currentDb = JSON.parse(file);
-            } catch (e) {
-                // Si no existe, se crea
-            }
+            } catch (e) { }
 
-            // Actualizar datos
+            // Actualizamos los campos que lleguen
             if (data.favorites) currentDb.favorites = data.favorites;
             if (data.monthlyPicks) currentDb.monthlyPicks = data.monthlyPicks;
 
-            // Escribir
             await fs.writeFile(dbPath, JSON.stringify(currentDb, null, 2));
-            console.log("✅ Database actualizada:", Object.keys(data));
             return new Response(JSON.stringify({ success: true }));
         }
 
-        // CASO 2: GUARDAR PERFIL
+        // --- CASO 2: GUARDAR PERFIL ---
         if (data.type === 'profile_config') {
-            const filePath = path.join(process.cwd(), 'src', 'content', 'config.json');
-            await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+            const configPath = path.join(process.cwd(), 'src', 'content', 'config.json');
+            await fs.writeFile(configPath, JSON.stringify(data, null, 2));
             return new Response(JSON.stringify({ success: true }));
         }
 
-        // CASO 3: GUARDAR OBRA INDIVIDUAL
+        // --- CASO 3: GUARDAR OBRA INDIVIDUAL ---
+        // (Esto guarda el archivo .json individual de la obra)
         const { type, title, id } = data;
         if (!type || !title) throw new Error("Datos incompletos");
 
@@ -47,7 +42,6 @@ export const POST: APIRoute = async ({ request }) => {
 
         await fs.mkdir(dirPath, { recursive: true });
 
-        // Guardamos datos de la obra (sin metadatos globales)
         const fileContent = {
             title: data.title,
             cover: data.cover,
@@ -58,12 +52,10 @@ export const POST: APIRoute = async ({ request }) => {
         };
 
         await fs.writeFile(path.join(dirPath, fileName), JSON.stringify(fileContent, null, 2));
-        console.log("✅ Obra guardada:", title);
 
         return new Response(JSON.stringify({ success: true }));
 
     } catch (e: any) {
-        console.error("❌ Error API:", e);
         return new Response(JSON.stringify({ error: e.message }), { status: 500 });
     }
 }
