@@ -1,32 +1,31 @@
 ---
 import { getCollection } from "astro:content";
 
-// 1. Cargar datos
-let profile = {
-	username: "Admin",
-	bio: "Bienvenido a mi colección.",
-	banner: "",
-	avatar: "",
-};
+// 1. Cargar Configuración del Perfil
+let profile = { username: "Admin", bio: "Cargando perfil..." };
 try {
 	const config = await import("../content/config.json");
 	profile = config.default || config;
 } catch (e) {}
 
-// Cargar colecciones (si no existen carpetas aun, devuelve array vacío)
+// Definir rutas de imágenes (Busca en /public/img/profile/)
+const bannerPath = "/img/profile/banner.png";
+const avatarPath = "/img/profile/pic.png";
+
+// 2. Cargar Colecciones
 const games = await getCollection("games").catch(() => []);
 const anime = await getCollection("anime").catch(() => []);
 const manga = await getCollection("manga").catch(() => []);
 
-// Unificar todo y marcar el tipo
+// 3. Unificar todo
 const allContent = [
 	...games.map((i) => ({ ...i, type: "game" })),
 	...anime.map((i) => ({ ...i, type: "anime" })),
 	...manga.map((i) => ({ ...i, type: "manga" })),
 ];
 
-// Favoritos (Obras con nota 10 o 9)
-const favorites = allContent.filter((i) => i.data.score >= 9);
+// Ordenar por nota (Mayor a menor)
+allContent.sort((a, b) => b.data.score - a.data.score);
 ---
 
 <html lang="es" class="dark">
@@ -39,213 +38,188 @@ const favorites = allContent.filter((i) => i.data.score >= 9);
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 		/>
 		<style>
-			/* Efecto Glassmorphism */
-			.glass {
-				background: rgba(30, 30, 35, 0.7);
-				backdrop-filter: blur(10px);
-				border: 1px solid rgba(255, 255, 255, 0.1);
+			/* Estilos Base */
+			body {
+				background-color: #09090b;
+				color: #e4e4e7;
 			}
-			/* Ocultar scrollbar pero permitir scroll */
+			.glass {
+				background: rgba(20, 20, 25, 0.7);
+				backdrop-filter: blur(12px);
+				border: 1px solid rgba(255, 255, 255, 0.05);
+			}
 			.hide-scroll::-webkit-scrollbar {
 				display: none;
 			}
-			.hide-scroll {
-				-ms-overflow-style: none;
-				scrollbar-width: none;
+
+			/* Animaciones */
+			@keyframes fadeInUp {
+				from {
+					opacity: 0;
+					transform: translateY(20px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+			.card-enter {
+				animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)
+					backwards;
 			}
 		</style>
 	</head>
-	<body class="bg-[#0f0f12] text-gray-200 font-sans min-h-screen">
-		<header class="relative w-full">
-			<div
-				class="h-64 md:h-80 w-full bg-gray-800 overflow-hidden relative"
-			>
+	<body
+		class="font-sans min-h-screen selection:bg-indigo-500 selection:text-white"
+	>
+		<header class="relative w-full group">
+			<div class="h-64 md:h-80 w-full overflow-hidden relative">
 				<img
-					src={profile.banner ||
-						"https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=2000&q=80"}
-					class="w-full h-full object-cover opacity-80"
-					alt="banner"
+					src={bannerPath}
+					onerror="this.src='https://placehold.co/1500x500/111/444?text=No+Banner'"
+					class="w-full h-full object-cover opacity-60 transition-transform duration-[10s] group-hover:scale-105"
 				/>
 				<div
-					class="absolute inset-0 bg-gradient-to-t from-[#0f0f12] to-transparent"
+					class="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent"
 				>
 				</div>
 
 				<a
 					href="/admin"
-					class="absolute top-4 right-4 bg-black/50 hover:bg-white/20 text-white px-3 py-1 rounded-full text-xs backdrop-blur-md transition"
+					class="absolute top-6 right-6 glass px-4 py-2 rounded-full text-xs font-bold hover:bg-white/10 transition border border-white/5 flex items-center gap-2"
 				>
-					<i class="fa-solid fa-gear"></i> Admin
+					<i class="fa-solid fa-sliders"></i> Gestionar
 				</a>
 			</div>
 
 			<div
-				class="absolute -bottom-16 left-0 right-0 flex flex-col items-center px-4"
+				class="absolute -bottom-16 left-0 right-0 flex flex-col items-center z-10"
 			>
-				<div class="relative group">
+				<div class="relative group cursor-pointer">
 					<img
-						src={profile.avatar ||
-							"https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
-						class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#0f0f12] shadow-2xl object-cover bg-gray-700"
+						src={avatarPath}
+						onerror="this.src='https://placehold.co/200/222/FFF?text=User'"
+						class="w-32 h-32 md:w-40 md:h-40 rounded-full border-[6px] border-[#09090b] shadow-2xl object-cover bg-[#1a1a1e] transition-transform hover:scale-105"
 					/>
-					<div
-						class="absolute bottom-2 right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-[#0f0f12]"
-						title="Online"
-					>
-					</div>
 				</div>
-
-				<div class="text-center mt-4">
-					<h1 class="text-3xl font-bold text-white tracking-tight">
+				<div class="text-center mt-3 animate-fade-in">
+					<h1
+						class="text-3xl font-bold text-white tracking-tight drop-shadow-lg"
+					>
 						{profile.username}
 					</h1>
-					<p
-						class="text-gray-400 max-w-md mx-auto mt-1 text-sm md:text-base"
-					>
-						{profile.bio}
-					</p>
+					<p class="text-gray-400 text-sm mt-1">{profile.bio}</p>
 				</div>
 			</div>
 		</header>
 
-		<main class="mt-24 px-4 md:px-8 max-w-7xl mx-auto pb-20">
+		<main class="mt-24 px-4 max-w-7xl mx-auto pb-20">
 			<nav
-				class="flex justify-center gap-2 md:gap-6 mb-10 overflow-x-auto hide-scroll py-2"
+				class="flex justify-center gap-3 mb-12 overflow-x-auto hide-scroll py-2"
 			>
 				<button
-					onclick="filter('all')"
-					class="tab-btn active px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 ring-1 ring-white/10"
+					onclick="filter('all', this)"
+					class="tab-btn active px-6 py-2 rounded-full text-sm font-bold bg-white text-black shadow-lg shadow-white/10 transition-transform active:scale-95"
+					>Todo</button
 				>
-					<i class="fa-solid fa-layer-group"></i> Todo
-				</button>
 				<button
-					onclick="filter('fav')"
-					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+					onclick="filter('fav', this)"
+					class="tab-btn px-6 py-2 rounded-full text-sm font-bold bg-[#18181b] text-gray-400 hover:text-white border border-white/5 transition-colors"
+					>Favoritos</button
 				>
-					<i class="fa-solid fa-heart text-red-500"></i> Favoritos
-				</button>
 				<button
-					onclick="filter('game')"
-					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+					onclick="filter('game', this)"
+					class="tab-btn px-6 py-2 rounded-full text-sm font-bold bg-[#18181b] text-gray-400 hover:text-white border border-white/5 transition-colors"
+					>Juegos</button
 				>
-					<i class="fa-solid fa-gamepad text-purple-400"></i> Juegos
-				</button>
 				<button
-					onclick="filter('anime')"
-					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+					onclick="filter('anime', this)"
+					class="tab-btn px-6 py-2 rounded-full text-sm font-bold bg-[#18181b] text-gray-400 hover:text-white border border-white/5 transition-colors"
+					>Anime</button
 				>
-					<i class="fa-solid fa-tv text-pink-400"></i> Anime
-				</button>
 				<button
-					onclick="filter('manga')"
-					class="tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
+					onclick="filter('manga', this)"
+					class="tab-btn px-6 py-2 rounded-full text-sm font-bold bg-[#18181b] text-gray-400 hover:text-white border border-white/5 transition-colors"
+					>Manga</button
 				>
-					<i class="fa-solid fa-book-open text-orange-400"></i> Manga
-				</button>
 			</nav>
 
 			<div
 				id="grid"
-				class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+				class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5"
 			>
 				{
-					allContent.map((item) => (
+					allContent.map((item, index) => (
 						<div
-							class="media-card group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer shadow-lg bg-gray-800 transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/20"
+							class="card-enter group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer bg-[#18181b] shadow-lg ring-1 ring-white/5 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20"
+							style={`animation-delay: ${index * 40}ms`}
 							data-type={item.type}
 							data-fav={item.data.score >= 9 ? "true" : "false"}
 						>
 							<img
 								src={item.data.cover}
-								alt={item.data.title}
-								class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
 								loading="lazy"
+								class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
 							/>
 
 							<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
-							<div class="absolute top-2 right-2 glass px-2 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1">
+							<div class="absolute top-2 right-2 glass px-2 py-1 rounded-md text-xs font-bold text-white flex items-center gap-1 shadow-lg">
 								<i class="fa-solid fa-star text-yellow-400 text-[10px]" />{" "}
 								{item.data.score}
 							</div>
 
-							<div class="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-								<div class="text-[10px] uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-2">
+							<div class="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+								<div class="text-[10px] uppercase font-bold text-gray-400 mb-1 flex items-center gap-2">
 									<span
-										class={`w-2 h-2 rounded-full ${
-											item.data.status === "Jugando" ||
-											item.data.status === "Viendo"
-												? "bg-green-500 animate-pulse"
-												: item.data.status ===
-													  "Completado"
-													? "bg-blue-500"
-													: item.data.status ===
-														  "Abandonado"
-														? "bg-red-500"
-														: "bg-yellow-500"
-										}`}
+										class={`w-2 h-2 rounded-full ${item.data.status === "Jugando" ? "bg-green-500 animate-pulse" : item.data.status === "Completado" ? "bg-blue-500" : "bg-yellow-500"}`}
 									/>
 									{item.data.status}
 								</div>
-								<h3 class="text-white font-bold leading-tight text-sm md:text-base line-clamp-2">
+								<h3 class="text-white font-bold text-sm leading-tight line-clamp-2 group-hover:text-indigo-300 transition-colors">
 									{item.data.title}
 								</h3>
 							</div>
 						</div>
 					))
 				}
+			</div>
 
-				<div
-					id="empty-state"
-					class="hidden col-span-full text-center py-20 text-gray-500"
-				>
-					<i class="fa-regular fa-folder-open text-4xl mb-4"></i>
-					<p>No hay contenido en esta categoría.</p>
-				</div>
+			<div
+				id="empty-state"
+				class="hidden text-center py-20 text-gray-600"
+			>
+				<i class="fa-regular fa-folder-open text-4xl mb-4 opacity-50"
+				></i>
+				<p>Sin contenido.</p>
 			</div>
 		</main>
 
 		<script is:inline>
-			function filter(category) {
-				// Actualizar botones
-				document.querySelectorAll(".tab-btn").forEach((btn) => {
-					btn.className =
-						"tab-btn px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5";
+			function filter(cat, btn) {
+				document
+					.querySelectorAll(".tab-btn")
+					.forEach(
+						(b) =>
+							(b.className =
+								"tab-btn px-6 py-2 rounded-full text-sm font-bold bg-[#18181b] text-gray-400 hover:text-white border border-white/5 transition-colors"),
+					);
+				btn.className =
+					"tab-btn active px-6 py-2 rounded-full text-sm font-bold bg-white text-black shadow-lg shadow-white/10 transition-transform active:scale-95";
+
+				const cards = document.querySelectorAll("[data-type]");
+				let visible = 0;
+				cards.forEach((c) => {
+					const match =
+						cat === "all" ||
+						c.dataset.type === cat ||
+						(cat === "fav" && c.dataset.fav === "true");
+					c.style.display = match ? "block" : "none";
+					if (match) visible++;
 				});
-				event.currentTarget.className =
-					"tab-btn active px-6 py-2 rounded-full font-medium transition-all duration-300 flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 ring-1 ring-white/10 shadow-lg shadow-purple-500/10";
-
-				// Filtrar cards
-				const cards = document.querySelectorAll(".media-card");
-				let visibleCount = 0;
-
-				cards.forEach((card) => {
-					const type = card.getAttribute("data-type");
-					const isFav = card.getAttribute("data-fav") === "true";
-
-					if (
-						category === "all" ||
-						type === category ||
-						(category === "fav" && isFav)
-					) {
-						card.style.display = "block";
-						// Pequeña animación de entrada
-						card.animate(
-							[
-								{ transform: "scale(0.95)", opacity: 0 },
-								{ transform: "scale(1)", opacity: 1 },
-							],
-							{ duration: 300, easing: "ease-out" },
-						);
-						visibleCount++;
-					} else {
-						card.style.display = "none";
-					}
-				});
-
-				// Mostrar empty state si no hay nada
-				const empty = document.getElementById("empty-state");
-				empty.style.display = visibleCount === 0 ? "block" : "none";
+				document.getElementById("empty-state").style.display = visible
+					? "none"
+					: "block";
 			}
 		</script>
 	</body>
