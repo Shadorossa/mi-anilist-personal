@@ -1,11 +1,11 @@
 {
-  "title": "Gintama",
+  "title": "Gintama.",
   "cover": "/img/covers/gintama.jpg",
-  "year": 2006,
+  "year": 2017,
   "type": "anime",
   "status": "Completado",
   "score": 10,
-  "startDate": "2020-12-24",
-  "finishDate": "2021-03-15",
-  "coverOffsetY": 15
+  "startDate": "",
+  "finishDate": "",
+  "coverOffsetY": 44
 }

@@ -265,6 +265,132 @@
       "cover": "/img/chara/shirley-orlando.png",
       "source": "Trails to Azure",
       "coverOffsetY": 50
+    },
+    {
+      "id": 275204,
+      "title": "Van Arkride",
+      "cover": "/img/chara/van-arkride.png",
+      "source": "Trails through Daybreak",
+      "coverOffsetY": 34
+    },
+    {
+      "id": 301468,
+      "title": "Elaine Auclair",
+      "cover": "/img/chara/elaine-auclair.png",
+      "source": "Trails through Daybreak",
+      "coverOffsetY": 39
+    },
+    {
+      "id": 272948,
+      "title": "Raiden",
+      "cover": "/img/chara/raiden.png",
+      "source": "Metal Gear Solid 2: Sons of Liberty",
+      "coverOffsetY": 30
+    },
+    {
+      "id": 14040,
+      "title": "Battler Ushiromiya",
+      "cover": "/img/chara/battler-ushiromiya.png",
+      "source": "Umineko no Naku Koro ni",
+      "coverOffsetY": 52
+    },
+    {
+      "id": 81735,
+      "title": "Arianrhod",
+      "cover": "/img/chara/arianrhod.png",
+      "source": "Trails to Azure",
+      "coverOffsetY": 57
+    },
+    {
+      "id": 6,
+      "title": "Rukia Kuchiki",
+      "cover": "/img/chara/rukia-kuchiki.png",
+      "source": "Bleach",
+      "coverOffsetY": 36
+    },
+    {
+      "id": 87886,
+      "title": "Ougi Oshino",
+      "cover": "/img/chara/ougi-oshino.png",
+      "source": "Kabukimonogatari",
+      "coverOffsetY": 24
+    },
+    {
+      "id": 209887,
+      "title": "Kevin Graham",
+      "cover": "/img/chara/kevin-graham.png",
+      "source": "Trails in the sky SC",
+      "coverOffsetY": 24
+    },
+    {
+      "id": 1533,
+      "title": "Kotarou Katsura",
+      "cover": "/img/chara/kotarou-katsura.png",
+      "source": "Gintama",
+      "coverOffsetY": 28
+    },
+    {
+      "id": 124135,
+      "title": "Utsuro",
+      "cover": "/img/chara/utsuro.png",
+      "source": "Gintama",
+      "coverOffsetY": 32
+    },
+    {
+      "id": 1816,
+      "title": "Sephiroth",
+      "cover": "/img/chara/sephiroth.png",
+      "source": "Final Fantasy VII",
+      "coverOffsetY": 31
+    },
+    {
+      "id": 17464,
+      "title": "Godot",
+      "cover": "/img/chara/godot.png",
+      "source": "Ace Attorney: Trials & Tribulations",
+      "coverOffsetY": 35
+    },
+    {
+      "id": 8673,
+      "title": "Miles Edgeworth",
+      "cover": "/img/chara/miles-edgeworth.png",
+      "source": "Phoenix Wright: Ace Attorney",
+      "coverOffsetY": 26
+    },
+    {
+      "id": 309955,
+      "title": "Barok van Zieks",
+      "cover": "/img/chara/barok-van-zieks.png",
+      "source": "The Great Ace Attorney",
+      "coverOffsetY": 28
+    },
+    {
+      "id": 76170,
+      "title": "Wazy Hemisphere",
+      "cover": "/img/chara/wazy-hemisphere.png",
+      "source": "Trails to azure",
+      "coverOffsetY": 38
+    },
+    {
+      "id": 89626,
+      "title": "Ayana Otonashi",
+      "cover": "/img/chara/ayana-otonashi.png",
+      "source": "Tsui no Sora",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 272535,
+      "title": "Solid Snake",
+      "cover": "/img/chara/solid-snake.png",
+      "source": "Metal Gear",
+      "coverOffsetY": 28
+    },
+    {
+      "id": 298406,
+      "title": "Claire Rieveldt",
+      "cover": "/img/chara/claire-rieveldt.png",
+      "source": "Trails of Cold Steel",
+      "coverOffsetY": 35
     }
   ],
   "monthlyChars": [
