@@ -80,6 +80,21 @@
       "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co74em.jpg"
     },
     {
+      "month": "2024-08",
+      "title": "The Great Ace Attorney 2: Resolve",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9su.jpg"
+    },
+    {
+      "month": "2024-07",
+      "title": "Shin Megami Tensei V: Vengeance",
+      "cover": "/img/covers/shin-megami-tensei-v-vengeance.png"
+    },
+    {
+      "month": "2024-06",
+      "title": "The Great Ace Attorney: Adventures",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9st.jpg"
+    },
+    {
       "month": "2024-02",
       "title": "Persona 3 Reload",
       "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co6z12.jpg"
@@ -88,6 +103,11 @@
       "month": "2024-01",
       "title": "Silent Hill 2",
       "cover": "/img/covers/silent-hill-2.jpg"
+    },
+    {
+      "month": "2023-07",
+      "title": "Final Fantasy XVI",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobd9i.jpg"
     },
     {
       "month": "2023-05",
@@ -121,13 +141,28 @@
     }
   ],
   "sagas": {
+    "Ace Attorney": [
+      "The Great Ace Attorney 2: Resolve",
+      "The Great Ace Attorney: Adventures"
+    ],
     "Bayonetta": [
       "Bayonetta Origins: Cereza and the Lost Demon",
       "Bayonetta 3",
       "Bayonetta 2",
       "Bayonetta"
     ],
+    "Bungo Stray Dogs": [
+      "Bungou Stray Dogs 5th Season",
+      "Bungou Stray Dogs 4th Season",
+      "Bungou Stray Dogs 3rd Season",
+      "Bungou Stray Dogs 2nd Season",
+      "Bungou Stray Dogs"
+    ],
+    "Devil May Cry": [
+      "Devil May Cry 3: Dante's Awakening"
+    ],
     "Final Fantasy": [
+      "Final Fantasy XVI",
       "Final Fantasy VII Rebirth",
       "Final Fantasy VII Remake Intergrade",
       "Final Fantasy II",
@@ -135,18 +170,27 @@
     ],
     "Gintama": [
       "Gintama: The Final",
+      "Gintama. Porori-hen",
       "Gintama°",
       "Gintama': Enchousen",
-      "Gintama"
+      "Gintama."
     ],
     "Hollow Knight": [
       "Hollow Knight: Silksong"
     ],
     "Like a Dragon": [
+      "Yakuza 6: The Song of Life",
+      "Yakuza 5 Remastered",
+      "Yakuza 4 Remastered",
+      "Yakuza 3 Remastered",
+      "Yakuza Kiwami 3",
+      "Yakuza Kiwami 2",
       "Yakuza Kiwami",
       "Yakuza 0"
     ],
     "Metal Gear": [
+      "Metal Gear Solid V: The Phantom Pain",
+      "Metal Gear Solid V: Ground Zeroes",
       "Metal Gear Solid 4: Guns of the Patriots",
       "Metal Gear Solid 3: Snake Eater",
       "Metal Gear Solid 2: Sons of Liberty",
@@ -169,6 +213,9 @@
       "Rance 01: Quest for Hikari",
       "Kichikuou Rance"
     ],
+    "Shin Megami Tensei": [
+      "Shin Megami Tensei V: Vengeance"
+    ],
     "Silent Hill": [
       "Silent Hill f",
       "Silent Hill 4: The Room",
@@ -190,6 +237,10 @@
       "The Legend of Heroes: Trails in the Sky the 3rd",
       "The Legend of Heroes: Trails in the Sky SC",
       "The Legend of Heroes: Trails in the Sky"
+    ],
+    "Hades": [
+      "Hades II",
+      "Hades"
     ]
   },
   "characters": [
@@ -289,46 +340,11 @@
       "coverOffsetY": 44
     },
     {
-      "id": 249642,
-      "title": "Shirley Orlando",
-      "cover": "/img/chara/shirley-orlando.png",
-      "source": "Trails to Azure",
-      "coverOffsetY": 50
-    },
-    {
-<<<<<<< HEAD
-      "id": 87496,
-      "title": "Bayonetta",
-      "cover": "/img/chara/bayonetta.png",
-      "source": "Bayonetta",
-      "coverOffsetY": 26
-    },
-    {
-      "id": 136284,
-      "title": "Shizuka Masou",
-      "cover": "/img/chara/shizuka-masou.png",
-      "source": "Rance 02",
-      "coverOffsetY": 39
-=======
-      "id": 275204,
-      "title": "Van Arkride",
-      "cover": "/img/chara/van-arkride.png",
-      "source": "Trails through Daybreak",
-      "coverOffsetY": 34
-    },
-    {
       "id": 301468,
       "title": "Elaine Auclair",
       "cover": "/img/chara/elaine-auclair.png",
       "source": "Trails through Daybreak",
       "coverOffsetY": 39
-    },
-    {
-      "id": 272948,
-      "title": "Raiden",
-      "cover": "/img/chara/raiden.png",
-      "source": "Metal Gear Solid 2: Sons of Liberty",
-      "coverOffsetY": 30
     },
     {
       "id": 14040,
@@ -366,13 +382,6 @@
       "coverOffsetY": 24
     },
     {
-      "id": 1533,
-      "title": "Kotarou Katsura",
-      "cover": "/img/chara/kotarou-katsura.png",
-      "source": "Gintama",
-      "coverOffsetY": 28
-    },
-    {
       "id": 124135,
       "title": "Utsuro",
       "cover": "/img/chara/utsuro.png",
@@ -408,6 +417,57 @@
       "coverOffsetY": 28
     },
     {
+      "id": 89626,
+      "title": "Ayana Otonashi",
+      "cover": "/img/chara/ayana-otonashi.png",
+      "source": "Tsui no Sora",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 298406,
+      "title": "Claire Rieveldt",
+      "cover": "/img/chara/claire-rieveldt.png",
+      "source": "Trails of Cold Steel",
+      "coverOffsetY": 35
+    },
+    {
+      "id": 301467,
+      "title": "Agnès Claudel",
+      "cover": "/img/chara/agns-claudel.png",
+      "source": "Trails through Daybreak",
+      "coverOffsetY": 34
+    },
+    {
+      "id": 242074,
+      "title": "Ries Argent",
+      "cover": "/img/chara/ries-argent.png",
+      "source": "Trails in the sky 3rd",
+      "coverOffsetY": 45
+    }
+  ],
+  "likedCharacters": [
+    {
+      "id": 275204,
+      "title": "Van Arkride",
+      "cover": "/img/chara/van-arkride.png",
+      "source": "Trails through Daybreak",
+      "coverOffsetY": 34
+    },
+    {
+      "id": 272948,
+      "title": "Raiden",
+      "cover": "/img/chara/raiden.png",
+      "source": "Metal Gear Solid 2: Sons of Liberty",
+      "coverOffsetY": 30
+    },
+    {
+      "id": 249642,
+      "title": "Shirley Orlando",
+      "cover": "/img/chara/shirley-orlando.png",
+      "source": "Trails to Azure",
+      "coverOffsetY": 50
+    },
+    {
       "id": 76170,
       "title": "Wazy Hemisphere",
       "cover": "/img/chara/wazy-hemisphere.png",
@@ -415,11 +475,11 @@
       "coverOffsetY": 38
     },
     {
-      "id": 89626,
-      "title": "Ayana Otonashi",
-      "cover": "/img/chara/ayana-otonashi.png",
-      "source": "Tsui no Sora",
-      "coverOffsetY": 50
+      "id": 1533,
+      "title": "Kotarou Katsura",
+      "cover": "/img/chara/kotarou-katsura.png",
+      "source": "Gintama",
+      "coverOffsetY": 28
     },
     {
       "id": 272535,
@@ -429,12 +489,25 @@
       "coverOffsetY": 28
     },
     {
-      "id": 298406,
-      "title": "Claire Rieveldt",
-      "cover": "/img/chara/claire-rieveldt.png",
-      "source": "Trails of Cold Steel",
+      "id": 87496,
+      "title": "Bayonetta",
+      "cover": "/img/chara/bayonetta.png",
+      "source": "Bayonetta",
       "coverOffsetY": 35
->>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
+    },
+    {
+      "id": 136284,
+      "title": "Shizuka Masou",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b136284-HV4FwSGchPsq.png",
+      "source": "Rance 02",
+      "coverOffsetY": 40
+    },
+    {
+      "id": 219275,
+      "title": "Jeanne",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b219275-fGijIVw2jnag.png",
+      "source": "Bayonetta",
+      "coverOffsetY": 23
     }
   ],
   "monthlyChars": [

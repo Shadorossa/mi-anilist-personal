@@ -125,11 +125,10 @@ const monthlyWorks = (db.monthlyPicks || [])
     .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
 // 6. MENSUALES (PERSONAJES)
+const allDbChars = [...(db.characters || []), ...(db.likedCharacters || [])];
 const monthlyChars = (db.monthlyChars || [])
     .map((pick) => {
-        const fullChar = (db.characters || []).find(
-            (c) => c.title === pick.name,
-        );
+        const fullChar = allDbChars.find((c) => c.title === pick.name);
         const [y, m] = pick.month.split("-");
         const dateObj = new Date(parseInt(y), parseInt(m) - 1);
         const monthName = dateObj
@@ -171,9 +170,13 @@ if (db.likedCharacters && db.likedCharacters.length > 0) {
         .map((c) => ({
             name: c.title,
             img: resolveImagePath(c.cover),
-            source: c.source,
+            source: c.source || "Sin Origen",
         }))
-        .sort((a, b) => a.source.localeCompare(b.source));
+        .sort((a, b) => {
+            const sourceCompare = a.source.localeCompare(b.source);
+            if (sourceCompare !== 0) return sourceCompare;
+            return a.name.localeCompare(b.name);
+        });
 }
 ---
 

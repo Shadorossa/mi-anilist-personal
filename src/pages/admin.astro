@@ -52,13 +52,24 @@ function resolveImagePath(basePath) {
     return basePath; // Fallback to original path if not found.
 }
 
-let db = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
+let db = {
+    favorites: [],
+    monthlyPicks: [],
+    characters: [],
+    monthlyChars: [],
+    likedCharacters: [],
+};
 try {
     const d = await import("../content/database.json");
     db = d.default || d;
 } catch (e) {}
 
 db.characters = (db.characters || []).map((char) => ({
+    ...char,
+    cover: resolveImagePath(char.cover),
+}));
+
+db.likedCharacters = (db.likedCharacters || []).map((char) => ({
     ...char,
     cover: resolveImagePath(char.cover),
 }));
@@ -102,22 +113,14 @@ const favoritesOrdered = db.favorites
                 <button
                     onclick="switchMode('characters')"
                     class="nav-btn"
-<<<<<<< HEAD
                     title="Buscar Personajes"
-                    ><i class="fa-solid fa-magnifying-glass"></i></button
-=======
-                    title="Buscar Personajes"><i class="fa-solid fa-mask"></i></button
->>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
+                    ><i class="fa-solid fa-mask"></i></button
                 >
                 <button
                     onclick="switchMode('my-characters')"
                     class="nav-btn"
-<<<<<<< HEAD
                     title="Mis Personajes"
                     ><i class="fa-solid fa-users"></i></button
-=======
-                    title="Mis Personajes"><i class="fa-solid fa-users"></i></button
->>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
                 >
                 <div class="h-px bg-white/5 w-full"></div>
                 <button
@@ -170,7 +173,7 @@ const favoritesOrdered = db.favorites
                         >
                     </form>
                 </div>
-                <div class="custom-scrollbar h-full">
+                <div class="custom-scrollbar flex-1">
                     <div id="searchResults" class="asearch-grid"></div>
                 </div>
             </div>
@@ -230,13 +233,13 @@ const favoritesOrdered = db.favorites
                         />
                     </div>
                 </div>
-                <div class="custom-scrollbar h-full">
+                <div class="custom-scrollbar flex-1">
                     <div id="localGrid" class="asearch-grid"></div>
                 </div>
             </div>
 
             <div id="characters-panel" class="panel hidden">
-                <div class="flex flex-col h-full min-h-0 gap-6">
+                <div class="flex flex-col h-full min-h-0">
                     <div class="search-bar-container shrink-0">
                         <select
                             disabled
@@ -244,11 +247,7 @@ const favoritesOrdered = db.favorites
                         >
                             <option>Personajes</option>
                         </select>
-                        <form
-                            id="charSearchForm"
-                            class="search-form"
-                            onsubmit="event.preventDefault();"
-                        >
+                        <form id="charSearchForm" class="search-form">
                             <input
                                 type="text"
                                 id="charInput"
@@ -261,23 +260,8 @@ const favoritesOrdered = db.favorites
                             >
                         </form>
                     </div>
-                    <div class="custom-scrollbar h-full space-y-10">
-<<<<<<< HEAD
-                        <div class="flex justify-between items-center">
-                            <h3 class="panel-subheader">Mis Personajes</h3>
-                            <button
-                                onclick="createNewCharacter()"
-                                class="text-indigo-400 hover:text-indigo-300 text-xs font-bold uppercase tracking-wider px-2 py-1 rounded hover:bg-indigo-500/10"
-                            >
-                                Crear Nuevo
-                            </button>
-                            <div id="savedCharsGrid" class="asearch-grid mt-4">
-                            </div>
-                        </div>
-                        <div class="border-t border-white/5 pt-6">
-=======
+                    <div class="custom-scrollbar flex-1 space-y-10">
                         <div>
->>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
                             <h3 class="panel-subheader">
                                 Resultados de Búsqueda
                             </h3>
@@ -298,14 +282,14 @@ const favoritesOrdered = db.favorites
                         class="form-input !w-48 !text-xs"
                     />
                 </div>
-                <div class="custom-scrollbar h-full">
+                <div class="custom-scrollbar flex-1">
                     <div id="myCharsGrid" class="asearch-grid"></div>
                 </div>
             </div>
 
             <div id="favorites-panel" class="panel hidden">
                 <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="panel-header">Editor Hall of Fame</h2>
+                    <h2 class="panel-header">Ordenar Favoritos</h2>
                     <div
                         class="bg-[#0a0a0c] p-1 rounded-full border border-white/10 flex relative w-24 h-10 shadow-inner"
                     >
@@ -346,15 +330,37 @@ const favoritesOrdered = db.favorites
                     </div>
                 </div>
 
-                <div id="fav-chars-view" class="hidden flex-col flex-1 min-h-0">
-                    <div class="custom-scrollbar flex-1">
-                        <div id="favCharsList" class="asearch-grid"></div>
+                <div
+                    id="fav-chars-view"
+                    class="hidden flex flex-col flex-1 min-h-0"
+                >
+                    <div
+                        class="custom-scrollbar flex-1"
+                        id="fav-chars-container"
+                    >
+                        <h3 class="panel-subheader mb-2 mt-4">
+                            Hall of Fame (Arrastrables)
+                        </h3>
+                        <div
+                            id="favCharsList"
+                            class="asearch-grid min-h-[120px]"
+                        >
+                        </div>
+
+                        <h3 class="panel-subheader mb-2 mt-8">
+                            Me Gustan (Arrastrables)
+                        </h3>
+                        <div
+                            id="likedCharsList"
+                            class="asearch-grid min-h-[120px]"
+                        >
+                        </div>
                     </div>
                     <div class="mt-auto pt-4 border-t border-white/5">
                         <button
                             id="saveCharOrderBtn"
                             class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white h-9 rounded-lg font-bold hover:bg-indigo-500 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
-                            ><i class="fa-solid fa-save"></i> Guardar Orden</button
+                            ><i class="fa-solid fa-save"></i> Guardar Órdenes de Personajes</button
                         >
                     </div>
                 </div>
@@ -377,70 +383,28 @@ const favoritesOrdered = db.favorites
                     </div>
                 </div>
                 <div class="flex-1 flex gap-6 min-h-0">
-                    <div class="w-1/3 flex flex-col gap-4">
-                        <div>
-                            <h3 class="panel-subheader mb-2">
-                                Coincidencias Sugeridas
-                            </h3>
-                            <div
-                                id="potential-matches"
-                                class="saga-list custom-scrollbar h-48"
-                            >
-                            </div>
-                        </div>
-                        <div class="flex-1 flex flex-col min-h-0">
+                    <div class="w-1/4 flex flex-col min-h-0">
+                        <div class="custom-scrollbar flex-1 pr-2">
                             <h3 class="panel-subheader mb-2">
                                 Obras sin asignar
                             </h3>
-                            <div
-                                id="unassigned-games"
-                                class="saga-list custom-scrollbar flex-1"
-                            >
+                            <div id="unassigned-games" class="saga-list mb-6">
                             </div>
+                            <h3 class="panel-subheader mb-2">Sugerencias</h3>
+                            <div id="suggested-games" class="saga-list"></div>
                         </div>
                     </div>
-                    <div class="w-2/3 flex flex-col">
+                    <div class="w-3/4 flex flex-col">
                         <h3 class="panel-subheader mb-2">Sagas</h3>
                         <div
                             id="sagas-container"
-                            class="custom-scrollbar flex-1 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4 content-start"
+                            class="custom-scrollbar flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 content-start"
                         >
                         </div>
                     </div>
                 </div>
             </div>
         </main>
-
-        <div
-            id="sagaCoverPickerModal"
-            class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-        >
-            <div
-                class="bg-[#0c0c0e] border border-white/10 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col h-[600px]"
-            >
-                <div
-                    class="p-6 border-b border-white/5 flex justify-between items-center"
-                >
-                    <h3
-                        id="sagaCoverPickerTitle"
-                        class="text-lg font-bold text-white"
-                    >
-                        Seleccionar Portada para Saga
-                    </h3>
-                    <button
-                        onclick="closeSagaCoverPicker()"
-                        class="text-gray-500 hover:text-white transition"
-                        ><i class="fa-solid fa-xmark text-lg"></i></button
-                    >
-                </div>
-                <div
-                    id="sagaCoverPickerGrid"
-                    class="asearch-grid p-6 overflow-y-auto custom-scrollbar"
-                >
-                    <!-- Covers will be injected here -->
-                </div>
-            </div>
-        </div>
 
         <div
             id="editor"
@@ -737,12 +701,22 @@ const favoritesOrdered = db.favorites
                     </div>
 
                     <div class="pt-4 mt-auto">
-                        <button
-                            id="saveMediaBtn"
-                            type="button"
-                            class="w-full bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
-                            >Guardar Cambios</button
-                        >
+                        <div class="flex items-center gap-4">
+                            <button
+                                id="deleteMediaBtn"
+                                type="button"
+                                class="bg-red-500/10 text-red-400 h-9 rounded-lg font-bold hover:bg-red-500/20 transition text-[10px] uppercase tracking-widest px-6"
+                            >
+                                Eliminar Logs
+                            </button>
+                            <button
+                                id="saveMediaBtn"
+                                type="button"
+                                class="flex-1 bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                            >
+                                Guardar Cambios
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -828,7 +802,6 @@ const favoritesOrdered = db.favorites
                                     class="flex items-center justify-center gap-3"
                                 >
                                     <div
-                                        class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
                                         class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
                                     >
                                         <div
@@ -964,6 +937,30 @@ const favoritesOrdered = db.favorites
             </div>
         </div>
 
+        <!-- Saga Cover Picker Modal -->
+        <div
+            id="saga-cover-picker-modal"
+            class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-4xl rounded-3xl shadow-2xl p-6 relative flex flex-col max-h-[80vh]"
+            >
+                <button
+                    onclick="document.getElementById('saga-cover-picker-modal').classList.add('hidden')"
+                    class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20"
+                    ><i class="fa-solid fa-xmark"></i></button
+                >
+                <h3
+                    id="saga-picker-title"
+                    class="text-lg font-bold text-white mb-4 shrink-0"
+                >
+                </h3>
+                <div class="custom-scrollbar flex-1">
+                    <div id="saga-picker-grid" class="asearch-grid"></div>
+                </div>
+            </div>
+        </div>
+
         <script define:vars={{ localLibrary, favoritesOrdered, db }}>
             window.localLibrary = localLibrary;
             window.favoritesList = favoritesOrdered;
@@ -971,6 +968,7 @@ const favoritesOrdered = db.favorites
             window.monthlyPicksGlobal = db.monthlyPicks || [];
             window.charactersGlobal = db.characters || [];
             window.monthlyCharsGlobal = db.monthlyChars || [];
+            window.likedCharactersGlobal = db.likedCharacters || [];
             window.sagas = db.sagas || {};
         </script>
 
@@ -981,14 +979,15 @@ const favoritesOrdered = db.favorites
 
         <script is:inline>
             // CSS para el panel de sagas
+
             const sagaStyles = `
-                .saga-list { background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 8px; min-height: 100px; display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; align-content: start; }
+                .saga-list { background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 6px; min-height: 80px; display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; align-content: start; }
                 .saga-item { position: relative; aspect-ratio: 2 / 3; border-radius: 4px; cursor: grab; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
                 .saga-item-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
                 .saga-item.sortable-ghost { background: #6366f1; opacity: 0.5; }
-                .saga-container { background-color: #0c0c0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; }
-                .saga-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-                .saga-title-input { background: transparent; color: white; font-weight: bold; border: none; outline: none; width: 100%; font-size: 14px; }
+                .saga-container { background-color: #0c0c0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; }
+                .saga-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+                .saga-title-input { background: transparent; color: white; font-weight: bold; border: none; outline: none; width: 100%; font-size: 13px; }
                 .delete-saga-btn { color: #71717a; cursor: pointer; }
                 .delete-saga-btn:hover { color: #f87171; }
 
@@ -1006,55 +1005,96 @@ const favoritesOrdered = db.favorites
                     color: #404040;
                 }
             `;
+
             const styleSheet = document.createElement("style");
             styleSheet.innerText = sagaStyles;
             document.head.appendChild(styleSheet);
+
+            window.toggleSagaFavorite = (sagaName, starIcon) => {
+                const favIndex = window.favoritesTitles.findIndex(
+                    (fav) => fav && fav.isSaga && fav.title === sagaName,
+                );
+
+                if (favIndex > -1) {
+                    // Si ya es favorito, lo quitamos
+                    window.favoritesTitles.splice(favIndex, 1);
+                    starIcon.classList.remove("text-yellow-400");
+                    starIcon.classList.add(
+                        "text-gray-600",
+                        "hover:text-yellow-400",
+                    );
+                } else {
+                    openSagaCoverPicker(sagaName);
+                }
+            };
+
+            window.openSagaCoverPicker = (sagaName) => {
+                const modal = document.getElementById(
+                    "saga-cover-picker-modal",
+                );
+                const grid = document.getElementById("saga-picker-grid");
+                const title = document.getElementById("saga-picker-title");
+
+                const gamesInSaga = window.sagas[sagaName];
+                if (!gamesInSaga || gamesInSaga.length === 0) {
+                    alert(
+                        "Esta saga no tiene juegos. Añade juegos a la saga primero.",
+                    );
+                    return;
+                }
+
+                title.innerText = `Elige una portada para la saga "${sagaName}"`;
+
+                grid.innerHTML = gamesInSaga
+                    .map((gameTitle) => {
+                        const game = window.localLibrary.find(
+                            (item) => item.title === gameTitle,
+                        );
+                        if (!game) return "";
+                        return `
+                        <div class="asearch-card" onclick="selectSagaCover('${sagaName}', '${game.cover}')">
+                            <img src="${game.cover}" loading="lazy">
+                            <div class="asearch-info">
+                                <h4 class="asearch-title">${game.title}</h4>
+                            </div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+
+                modal.classList.remove("hidden");
+            };
+
+            window.selectSagaCover = (sagaName, coverUrl) => {
+                const sagaFavObject = {
+                    isSaga: true,
+                    title: sagaName,
+                    cover: coverUrl,
+                };
+                window.favoritesTitles.push(sagaFavObject);
+
+                const starIcon = document.querySelector(
+                    `i[onclick*="'${sagaName}'"]`,
+                );
+                if (starIcon) {
+                    starIcon.classList.add("text-yellow-400");
+                    starIcon.classList.remove(
+                        "text-gray-600",
+                        "hover:text-yellow-400",
+                    );
+                }
+
+                document
+                    .getElementById("saga-cover-picker-modal")
+                    .classList.add("hidden");
+            };
 
             let currentSelection = null;
             let isFavorite = false;
             let currentPickYear = new Date().getFullYear();
             let currentCharPickYear = new Date().getFullYear();
-
-            let currentSagaForHof = null;
-
-            window.createNewCharacter = () => {
-                currentSelection = {
-                    id: `custom-${Date.now()}`, // Unique ID for new characters
-                    title: "",
-                    source: "",
-                    cover: "https://placehold.co/240x360/111/333?text=Pegar+Imagen",
-                    isNew: true, // Flag to indicate it's a new character
-                };
-                openCharEditor(currentSelection);
-            };
-
-            window.addSagaToHof = (sagaName) => {
-                currentSagaForHof = sagaName;
-                const sagaGames = window.sagas[sagaName] || [];
-                const gameObjects = sagaGames
-                    .map((title) =>
-                        window.localLibrary.find(
-                            (item) => item.title === title,
-                        ),
-                    )
-                    .filter(Boolean);
-
-                const grid = document.getElementById("sagaCoverPickerGrid");
-                document.getElementById("sagaCoverPickerTitle").innerText =
-                    `Seleccionar Portada para "${sagaName}"`;
-
-                grid.innerHTML = gameObjects
-                    .map(
-                        (game) => `
-                    <div class="asearch-card !rounded-lg" onclick="selectSagaCover('${game.cover}')">
-                        <img src="${game.cover}" class="obj-center"><div class="asearch-info !opacity-100 !bg-black/50"><h4 class="asearch-title !text-[9px]">${game.title}</h4></div></div>`,
-                    )
-                    .join("");
-
-                document
-                    .getElementById("sagaCoverPickerModal")
-                    .classList.remove("hidden");
-            };
+            let favCharsSortable = null;
+            let likedCharsSortable = null;
 
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
@@ -1076,30 +1116,6 @@ const favoritesOrdered = db.favorites
                 }
             }
 
-            window.selectSagaCover = (coverUrl) => {
-                const sagaObject = {
-                    isSaga: true,
-                    title: currentSagaForHof,
-                    cover: coverUrl,
-                };
-
-                const existingIndex = window.favoritesTitles.findIndex(
-                    (fav) =>
-                        typeof fav === "object" &&
-                        fav.title === sagaObject.title,
-                );
-                if (existingIndex === -1) {
-                    window.favoritesTitles.unshift(sagaObject);
-                    alert(
-                        `"${sagaObject.title}" añadida al Hall of Fame. Ve al editor para guardarla y ordenarla.`,
-                    );
-                } else {
-                    alert("Esta saga ya está en el Hall of Fame.");
-                }
-
-                closeSagaCoverPicker();
-            };
-
             // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
                 try {
@@ -1115,12 +1131,6 @@ const favoritesOrdered = db.favorites
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
                 }
-            };
-
-            window.closeSagaCoverPicker = () => {
-                document
-                    .getElementById("sagaCoverPickerModal")
-                    .classList.add("hidden");
             };
 
             // --- 2. DEFINIR LA FUNCIÓN PARA ABRIR EL EDITOR DE PERSONAJES ---
@@ -1175,30 +1185,21 @@ const favoritesOrdered = db.favorites
             };
 
             function renderCard(item, actionName, isChar = false) {
+                const isFav = window.favoritesTitles.includes(item.title);
+                // encodeURIComponent doesn't escape single quotes, which breaks the onclick attribute.
+                // We need to manually encode it for it to be a valid JS string inside the attribute.
                 const safeItem = encodeURIComponent(
                     JSON.stringify(item),
                 ).replace(/'/g, "%27");
 
-                if (item.isSaga) {
-                    return `
-                    <div data-item='${safeItem}' class="asearch-card">
-                        <img src="${item.cover}" class="obj-center">
-                        <div class="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">Saga</div>
-                        <div class="asearch-info !opacity-100 !bg-gradient-to-t from-black/80 to-transparent">
-                            <h4 class="asearch-title !transform-none">${item.title}</h4>
-                        </div>
-                    </div>`;
-                }
-
-                const isFav = window.favoritesTitles.includes(item.title);
-
+                // Si es personaje, no mostramos estrellas
                 const starRating =
                     !isChar && window.calculateRating
                         ? window.calculateRating(item.score || 0)
                         : 0;
 
                 return `
-    <div onclick="handleCardClick('${actionName}', '${safeItem}')" data-item='${safeItem}' class="asearch-card">
+    <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card">
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy">
         ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
@@ -1668,8 +1669,19 @@ const favoritesOrdered = db.favorites
                             `/api/search.json?q=${encodeURIComponent(q)}&type=${t}`,
                         );
                         const data = await res.json();
+                        const keywordsToFilter = [
+                            "digital deluxe",
+                            "collection",
+                            "hd edition",
+                        ];
+                        const filteredData = data.filter((item) => {
+                            const lowerCaseTitle = item.title.toLowerCase();
+                            return !keywordsToFilter.some((keyword) =>
+                                lowerCaseTitle.includes(keyword),
+                            );
+                        });
                         document.getElementById("searchResults").innerHTML =
-                            data
+                            filteredData
                                 .map((i) => renderCard(i, "openEditorSearch"))
                                 .join("");
                     } catch (e) {
@@ -1699,9 +1711,9 @@ const favoritesOrdered = db.favorites
                 if (mode === "favorites") renderFavWorksSortable();
                 if (mode === "characters") {
                     document.getElementById("charResults").innerHTML = "";
-                    }
-                    if (mode === "my-characters") {
-                        renderMyCharacters();
+                }
+                if (mode === "my-characters") {
+                    renderMyCharacters();
                 }
                 if (mode === "sagas") {
                     renderSagasPanel();
@@ -1711,7 +1723,10 @@ const favoritesOrdered = db.favorites
             function renderMyCharacters(filter = "") {
                 const grid = document.getElementById("myCharsGrid");
                 if (!grid) return;
-                let list = window.charactersGlobal || [];
+                let list = [
+                    ...(window.charactersGlobal || []),
+                    ...(window.likedCharactersGlobal || []),
+                ].sort((a, b) => a.title.localeCompare(b.title));
                 if (filter) {
                     list = list.filter((c) =>
                         c.title.toLowerCase().includes(filter.toLowerCase()),
@@ -1732,31 +1747,48 @@ const favoritesOrdered = db.favorites
                     renderMyCharacters(e.target.value),
                 );
 
+            function renderSagaFavoriteCard(sagaItem) {
+                return `
+                <div class="asearch-card" data-issaga="true" data-title="${sagaItem.title}" data-cover="${sagaItem.cover}">
+                    <img src="${sagaItem.cover}" class="obj-center" loading="lazy">
+                    <div class="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">Saga</div>
+                    <div class="asearch-info">
+                        <h4 class="asearch-title">${sagaItem.title}</h4>
+                    </div>
+                </div>`;
+            }
+
             function renderFavWorksSortable() {
                 const container = document.getElementById("favList");
-                const list = window.favoritesTitles
-                    .map((fav) => {
-                        if (typeof fav === "string") {
-                            const work = window.localLibrary.find(
-                                (item) => item.title === fav,
-                            );
-                            if (work) return { ...work, isSaga: false }; // Ensure isSaga is false
-                            return null;
-                        }
-                        return fav; // It's a saga object
-                    })
-                    .filter(Boolean);
 
-                if (list.length === 0) {
+                if (window.favoritesTitles.length === 0) {
                     container.innerHTML =
                         '<p class="col-span-full text-center text-white/20 py-20">No tienes obras en favoritos aún.</p>';
                     return;
                 }
 
-                // Dibujamos las tarjetas
-                container.innerHTML = list
-                    .map((item) => renderCard(item, "openEditorLocal"))
+                const listHtml = window.favoritesTitles
+                    .map((fav) => {
+                        if (typeof fav === "string") {
+                            const item = window.localLibrary.find(
+                                (i) => i.title === fav,
+                            );
+                            if (item) {
+                                return renderCard(
+                                    item,
+                                    "openEditorLocal",
+                                    false,
+                                );
+                            }
+                            return ""; // Or a placeholder for a missing item
+                        } else if (fav && fav.isSaga) {
+                            return renderSagaFavoriteCard(fav);
+                        }
+                        return "";
+                    })
                     .join("");
+
+                container.innerHTML = listHtml;
 
                 // Activamos la capacidad de arrastrar (Sortable)
                 new Sortable(container, {
@@ -1766,20 +1798,41 @@ const favoritesOrdered = db.favorites
             }
 
             function renderFavCharsSortable() {
-                const container = document.getElementById("favCharsList");
-                const list = window.charactersGlobal || [];
+                if (favCharsSortable) favCharsSortable.destroy();
+                if (likedCharsSortable) likedCharsSortable.destroy();
 
-                if (list.length === 0) {
-                    container.innerHTML =
-                        '<p class="col-span-full text-center text-white/20 py-20">No tienes personajes en favoritos aún.</p>';
-                    return;
-                }
+                const favContainer = document.getElementById("favCharsList");
+                const likedContainer =
+                    document.getElementById("likedCharsList");
+                const favList = window.charactersGlobal || [];
+                const likedList = window.likedCharactersGlobal || [];
 
-                container.innerHTML = list
-                    .map((item) => renderCard(item, "openCharEditor", true))
-                    .join("");
+                favContainer.innerHTML =
+                    favList.length > 0
+                        ? favList
+                              .map((item) =>
+                                  renderCard(item, "openCharEditor", true),
+                              )
+                              .join("")
+                        : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí desde "Me Gustan".</p>';
 
-                new Sortable(container, {
+                likedContainer.innerHTML =
+                    likedList.length > 0
+                        ? likedList
+                              .map((item) =>
+                                  renderCard(item, "openCharEditor", true),
+                              )
+                              .join("")
+                        : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí desde "Hall of Fame".</p>';
+
+                favCharsSortable = new Sortable(favContainer, {
+                    group: "characters",
+                    animation: 150,
+                    ghostClass: "opacity-50",
+                });
+
+                likedCharsSortable = new Sortable(likedContainer, {
+                    group: "characters",
                     animation: 150,
                     ghostClass: "opacity-50",
                 });
@@ -1816,26 +1869,43 @@ const favoritesOrdered = db.favorites
                     btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
                     btn.disabled = true;
 
-                    const newOrderTitles = Array.from(
+                    const newFavOrderTitles = Array.from(
                         document.querySelectorAll(
                             "#favCharsList .asearch-title",
                         ),
                     ).map((el) => el.innerText);
-                    const newOrderedChars = newOrderTitles
-                        .map((title) =>
-                            window.charactersGlobal.find(
-                                (c) => c.title === title,
-                            ),
-                        )
+
+                    const newLikedOrderTitles = Array.from(
+                        document.querySelectorAll(
+                            "#likedCharsList .asearch-title",
+                        ),
+                    ).map((el) => el.innerText);
+
+                    const allChars = [
+                        ...window.charactersGlobal,
+                        ...window.likedCharactersGlobal,
+                    ];
+
+                    const newOrderedFavs = newFavOrderTitles
+                        .map((title) => allChars.find((c) => c.title === title))
                         .filter(Boolean);
-                    window.charactersGlobal = newOrderedChars;
+
+                    const newOrderedLiked = newLikedOrderTitles
+                        .map((title) => allChars.find((c) => c.title === title))
+                        .filter(Boolean);
+
+                    window.charactersGlobal = newOrderedFavs;
+                    window.likedCharactersGlobal = newOrderedLiked;
 
                     try {
                         await fetch("/api/save.json", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                dbData: { characters: newOrderedChars },
+                                dbData: {
+                                    characters: newOrderedFavs,
+                                    likedCharacters: newOrderedLiked,
+                                },
                             }),
                         });
                         btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
@@ -1861,29 +1931,24 @@ const favoritesOrdered = db.favorites
                     btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
                     btn.disabled = true;
 
-                    // Obtenemos los títulos en el nuevo orden en el que han quedado las tarjetas
-                    const newOrder = Array.from(
-                        document.querySelectorAll("#favList .asearch-card"),
-                    )
-                        .map((card) => {
-                            // The data-item attribute is on a child for sagas, so we need to find the card itself
-                            const cardElement = card.closest(".asearch-card");
-                            const itemDataString = cardElement.dataset.item;
-                            if (!itemDataString) return null;
-                            const itemData = JSON.parse(
-                                decodeURIComponent(itemDataString),
-                            );
-
-                            if (itemData.isSaga) {
-                                return {
+                    const newOrder = [];
+                    document
+                        .querySelectorAll("#favList .asearch-card")
+                        .forEach((card) => {
+                            if (card.dataset.issaga === "true") {
+                                newOrder.push({
                                     isSaga: true,
-                                    title: itemData.title,
-                                    cover: itemData.cover,
-                                }; // Save the whole object for sagas
+                                    title: card.dataset.title,
+                                    cover: card.dataset.cover,
+                                });
+                            } else {
+                                const titleEl =
+                                    card.querySelector(".asearch-title");
+                                if (titleEl) {
+                                    newOrder.push(titleEl.innerText);
+                                }
                             }
-                            return itemData.title; // Save just the title for works
-                        })
-                        .filter(Boolean);
+                        });
 
                     window.favoritesTitles = newOrder;
 
@@ -1920,36 +1985,162 @@ const favoritesOrdered = db.favorites
                 `;
             }
 
-            function renderSagasPanel() {
-                const sagasContainer =
-                    document.getElementById("sagas-container");
-                const potentialMatchesContainer =
-                    document.getElementById("potential-matches");
-                const unassignedContainer =
-                    document.getElementById("unassigned-games");
+            function romanToArabic(s) {
+                if (!s || typeof s !== "string") return null;
+                const roman = s.toUpperCase();
+                if (!/^[IVXLCDM]+$/.test(roman)) return null;
+                const map = {
+                    I: 1,
+                    V: 5,
+                    X: 10,
+                    L: 50,
+                    C: 100,
+                    D: 500,
+                    M: 1000,
+                };
+                let result = 0;
+                for (let i = 0; i < roman.length; i++) {
+                    const current = map[roman[i]];
+                    const next = map[roman[i + 1]];
+                    if (next && current < next) {
+                        result -= current;
+                    } else {
+                        result += current;
+                    }
+                }
+                return result;
+            }
 
+            function getSortValue(title) {
+                const trimmedTitle = title.trim();
+                let match = trimmedTitle.match(/^(.*)\s(F)$/i);
+                if (match) return { value: 1000, base: match[1].trim() };
+                match = trimmedTitle.match(/^(.*)\s(\d+)$/);
+                if (match)
+                    return {
+                        value: parseInt(match[2], 10),
+                        base: match[1].trim(),
+                    };
+                match = trimmedTitle.match(/^(.*)\s([IVXLCDM]+)$/i);
+                if (match) {
+                    const num = romanToArabic(match[2]);
+                    if (num !== null) {
+                        return { value: num, base: match[1].trim() };
+                    }
+                }
+                return { value: 1, base: trimmedTitle };
+            }
+
+            function renderSagasPanel() {
                 const findItem = (title) =>
                     window.localLibrary.find((item) => item.title === title);
 
+                // 1. Auto-assignment phase
                 const allItemTitles = new Set(
                     window.localLibrary.map((item) => item.title),
                 );
-                const assignedTitles = new Set(
+                const allSagaNames = Object.keys(window.sagas);
+                let assignedInSagas = new Set(
                     Object.values(window.sagas).flat(),
                 );
+                let currentlyUnassigned = new Set(
+                    [...allItemTitles].filter(
+                        (title) => !assignedInSagas.has(title),
+                    ),
+                );
+
+                const modifiedSagas = new Set();
+
+                for (const sagaName of allSagaNames) {
+                    const titlesToMove = [];
+                    for (const unassignedTitle of currentlyUnassigned) {
+                        const { base } = getSortValue(unassignedTitle);
+                        if (base.toLowerCase() === sagaName.toLowerCase()) {
+                            titlesToMove.push(unassignedTitle);
+                        }
+                    }
+
+                    if (titlesToMove.length > 0) {
+                        window.sagas[sagaName].push(...titlesToMove);
+                        titlesToMove.forEach((title) =>
+                            currentlyUnassigned.delete(title),
+                        );
+                        modifiedSagas.add(sagaName);
+                    }
+                }
+
+                // Process sagas: remove duplicates and sort only if modified
+                for (const sagaName in window.sagas) {
+                    window.sagas[sagaName] = [
+                        ...new Set(window.sagas[sagaName]),
+                    ]; // Remove duplicates
+
+                    if (modifiedSagas.has(sagaName)) {
+                        window.sagas[sagaName].sort((a, b) => {
+                            const valA = getSortValue(a).value;
+                            const valB = getSortValue(b).value;
+                            return valB - valA; // Descending
+                        });
+                    }
+                }
+
+                // 2. Categorize remaining unassigned
+                const suggestedTitles = [];
+                const trulyUnassignedTitles = [];
+                const sagaNamesLower = allSagaNames.map((s) => s.toLowerCase());
+
+                for (const title of currentlyUnassigned) {
+                    let isSuggestion = false;
+                    for (const sagaName of sagaNamesLower) {
+                        if (title.toLowerCase().includes(sagaName)) {
+                            isSuggestion = true;
+                            break;
+                        }
+                    }
+                    if (isSuggestion) {
+                        suggestedTitles.push(title);
+                    } else {
+                        trulyUnassignedTitles.push(title);
+                    }
+                }
+
+                // 3. Render UI
+                const unassignedContainer =
+                    document.getElementById("unassigned-games");
+                const suggestedContainer =
+                    document.getElementById("suggested-games");
+                const sagasContainer =
+                    document.getElementById("sagas-container");
+
+                unassignedContainer.innerHTML = trulyUnassignedTitles
+                    .map(findItem)
+                    .filter(Boolean)
+                    .map(renderSagaItem)
+                    .join("");
+                suggestedContainer.innerHTML = suggestedTitles
+                    .map(findItem)
+                    .filter(Boolean)
+                    .map(renderSagaItem)
+                    .join("");
 
                 sagasContainer.innerHTML = Object.entries(window.sagas)
                     .sort((a, b) => a[0].localeCompare(b[0]))
                     .map(([sagaName, games]) => {
+                        const isFav = window.favoritesTitles.some(
+                            (fav) =>
+                                fav && fav.isSaga && fav.title === sagaName,
+                        );
                         const gameObjects = games.map(findItem).filter(Boolean);
                         return `
                         <div class="saga-container" data-saga-name="${sagaName}">
                             <div class="saga-header">
-                                <input type="text" class="saga-title-input" value="${sagaName}" />
+                                <input type="text" class="saga-title-input" value="${sagaName}">
                                 <div class="flex items-center gap-3">
-                                    <i class="fa-solid fa-crown text-yellow-500/50 hover:text-yellow-500 cursor-pointer transition-colors" title="Añadir al Hall of Fame" onclick="addSagaToHof('${
-                                        sagaName
-                                    }')"></i>
+                                    <i class="fa-solid fa-star cursor-pointer ${
+                                        isFav
+                                            ? "text-yellow-400"
+                                            : "text-gray-600 hover:text-yellow-400"
+                                    }" title="Marcar como Favorito" onclick="toggleSagaFavorite('${sagaName}', this)"></i>
                                     <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
                                 </div>
                             </div>
@@ -1961,43 +2152,13 @@ const favoritesOrdered = db.favorites
                     })
                     .join("");
 
-                const unassignedItems = [...allItemTitles]
-                    .filter((title) => !assignedTitles.has(title))
-                    .map(findItem)
-                    .filter(Boolean);
-
-                const potentialMatches = [];
-                const completelyUnassigned = [];
-                const sagaNamesLower = Object.keys(window.sagas).map((s) =>
-                    s.toLowerCase(),
-                );
-
-                unassignedItems.forEach((item) => {
-                    const itemTitleLower = item.title.toLowerCase();
-                    const isPotentialMatch = sagaNamesLower.some((sagaName) =>
-                        itemTitleLower.startsWith(sagaName),
-                    );
-                    if (isPotentialMatch) {
-                        potentialMatches.push(item);
-                    } else {
-                        completelyUnassigned.push(item);
-                    }
-                });
-
-                potentialMatchesContainer.innerHTML = potentialMatches
-                    .map(renderSagaItem)
-                    .join("");
-                unassignedContainer.innerHTML = completelyUnassigned
-                    .map(renderSagaItem)
-                    .join("");
-
-                // Init Sortable on all lists
-                new Sortable(potentialMatchesContainer, {
+                // Init Sortable
+                new Sortable(unassignedContainer, {
                     group: "sagas",
                     animation: 150,
                     ghostClass: "sortable-ghost",
                 });
-                new Sortable(unassignedContainer, {
+                new Sortable(suggestedContainer, {
                     group: "sagas",
                     animation: 150,
                     ghostClass: "sortable-ghost",
@@ -2012,6 +2173,30 @@ const favoritesOrdered = db.favorites
                         });
                     });
             }
+
+            document
+                .getElementById("addSagaBtn")
+                .addEventListener("click", () => {
+                    const sagasContainer =
+                        document.getElementById("sagas-container");
+                    const newSagaName = `Nueva Saga ${Object.keys(window.sagas).length + 1}`;
+                    const newSagaEl = document.createElement("div");
+                    newSagaEl.className = "saga-container";
+                    newSagaEl.dataset.sagaName = newSagaName;
+                    newSagaEl.innerHTML = `
+                    <div class="saga-header">
+                        <input type="text" class="saga-title-input" value="${newSagaName}">
+                        <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
+                    </div>
+                    <div class="saga-list"></div>
+                `;
+                    sagasContainer.appendChild(newSagaEl);
+                    new Sortable(newSagaEl.querySelector(".saga-list"), {
+                        group: "sagas",
+                        animation: 150,
+                        ghostClass: "sortable-ghost",
+                    });
+                });
 
             document
                 .getElementById("saveSagasBtn")
@@ -2100,37 +2285,6 @@ const favoritesOrdered = db.favorites
                 });
             }
 
-            const charCoverWrapper =
-                document.getElementById("charCover").parentElement;
-            charCoverWrapper.addEventListener("paste", (e) => {
-                if (
-                    !document
-                        .getElementById("charEditor")
-                        .classList.contains("hidden")
-                ) {
-                    const items = (e.clipboardData || window.clipboardData)
-                        .items;
-                    for (const item of items) {
-                        if (item.type.indexOf("image") === 0) {
-                            const blob = item.getAsFile();
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                                const dataUrl = event.target.result;
-                                document.getElementById("charCover").src =
-                                    dataUrl;
-                                document.getElementById(
-                                    "charEditorPreviewCover",
-                                ).src = dataUrl;
-                                currentSelection.cover = dataUrl;
-                            };
-                            reader.readAsDataURL(blob);
-                            e.preventDefault();
-                            break;
-                        }
-                    }
-                }
-            });
-
             // --- GUARDAR PERSONAJE ---
             document
                 .getElementById("saveCharBtn")
@@ -2151,19 +2305,26 @@ const favoritesOrdered = db.favorites
                         coverOffsetY: Number(coverOffsetY),
                     };
 
-                    const existingIndex = window.charactersGlobal.findIndex(
+                    const favIndex = window.charactersGlobal.findIndex(
+                        (c) => c.id === updatedChar.id,
+                    );
+                    const likedIndex = window.likedCharactersGlobal.findIndex(
                         (c) => c.id === updatedChar.id,
                     );
 
-                    if (existingIndex > -1) {
-                        window.charactersGlobal[existingIndex] = updatedChar;
+                    if (favIndex > -1) {
+                        window.charactersGlobal[favIndex] = updatedChar;
+                    } else if (likedIndex > -1) {
+                        window.likedCharactersGlobal[likedIndex] = updatedChar;
                     } else {
-                        window.charactersGlobal.push(updatedChar);
+                        // Por defecto, un personaje nuevo se añade a "Me Gustan"
+                        window.likedCharactersGlobal.push(updatedChar);
                     }
 
                     const payload = {
                         dbData: {
                             characters: window.charactersGlobal,
+                            likedCharacters: window.likedCharactersGlobal,
                             monthlyChars: window.monthlyCharsGlobal,
                         },
                     };
@@ -2188,6 +2349,70 @@ const favoritesOrdered = db.favorites
                     } catch (e) {
                         console.error("Error saving character:", e);
                         alert("Error al guardar el personaje.");
+                    }
+                });
+
+            document
+                .getElementById("deleteMediaBtn")
+                .addEventListener("click", async () => {
+                    if (!currentSelection || !currentSelection.id) return;
+
+                    if (
+                        !confirm(
+                            `¿Seguro que quieres eliminar "${currentSelection.title}" de tu colección? Esta acción no se puede deshacer.`,
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const btn = document.getElementById("deleteMediaBtn");
+                    const originalText = btn.innerText;
+                    btn.innerText = "Eliminando...";
+                    btn.disabled = true;
+
+                    try {
+                        const deleteRes = await fetch("/api/delete.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                type: currentSelection.type,
+                                id: currentSelection.id,
+                            }),
+                        });
+                        if (!deleteRes.ok)
+                            throw new Error("File deletion failed");
+
+                        window.favoritesTitles = window.favoritesTitles.filter(
+                            (t) => {
+                                if (typeof t === "string")
+                                    return t !== currentSelection.title;
+                                return true;
+                            },
+                        );
+                        window.monthlyPicksGlobal =
+                            window.monthlyPicksGlobal.filter(
+                                (p) => p.title !== currentSelection.title,
+                            );
+
+                        const saveDbRes = await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                dbData: {
+                                    favorites: window.favoritesTitles,
+                                    monthlyPicks: window.monthlyPicksGlobal,
+                                },
+                            }),
+                        });
+                        if (!saveDbRes.ok) throw new Error("DB update failed");
+
+                        btn.innerText = "¡Eliminado!";
+                        setTimeout(() => window.location.reload(), 500);
+                    } catch (e) {
+                        console.error("Error deleting item:", e);
+                        alert("Error al eliminar la obra.");
+                        btn.innerText = originalText;
+                        btn.disabled = false;
                     }
                 });
 

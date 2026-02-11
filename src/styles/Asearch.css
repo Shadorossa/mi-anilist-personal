@@ -46,7 +46,6 @@ body {
     flex-direction: column;
     padding: 2rem;
     min-height: 0;
-    height: 100%;
 }
 
 .hidden {

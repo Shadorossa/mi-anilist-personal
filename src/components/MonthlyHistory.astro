@@ -2,7 +2,7 @@
 const { works = [], chars = [] } = Astro.props;
 ---
 
-<div class="w-full">
+<div class="w-full" id="monthly-history-component">
     <div class="flex gap-6 items-center">
         <div class="flex-1 min-w-0">
             <!-- Works History -->
@@ -233,6 +233,13 @@ const { works = [], chars = [] } = Astro.props;
     setupDraggableCarousel("hist-chars-scroll");
 
     document.addEventListener("keydown", (e) => {
+        const historyComponent = document.getElementById(
+            "monthly-history-component",
+        );
+        if (!historyComponent?.matches(":hover")) {
+            return;
+        }
+
         const worksWrapper = document.getElementById("hist-works-wrapper");
         let activeSlider = null;
 
@@ -242,14 +249,11 @@ const { works = [], chars = [] } = Astro.props;
             activeSlider = document.getElementById("hist-chars-scroll");
         }
 
-        if (activeSlider) {
+        if (activeSlider && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
             const rect = activeSlider.getBoundingClientRect();
             const isInViewport =
                 rect.top < window.innerHeight && rect.bottom >= 0;
-            if (
-                isInViewport &&
-                (e.key === "ArrowLeft" || e.key === "ArrowRight")
-            ) {
+            if (isInViewport) {
                 activeSlider.scrollBy({
                     left: e.key === "ArrowLeft" ? -300 : 300,
                     behavior: "smooth",

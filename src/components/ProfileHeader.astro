@@ -29,15 +29,15 @@ const { profile, bannerPath, avatarPath, stats } = Astro.props;
     >
         <div class="flex items-end gap-6">
             <!-- Avatar -->
-            <div class="relative w-72 h-[26rem] md:w-96 md:h-[31.6rem] -mb-20">
+            <div class="relative w-80 h-[29rem] md:w-[36rem] md:h-[34rem]">
                 <img
                     src={avatarPath}
                     onerror="this.src='https://placehold.co/400x600?text=U'"
-                    class="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.4)]"
+                    class="w-full h-full object-contain object-bottom drop-shadow-[0_10px_15px_rgba(0,0,0,0.4)]"
                 />
             </div>
             <!-- Name and Bio -->
-            <div class="mb-16">
+            <div>
                 <h1
                     class="text-5xl md:text-6xl font-black text-white tracking-tighter drop-shadow-2xl"
                 >

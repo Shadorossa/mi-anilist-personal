@@ -1,5 +1,5 @@
 ---
-const { favorites = [], characters = [] } = Astro.props;
+const { favorites = [], characters = [], likedCharacters = [] } = Astro.props;
 
 const padArray = (arr, size) => {
     const padded = [...arr];
@@ -7,10 +7,26 @@ const padArray = (arr, size) => {
     return padded.slice(0, size);
 };
 
+// Divide los personajes en grupos de 10
+const chunkArray = (arr, size) => {
+    const chunked = [];
+    for (let i = 0; i < arr.length; i += size) {
+        chunked.push(arr.slice(i, i + size));
+    }
+    return chunked;
+};
+
 const fixedFavorites = padArray(favorites, 10);
+const characterPages = chunkArray(characters, 10);
+const paddedCharacterPages = characterPages.map((page) => padArray(page, 10));
+
+const likedCharacterRows = chunkArray(likedCharacters, 20);
+const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
+    padArray(row, 20),
+);
 ---
 
-<div class="w-full">
+<div class="w-full" id="hall-of-fame-component">
     <div class="flex gap-6 items-center">
         <div class="flex-1 min-w-0">
             <div
@@ -106,96 +122,100 @@ const fixedFavorites = padArray(favorites, 10);
                 }
             </div>
 
-            <div id="view-chars" class="hidden relative group/carousel">
-                <div class="fade-x">
-                    <div
-                        id="hof-chars-scroll"
-                        class="hide-scroll overflow-x-auto scroll-smooth"
-                    >
-                        <div
-                            class="flex h-[400px] gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl"
-                            style={characters.length > 10
-                                ? `width: ${characters.length * 10}%`
-                                : "width: 100%"}
-                        >
-                            {
-                                (characters.length > 10
-                                    ? characters
-                                    : padArray(characters, 10)
-                                ).map((char, index) => (
-                                    <div
-                                        class:list={[
-                                            "relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0",
-                                            char
-                                                ? "hover:flex-[3] cursor-pointer bg-black"
-                                                : "bg-[#121215]",
-                                        ]}
-                                    >
-                                        {char ? (
-                                            <>
-                                                <img
-                                                    src={char.img}
-                                                    class="absolute inset-0 w-full h-full object-cover object-top opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
-                                                    loading="lazy"
-                                                />
-                                                <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+            <div
+                id="view-chars"
+                class="hidden bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl"
+            >
+                <div
+                    id="char-slider-track"
+                    class="flex transition-transform duration-500 ease-in-out"
+                >
+                    {
+                        paddedCharacterPages.map((page, pageIndex) => (
+                            <div class="flex h-[400px] w-full flex-shrink-0 gap-1">
+                                {page.map((char, charIndex) => {
+                                    const globalIndex =
+                                        pageIndex * 10 + charIndex;
+                                    return (
+                                        <div
+                                            class:list={[
+                                                "relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0",
+                                                char
+                                                    ? "hover:flex-[3] cursor-pointer bg-black"
+                                                    : "bg-[#121215]",
+                                            ]}
+                                        >
+                                            {char ? (
+                                                <>
+                                                    <img
+                                                        src={char.img}
+                                                        class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                                                        loading="lazy"
+                                                    />
+                                                    <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
 
-                                                <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
-                                                    <span class="text-[10px] font-bold text-white/40 group-hover:text-pink-500">
-                                                        #{index + 1}
+                                                    <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
+                                                        <span class="text-[10px] font-bold text-white/40 group-hover:text-pink-500">
+                                                            #{globalIndex + 1}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                                        <h3
+                                                            class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                                            style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                                        >
+                                                            {char.name}
+                                                        </h3>
+                                                    </div>
+
+                                                    <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                                        <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                                            {char.name}
+                                                        </h3>
+                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                            {char.source}
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                                                    <span class="text-white/10 font-bold text-lg group-hover:text-white/20">
+                                                        #{globalIndex + 1}
                                                     </span>
                                                 </div>
-
-                                                <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
-                                                    <h3
-                                                        class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
-                                                        style="writing-mode: vertical-rl; transform: rotate(180deg);"
-                                                    >
-                                                        {char.name}
-                                                    </h3>
-                                                </div>
-
-                                                <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
-                                                    <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
-                                                        {char.name}
-                                                    </h3>
-                                                    <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                        {char.source}
-                                                    </p>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                                                <span class="text-white/10 font-bold text-lg group-hover:text-white/20">
-                                                    #{index + 1}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ))
+                    }
                 </div>
-                {
-                    characters.length > 10 && (
-                        <>
-                            <button
-                                onclick="scrollHistoryGrid('hof-chars-scroll', -1)"
-                                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
-                            >
-                                <i class="fa-solid fa-chevron-left" />
-                            </button>
-                            <button
-                                onclick="scrollHistoryGrid('hof-chars-scroll', 1)"
-                                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
-                            >
-                                <i class="fa-solid fa-chevron-right" />
-                            </button>
-                        </>
-                    )
-                }
             </div>
+            {
+                paddedCharacterPages.length > 1 && (
+                    <div
+                        id="char-pagination-controls"
+                        class="hidden justify-end gap-2 mt-2"
+                    >
+                        <button
+                            id="char-prev-btn"
+                            onclick="changeCharPage(-1)"
+                            class="w-8 h-8 rounded-lg text-gray-400 bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <i class="fa-solid fa-chevron-left" />
+                        </button>
+                        <button
+                            id="char-next-btn"
+                            onclick="changeCharPage(1)"
+                            class="w-8 h-8 rounded-lg text-gray-400 bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <i class="fa-solid fa-chevron-right" />
+                        </button>
+                    </div>
+                )
+            }
         </div>
         <div class="flex flex-col items-center gap-2">
             <button
@@ -213,11 +233,97 @@ const fixedFavorites = padArray(favorites, 10);
             >
                 <i class="fa-solid fa-mask"></i>
             </button>
+            <button
+                onclick="toggleLikedCharsModal(true)"
+                id="btn-liked-toggle"
+                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+            >
+                <i class="fa-solid fa-thumbs-up"></i>
+            </button>
         </div>
     </div>
 </div>
 
-<script is:inline>
+<!-- Liked Characters Fullscreen Modal -->
+<div
+    id="liked-chars-modal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
+>
+    <div
+        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
+    >
+        <div class="flex items-center justify-between mb-4 shrink-0">
+            <h2 class="text-lg font-bold text-white">
+                Personajes que me gustan
+            </h2>
+            <button
+                onclick="toggleLikedCharsModal(false)"
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div
+            class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2 space-y-2"
+        >
+            {
+                likedCharacters.length > 0 ? (
+                    paddedLikedCharacterRows.map((row) => (
+                        <div class="flex h-[150px] w-full gap-1">
+                            {row.map((char) =>
+                                char ? (
+                                    <div
+                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[3] cursor-pointer bg-black"
+                                        title={char.name}
+                                    >
+                                        <img
+                                            src={char.img}
+                                            alt={char.name}
+                                            loading="lazy"
+                                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                                        />
+                                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                            <h3
+                                                class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                                style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                            >
+                                                {char.name}
+                                            </h3>
+                                        </div>
+                                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                                {char.name}
+                                            </h3>
+                                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                {char.source}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div class="relative flex-1 min-w-0 bg-[#121215] border-r border-black/50 last:border-0" />
+                                ),
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <div class="flex items-center justify-center h-full">
+                        <p class="text-gray-600">
+                            No hay personajes en esta lista.
+                        </p>
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</div>
+
+<script
+    define:vars={{
+        totalCharPages: paddedCharacterPages.length,
+    }}
+    is:inline
+>
     window.scrollHistoryGrid = (elementId, direction) => {
         const container = document.getElementById(elementId);
         if (container) {
@@ -272,51 +378,100 @@ const fixedFavorites = padArray(favorites, 10);
         const charsView = document.getElementById("view-chars");
         const btnWorks = document.getElementById("btn-works");
         const btnChars = document.getElementById("btn-chars");
+        const paginationControls = document.getElementById(
+            "char-pagination-controls",
+        );
 
         if (type === "works") {
             worksView.classList.remove("hidden");
             worksView.classList.add("flex");
             charsView.classList.add("hidden");
-            charsView.classList.remove("relative");
+            if (paginationControls) {
+                paginationControls.classList.add("hidden");
+                paginationControls.classList.remove("flex");
+            }
+
             btnWorks.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
             btnChars.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
-        } else {
+        } else if (type === "chars") {
             worksView.classList.add("hidden");
+            worksView.classList.remove("flex");
             charsView.classList.remove("hidden");
-            charsView.classList.add("relative");
+            if (paginationControls) {
+                paginationControls.classList.remove("hidden");
+                paginationControls.classList.add("flex");
+            }
+
             btnChars.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
             btnWorks.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
-            setupDraggableCarousel("hof-chars-scroll");
+
+            // Initialize pagination if not already
+            if (!window.charPaginatorInitialized) {
+                initializeCharPaginator();
+            }
+        }
+    };
+
+    let currentCharPage = 0;
+    window.charPaginatorInitialized = false;
+
+    function updateCharPagination() {
+        const track = document.getElementById("char-slider-track");
+        if (track) {
+            track.style.transform = `translateX(-${currentCharPage * 100}%)`;
+        }
+
+        document.getElementById("char-prev-btn").disabled =
+            currentCharPage === 0;
+        document.getElementById("char-next-btn").disabled =
+            currentCharPage === totalCharPages - 1;
+    }
+
+    window.changeCharPage = (direction) => {
+        const newPage = currentCharPage + direction;
+        if (newPage >= 0 && newPage < totalCharPages) {
+            currentCharPage = newPage;
+            updateCharPagination();
+        }
+    };
+
+    function initializeCharPaginator() {
+        if (totalCharPages > 1) {
+            updateCharPagination();
+            window.charPaginatorInitialized = true;
+        }
+    }
+
+    window.toggleLikedCharsModal = (show) => {
+        const modal = document.getElementById("liked-chars-modal");
+        if (show) {
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden"; // Prevent background scroll
+        } else {
+            modal.classList.add("hidden");
+            document.body.style.overflow = ""; // Restore background scroll
         }
     };
 
     document.addEventListener("keydown", (e) => {
+        const hofComponent = document.getElementById("hall-of-fame-component");
         const charsView = document.getElementById("view-chars");
-        if (charsView && !charsView.classList.contains("hidden")) {
-            const slider = document.getElementById("hof-chars-scroll");
-            if (slider) {
-                const rect = slider.getBoundingClientRect();
-                const isInViewport =
-                    rect.top < window.innerHeight && rect.bottom >= 0;
-                if (isInViewport) {
-                    const scrollAmount = 300;
-                    if (e.key === "ArrowLeft") {
-                        slider.scrollBy({
-                            left: -scrollAmount,
-                            behavior: "smooth",
-                        });
-                    } else if (e.key === "ArrowRight") {
-                        slider.scrollBy({
-                            left: scrollAmount,
-                            behavior: "smooth",
-                        });
-                    }
-                }
-            }
+
+        if (
+            !hofComponent?.matches(":hover") ||
+            !charsView ||
+            charsView.classList.contains("hidden")
+        )
+            return;
+
+        if (e.key === "ArrowLeft") {
+            changeCharPage(-1);
+        } else if (e.key === "ArrowRight") {
+            changeCharPage(1);
         }
     });
 </script>
@@ -349,5 +504,26 @@ const fixedFavorites = padArray(favorites, 10);
         cursor: grabbing !important;
         scroll-behavior: auto;
         user-select: none;
+    }
+    .custom-scrollbar-popup::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar-popup::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar-popup::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
 </style>
