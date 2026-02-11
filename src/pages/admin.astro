@@ -1,520 +1,2051 @@
 ---
-import { getCollection } from "astro:content";
+import fs from "node:fs";
+import path from "node:path";
+import "../styles/Asearch.css";
 
-// 1. CARGAR DATOS LOCALES
-const games = await getCollection("games").catch(() => []);
-const anime = await getCollection("anime").catch(() => []);
-const manga = await getCollection("manga").catch(() => []);
+function readCollection(collectionName) {
+    const dirPath = path.resolve(`./src/content/${collectionName}`);
+    if (!fs.existsSync(dirPath)) return [];
+    const files = fs.readdirSync(dirPath);
+    return files
+        .filter((file) => file.endsWith(".json"))
+        .map((file) => {
+            try {
+                const filePath = path.join(dirPath, file);
+                const content = fs.readFileSync(filePath, "utf-8");
+                const data = JSON.parse(content);
+                const type =
+                    collectionName === "games" ? "game" : collectionName;
+                return { ...data, id: file, type: type };
+            } catch (e) {
+                return null;
+            }
+        })
+        .filter((item) => item !== null);
+}
 
+// 1. CARGAR DATOS
 const localLibrary = [
-    ...games.map((i) => ({ ...i.data, id: i.id, type: "game" })),
-    ...anime.map((i) => ({ ...i.data, id: i.id, type: "anime" })),
-    ...manga.map((i) => ({ ...i.data, id: i.id, type: "manga" })),
+    ...readCollection("games"),
+    ...readCollection("anime"),
+    ...readCollection("manga"),
 ];
 
-// 2. CARGAR DB CENTRAL
+function resolveImagePath(basePath) {
+    if (
+        !basePath ||
+        basePath.startsWith("http") ||
+        /\.\w{3,4}$/.test(basePath)
+    ) {
+        return basePath; // It's a full URL or already has an extension.
+    }
+    const publicDir = path.resolve("./public");
+    const potentialPath = path.join(publicDir, basePath);
+    const dir = path.dirname(potentialPath);
+    const slug = path.basename(potentialPath);
+
+    const commonExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+    for (const ext of commonExtensions) {
+        if (fs.existsSync(path.join(dir, `${slug}${ext}`)))
+            return `${basePath}${ext}`;
+    }
+    return basePath; // Fallback to original path if not found.
+}
+
 let db = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
 try {
     const d = await import("../content/database.json");
     db = d.default || d;
 } catch (e) {}
 
+db.characters = (db.characters || []).map((char) => ({
+    ...char,
+    cover: resolveImagePath(char.cover),
+}));
+
 const favoritesOrdered = db.favorites
-    .map(title => localLibrary.find(item => item.title === title))
-    .filter(item => item !== undefined);
+    .map((title) => localLibrary.find((item) => item.title === title))
+    .filter((item) => item !== undefined);
 ---
 
 <html lang="es" class="dark">
-<head>
-    <title>Nexus Admin</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <style>
-        body { 
-            background-color: #050505; 
-            color: #e4e4e7;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            background-image: radial-gradient(circle at 50% 0%, #1a1a20 0%, #050505 80%);
-        }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        
-        /* Grid Estricto */
-        .dense-grid {
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-        @media (min-width: 640px) { .dense-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        @media (min-width: 768px) { .dense-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        @media (min-width: 1024px) { .dense-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
-        @media (min-width: 1280px) { .dense-grid { grid-template-columns: repeat(9, minmax(0, 1fr)); } }
-
-        .tag-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #d4d4d8; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
-        .tag-pill button:hover { color: #ef4444; }
-        
-        .stars-container i { cursor: pointer; transition: transform 0.1s, color 0.1s; }
-        .stars-container i:hover { transform: scale(1.2); }
-        .mask-fade-right { mask-image: linear-gradient(to right, black 60%, transparent 100%); }
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    </style>
-</head>
-<body class="flex h-screen w-full selection:bg-indigo-500/30 selection:text-white">
-
-    <aside class="w-16 bg-[#0a0a0c] border-r border-white/5 flex flex-col items-center py-6 z-50 shrink-0">
-        <div class="mb-8 text-indigo-500 opacity-80"><i class="fa-solid fa-cube text-xl"></i></div>
-        <nav class="flex flex-col gap-4 w-full px-3">
-            <button onclick="switchMode('search')" class="nav-btn active w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Añadir Obra"><i class="fa-solid fa-plus"></i></button>
-            <button onclick="switchMode('library')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Biblioteca"><i class="fa-solid fa-layer-group"></i></button>
-            <div class="h-px bg-white/5 w-full"></div>
-            <button onclick="switchMode('characters')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Personajes"><i class="fa-solid fa-mask"></i></button>
-            <div class="h-px bg-white/5 w-full"></div>
-            <button onclick="switchMode('favorites')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all" title="Ordenar Favs"><i class="fa-solid fa-heart"></i></button>
-        </nav>
-        <div class="mt-auto flex flex-col gap-3 w-full px-3">
-            <button onclick="switchMode('profile')" class="nav-btn w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-user"></i></button>
-            <a href="/" class="w-10 h-10 rounded-xl flex items-center justify-center text-red-900/50 hover:text-red-400 hover:bg-red-500/10 transition-all"><i class="fa-solid fa-power-off"></i></a>
-        </div>
-    </aside>
-
-    <main class="flex-1 relative flex flex-col min-w-0">
-        
-        <div id="search-panel" class="panel flex-1 flex flex-col p-8 min-h-0">
-            <div class="flex gap-3 mb-6 shrink-0 max-w-2xl mx-auto w-full bg-[#0a0a0c] p-1.5 rounded-2xl border border-white/5 shadow-2xl">
-                <select id="mediaType" class="bg-[#18181b] text-gray-300 font-bold rounded-xl px-4 outline-none border border-white/5 cursor-pointer hover:text-white transition h-10 text-xs">
-                    <option value="game">Juegos</option>
-                    <option value="anime">Anime</option>
-                    <option value="manga">Manga</option>
-                </select>
-                <form id="searchForm" class="flex-1 flex relative group">
-                    <input type="text" id="searchInput" placeholder="Buscar obra..." autocomplete="off" class="w-full bg-transparent text-white text-sm pl-4 pr-12 outline-none">
-                    <button type="submit" class="absolute right-0 top-0 bottom-0 px-4 text-gray-500 hover:text-indigo-400"><i class="fa-solid fa-search"></i></button>
-                </form>
+    <head>
+        <title>Nexus Admin</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"
+        ></script>
+    </head>
+    <body>
+        <aside class="admin-sidebar">
+            <div class="mb-8 text-indigo-500 opacity-80">
+                <i class="fa-solid fa-cube text-xl"></i>
             </div>
-            <div id="searchResults" class="dense-grid overflow-y-auto pb-20 custom-scrollbar px-4"></div>
-        </div>
-
-        <div id="library-panel" class="panel hidden flex-1 flex flex-col p-8 min-h-0">
-            <div class="flex justify-between items-center mb-6 shrink-0 border-b border-white/5 pb-4">
-                <h2 class="text-lg font-bold text-white tracking-tight">Tu Colección</h2>
-                <input type="text" id="localFilter" placeholder="Filtrar..." class="bg-[#0a0a0c] border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-white/10 w-56 transition-colors">
+            <nav class="flex flex-col gap-4 w-full px-3">
+                <button
+                    onclick="switchMode('search')"
+                    class="nav-btn active"
+                    title="Añadir"><i class="fa-solid fa-plus"></i></button
+                >
+                <button
+                    onclick="switchMode('library')"
+                    class="nav-btn"
+                    title="Biblioteca"
+                    ><i class="fa-solid fa-layer-group"></i></button
+                >
+                <div class="h-px bg-white/5 w-full"></div>
+                <button
+                    onclick="switchMode('characters')"
+                    class="nav-btn"
+                    title="Personajes"><i class="fa-solid fa-mask"></i></button
+                >
+                <div class="h-px bg-white/5 w-full"></div>
+                <button
+                    onclick="switchMode('favorites')"
+                    class="nav-btn"
+                    title="Favoritos"><i class="fa-solid fa-heart"></i></button
+                >
+                <button
+                    onclick="switchMode('sagas')"
+                    class="nav-btn"
+                    title="Sagas"><i class="fa-solid fa-list-ol"></i></button
+                >
+            </nav>
+            <div class="mt-auto w-full px-3 pt-4">
+                <div class="h-px bg-white/5 w-full mb-4"></div>
+                <a href="/" class="nav-btn" title="Ver Perfil">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
             </div>
-            <div id="localGrid" class="dense-grid overflow-y-auto pb-20 custom-scrollbar px-2"></div>
-        </div>
+        </aside>
 
-        <div id="characters-panel" class="panel hidden flex-1 flex flex-col p-8 min-h-0">
-            <div class="flex gap-3 mb-6 shrink-0 max-w-2xl mx-auto w-full bg-[#0a0a0c] p-1.5 rounded-2xl border border-white/5 shadow-2xl">
-                <div class="flex items-center px-4 bg-[#18181b] rounded-xl border border-white/5">
-                    <i class="fa-solid fa-mask text-gray-400 text-xs"></i>
+        <main class="admin-main">
+            <div
+                id="search-panel"
+                class="panel flex-1 flex flex-col p-8 min-h-0 h-full"
+            >
+                <div class="search-bar-container">
+                    <select
+                        id="mediaType"
+                        class="form-input !w-auto !text-xs !font-bold"
+                    >
+                        <option value="game">Juegos</option>
+                        <option value="anime">Anime</option>
+                        <option value="manga">Manga</option>
+                    </select>
+                    <form
+                        id="searchForm"
+                        class="search-form"
+                        onsubmit="event.preventDefault();"
+                    >
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Buscar obra..."
+                            autocomplete="off"
+                            class="search-input"
+                        />
+                        <button type="submit" class="search-btn"
+                            ><i class="fa-solid fa-search"></i></button
+                        >
+                    </form>
                 </div>
-                <form id="charSearchForm" class="flex-1 flex relative group">
-                    <input type="text" id="charInput" placeholder="Buscar personaje en Anilist..." autocomplete="off" class="w-full bg-transparent text-white text-sm pl-4 pr-12 outline-none">
-                    <button type="submit" class="absolute right-0 top-0 bottom-0 px-4 text-gray-500 hover:text-pink-400"><i class="fa-solid fa-search"></i></button>
-                </form>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto custom-scrollbar pb-20 px-2 space-y-8">
-                <div>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Mis Personajes</h3>
-                    <div id="savedCharsGrid" class="dense-grid"></div>
-                </div>
-                <div>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2 border-t border-white/5 pt-4">Resultados Búsqueda</h3>
-                    <div id="charResults" class="dense-grid"></div>
+                <div class="custom-scrollbar h-full">
+                    <div id="searchResults" class="asearch-grid"></div>
                 </div>
             </div>
-        </div>
 
-        <div id="favorites-panel" class="panel hidden flex-1 flex flex-col p-8 min-h-0">
-            <div class="flex justify-between items-center mb-6 shrink-0">
-                <h2 class="text-lg font-bold text-white tracking-tight">Ordenar Hall of Fame</h2>
-                <button id="saveOrderBtn" class="bg-white text-black font-bold px-5 py-2 rounded-lg hover:bg-gray-200 transition text-xs shadow-lg active:scale-95">Guardar Orden</button>
-            </div>
-            <div id="favList" class="dense-grid overflow-y-auto pb-20 px-2"></div>
-        </div>
-
-        <div id="profile-panel" class="panel hidden flex-1 flex flex-col items-center justify-center p-8">
-            <div class="bg-[#0f0f11] border border-white/5 p-8 rounded-3xl w-full max-w-md shadow-2xl">
-                <h2 class="text-xl font-bold text-white mb-6 text-center">Perfil</h2>
-                <input type="text" id="usernameInput" class="w-full bg-[#050505] border border-white/10 rounded-xl p-4 text-white mb-4 outline-none text-sm focus:border-indigo-500/50 transition">
-                <textarea id="bioInput" rows="4" class="w-full bg-[#050505] border border-white/10 rounded-xl p-4 text-white outline-none resize-none mb-6 text-sm focus:border-indigo-500/50 transition"></textarea>
-                <button id="saveProfileBtn" class="w-full bg-white text-black font-bold py-3 rounded-xl transition hover:bg-gray-200 active:scale-95">Guardar Cambios</button>
-            </div>
-        </div>
-    </main>
-
-    <div id="editor" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-        <div class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl h-[480px] rounded-[2rem] shadow-2xl overflow-hidden flex flex-row relative">
-            <div class="w-[260px] bg-black relative shrink-0 overflow-hidden">
-                <img id="editorCover" src="" class="absolute inset-0 w-full h-full object-cover opacity-80 mask-fade-right">
-                <div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"></div>
-            </div>
-            
-            <div class="flex-1 p-8 flex flex-col relative min-w-0 bg-[#0c0c0e]">
-                <button onclick="closeEditor()" class="absolute top-6 right-6 text-gray-500 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-
-                <div class="mb-8 pr-10 pt-2">
-                    <h2 id="editorTitle" class="text-2xl font-black text-white leading-tight line-clamp-2"></h2>
-                    <p id="editorYear" class="text-xs text-indigo-300 font-bold mt-2 opacity-90 tracking-widest uppercase"></p>
-                </div>
-
-                <div class="flex-1 flex flex-col justify-start space-y-8 pr-4">
+            <div id="library-panel" class="panel hidden">
+                <div class="flex justify-between items-center mb-4 shrink-0">
+                    <h2 class="panel-header">Mi Colección</h2>
                     <div class="flex items-center gap-4">
-                        <div class="flex gap-2">
-                            {[{v:'Jugando', i:'play', c:'green'}, {v:'Pausado', i:'pause', c:'orange'}, {v:'Pendiente', i:'clock', c:'yellow'}, {v:'Abandonado', i:'ban', c:'red'}, {v:'Completado', i:'check', c:'blue'}].map(s => (
-                                <label class="cursor-pointer group relative" title={s.v}>
-                                    <input type="radio" name="status" value={s.v} class="peer hidden" onchange="checkScoreLock()">
-                                    <div class={`w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-500 transition-all 
-                                        peer-checked:border-${s.c}-500 peer-checked:text-${s.c}-500 peer-checked:bg-${s.c}-500/10 peer-checked:shadow-[0_0_15px_rgba(0,0,0,0.5)] peer-checked:scale-110
-                                        hover:border-white/30 hover:text-gray-300 bg-[#121214]`}>
-                                        <i class={`fa-solid fa-${s.i}`}></i>
-                                    </div>
-                                </label>
-                            ))}
+                        <div class="flex items-center gap-1">
+                            <span
+                                class="text-[9px] uppercase font-bold text-gray-600 mr-2 hidden sm:inline tracking-wider"
+                                >Ordenar:</span
+                            >
+                            <button
+                                onclick="setLocalSort('saga', this)"
+                                class="sort-btn-local active w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white transition-all"
+                                title="Por Saga"
+                                ><i class="fa-solid fa-list-ol text-xs"
+                                ></i></button
+                            >
+                            <button
+                                onclick="setLocalSort('score', this)"
+                                class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-yellow-400 hover:bg-white/5 transition-all"
+                                title="Por Nota"
+                                ><i class="fa-solid fa-star text-xs"
+                                ></i></button
+                            >
+                            <button
+                                onclick="setLocalSort('year', this)"
+                                class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-all"
+                                title="Por Fecha de Completado"
+                                ><i class="fa-regular fa-calendar text-xs"
+                                ></i></button
+                            >
+                            <button
+                                onclick="setLocalSort('title', this)"
+                                class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                                title="Alfabéticamente"
+                                ><i class="fa-solid fa-font text-xs"
+                                ></i></button
+                            >
+                            <button
+                                id="localOrderBtn"
+                                onclick="toggleLocalOrder()"
+                                class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-all border border-white/5"
+                                style="display: none;"
+                                ><i
+                                    class="fa-solid fa-arrow-down-wide-short text-xs"
+                                ></i></button
+                            >
                         </div>
-                        <div class="w-px h-8 bg-white/5 mx-1"></div>
-                        <button id="favBtn" onclick="toggleFav()" class="text-gray-600 transition-all hover:scale-110 hover:text-red-400"><i class="fa-solid fa-heart text-xl"></i></button>
+                        <input
+                            type="text"
+                            id="localFilter"
+                            placeholder="Filtrar..."
+                            class="form-input !w-48 !text-xs"
+                        />
                     </div>
+                </div>
+                <div class="custom-scrollbar h-full">
+                    <div id="localGrid" class="asearch-grid"></div>
+                </div>
+            </div>
 
-                    <div id="scoreContainer" class="flex items-center gap-4 opacity-50 transition-opacity">
-                        <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Nota</span>
-                        <div class="stars-container flex gap-1 text-xl cursor-pointer text-[#222]" id="starsVisual"></div>
-                        <span id="scoreText" class="text-white text-xs font-bold bg-white/5 px-2 py-0.5 rounded ml-auto">0</span>
-                        <input type="range" id="scoreRange" min="0" max="10" step="1" value="0" class="sr-only">
+            <div id="characters-panel" class="panel hidden">
+                <div class="flex flex-col h-full min-h-0">
+                    <div class="search-bar-container shrink-0">
+                        <select
+                            disabled
+                            class="form-input !w-auto !text-xs !font-bold"
+                        >
+                            <option>Personajes</option>
+                        </select>
+                        <form id="charSearchForm" class="search-form">
+                            <input
+                                type="text"
+                                id="charInput"
+                                placeholder="Buscar personaje en Anilist..."
+                                autocomplete="off"
+                                class="search-input"
+                            />
+                            <button type="submit" class="search-btn"
+                                ><i class="fa-solid fa-search"></i></button
+                            >
+                        </form>
                     </div>
-
-                    <div class="space-y-3 pt-4 border-t border-white/5">
-                        <div class="flex items-center bg-[#121214] border border-white/5 rounded-xl overflow-hidden shadow-sm h-10 w-fit">
-                            <div class="relative">
-                                <select id="tagMonth" class="appearance-none bg-transparent text-gray-300 text-[10px] font-bold py-2 pl-3 pr-6 outline-none cursor-pointer uppercase tracking-wider relative z-10 hover:text-white transition">
-                                    <option value="01">Ene</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
-                                </select>
+                    <div class="custom-scrollbar h-full space-y-10">
+                        <div>
+                            <h3 class="panel-subheader">Mis Personajes</h3>
+                            <div id="savedCharsGrid" class="asearch-grid mt-4">
                             </div>
-                            <div class="w-px h-4 bg-white/5"></div>
-                            <input type="number" id="tagYear" class="bg-transparent text-gray-300 text-[10px] font-bold py-2 px-2 w-12 text-center outline-none hover:text-white transition" placeholder="Year">
-                            <button onclick="addMonthTag()" class="bg-white/5 hover:bg-white/10 text-white h-full px-3 flex items-center justify-center transition border-l border-white/5"><i class="fa-solid fa-plus text-[10px]"></i></button>
                         </div>
-                        <div id="monthlyTagsContainer" class="flex flex-wrap gap-2 min-h-[24px] content-center"></div>
+                        <div class="border-t border-white/5 pt-6">
+                            <h3 class="panel-subheader">
+                                Resultados de Búsqueda
+                            </h3>
+                            <div id="charResults" class="asearch-grid mt-4">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="favorites-panel" class="panel hidden">
+                <div class="flex justify-between items-center mb-4 shrink-0">
+                    <h2 class="panel-header">Editor Hall of Fame</h2>
+                    <div
+                        class="bg-[#0a0a0c] p-1 rounded-full border border-white/10 flex relative w-24 h-10 shadow-inner"
+                    >
+                        <div
+                            id="fav-tab-bg"
+                            class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-transform duration-300 ease-out border border-white/5"
+                        >
+                        </div>
+                        <button
+                            onclick="switchFavView('works')"
+                            id="btn-fav-works"
+                            class="relative z-10 w-1/2 h-full flex items-center justify-center transition-opacity"
+                            title="Obras Favoritas"
+                            ><i class="fa-solid fa-crown text-yellow-400"
+                            ></i></button
+                        >
+                        <button
+                            onclick="switchFavView('chars')"
+                            id="btn-fav-chars"
+                            class="relative z-10 w-1/2 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
+                            title="Personajes Favoritos"
+                            ><i class="fa-solid fa-mask text-pink-400"
+                            ></i></button
+                        >
                     </div>
                 </div>
 
-                <div class="mt-auto pt-6">
-                    <button id="saveMediaBtn" type="button" class="w-full bg-white text-black h-10 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg shadow-white/5 active:scale-[0.98] text-xs uppercase tracking-wide">Guardar Cambios</button>
+                <div id="fav-works-view" class="flex flex-col flex-1 min-h-0">
+                    <div class="custom-scrollbar flex-1">
+                        <div id="favList" class="asearch-grid"></div>
+                    </div>
+                    <div class="mt-auto pt-4 border-t border-white/5">
+                        <button
+                            id="saveOrderBtn"
+                            class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white h-9 rounded-lg font-bold hover:bg-indigo-500 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                            ><i class="fa-solid fa-save"></i> Guardar Orden</button
+                        >
+                    </div>
+                </div>
+
+                <div id="fav-chars-view" class="hidden flex-col flex-1 min-h-0">
+                    <div class="custom-scrollbar flex-1">
+                        <div id="favCharsList" class="asearch-grid"></div>
+                    </div>
+                    <div class="mt-auto pt-4 border-t border-white/5">
+                        <button
+                            id="saveCharOrderBtn"
+                            class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white h-9 rounded-lg font-bold hover:bg-indigo-500 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                            ><i class="fa-solid fa-save"></i> Guardar Orden</button
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div id="sagas-panel" class="panel hidden">
+                <div class="flex justify-between items-center mb-4 shrink-0">
+                    <h2 class="panel-header">Organizador de Sagas</h2>
+                    <div class="flex gap-2">
+                        <button
+                            id="addSagaBtn"
+                            class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-500 transition text-[10px] uppercase tracking-wide shadow-lg"
+                            >Crear Saga</button
+                        >
+                        <button
+                            id="saveSagasBtn"
+                            class="bg-white text-black font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200 transition text-[10px] uppercase tracking-wide shadow-lg"
+                            >Guardar Sagas</button
+                        >
+                    </div>
+                </div>
+                <div class="flex-1 flex gap-6 min-h-0">
+                    <div class="w-1/4 flex flex-col">
+                        <h3 class="panel-subheader mb-2">Obras sin asignar</h3>
+                        <div
+                            id="unassigned-games"
+                            class="saga-list custom-scrollbar flex-1"
+                        >
+                        </div>
+                    </div>
+                    <div class="w-3/4 flex flex-col">
+                        <h3 class="panel-subheader mb-2">Sagas</h3>
+                        <div
+                            id="sagas-container"
+                            class="custom-scrollbar flex-1 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4 content-start"
+                        >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div
+            id="editor"
+            class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-row relative h-[720px]"
+            >
+                <div
+                    class="w-[280px] bg-black relative shrink-0 overflow-hidden"
+                >
+                    <img
+                        id="editorCover"
+                        src=""
+                        class="absolute inset-0 w-full h-full object-cover opacity-80 mask-fade-right"
+                    />
+                    <div
+                        class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"
+                    >
+                    </div>
+                </div>
+
+                <div
+                    class="flex-1 p-6 flex flex-col relative min-w-0 bg-[#0c0c0e]"
+                >
+                    <button
+                        onclick="closeEditor()"
+                        class="absolute top-4 right-4 text-gray-500 hover:text-white transition"
+                        ><i class="fa-solid fa-xmark text-lg"></i></button
+                    >
+
+                    <div class="mb-5 pr-8">
+                        <h2
+                            id="editorTitle"
+                            class="text-xl font-black text-white leading-tight line-clamp-1"
+                        >
+                        </h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <p
+                                id="editorYear"
+                                class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded"
+                            >
+                            </p>
+                            <button
+                                id="favBtn"
+                                onclick="toggleFav()"
+                                class="text-gray-600 transition-all hover:scale-110 hover:text-red-400 text-sm"
+                                ><i class="fa-solid fa-heart"></i></button
+                            >
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col justify-start">
+                        <div
+                            class="flex justify-between items-center mb-4 px-2"
+                        >
+                            {
+                                [
+                                    { v: "Jugando", i: "play", l: "Jugando" },
+                                    { v: "Pausado", i: "pause", l: "Pausa" },
+                                    {
+                                        v: "Pendiente",
+                                        i: "clock",
+                                        l: "Pendiente",
+                                    },
+                                    { v: "Abandonado", i: "ban", l: "Drop" },
+                                    {
+                                        v: "Completado",
+                                        i: "check",
+                                        l: "Terminado",
+                                    },
+                                ].map((s) => (
+                                    <label class="cursor-pointer group flex flex-col items-center gap-1.5 w-12">
+                                        <input
+                                            type="radio"
+                                            name="status"
+                                            value={s.v}
+                                            class="status-radio hidden"
+                                            onchange="checkScoreLock()"
+                                        />
+                                        <div class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b]">
+                                            <i
+                                                class={`fa-solid fa-${s.i} text-xs text-gray-500 status-icon transition-colors`}
+                                            />
+                                        </div>
+                                        <span class="text-[8px] font-bold text-gray-600 uppercase status-text transition-colors opacity-60 group-hover:opacity-100">
+                                            {s.l}
+                                        </span>
+                                    </label>
+                                ))
+                            }
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="date-input-wrapper">
+                                <label class="date-input-label"
+                                    >Fecha Inicio</label
+                                >
+                                <input
+                                    type="date"
+                                    id="startDate"
+                                    class="date-input"
+                                />
+                            </div>
+                            <div class="date-input-wrapper">
+                                <label class="date-input-label">Fecha Fin</label
+                                >
+                                <input
+                                    type="date"
+                                    id="finishDate"
+                                    class="date-input"
+                                />
+                            </div>
+                        </div>
+
+                        <div
+                            id="scoreContainer"
+                            class="flex items-center justify-between bg-[#121215] border border-white/5 rounded-lg p-2 px-3 mb-4 transition-opacity"
+                        >
+                            <span
+                                class="text-[9px] font-bold text-gray-500 uppercase"
+                                >Valoración</span
+                            >
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="stars-container flex gap-0.5 text-sm cursor-pointer"
+                                    id="starsVisual"
+                                >
+                                </div>
+                                <span
+                                    id="scoreText"
+                                    class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded"
+                                    >0</span
+                                >
+                            </div>
+                            <input
+                                type="range"
+                                id="scoreRange"
+                                min="0"
+                                max="10"
+                                step="1"
+                                value="0"
+                                class="sr-only"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div
+                                class="bg-[#121215] border border-white/5 rounded-lg p-3 mb-4"
+                            >
+                                <div
+                                    class="flex justify-between items-center mb-3"
+                                >
+                                    <span
+                                        class="text-[9px] font-bold text-gray-500 uppercase"
+                                        >Ajuste Cover (Historial)</span
+                                    >
+                                    <span
+                                        id="coverOffsetText"
+                                        class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-10 text-center"
+                                        >50%</span
+                                    >
+                                </div>
+                                <div
+                                    class="flex items-center justify-center gap-3"
+                                >
+                                    <!-- Preview Card -->
+                                    <div
+                                        class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
+                                    >
+                                        <div
+                                            class="flex gap-2 h-10 mb-2 shrink-0"
+                                        >
+                                            <div
+                                                class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0"
+                                            >
+                                                <span
+                                                    class="text-[8px] text-gray-500 font-bold leading-none mb-0.5"
+                                                    >2024</span
+                                                >
+                                                <span
+                                                    class="text-[9px] text-indigo-400 font-black leading-none tracking-wide"
+                                                    >MES</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex-1 relative rounded overflow-hidden shadow-sm"
+                                            >
+                                                <img
+                                                    id="editorPreviewCover"
+                                                    src=""
+                                                    class="absolute inset-0 w-full h-full object-cover"
+                                                    style="object-position: center 50%;"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]"
+                                        >
+                                            <h4
+                                                id="editorPreviewTitle"
+                                                class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2"
+                                            >
+                                                Título de la obra
+                                            </h4>
+                                        </div>
+                                    </div>
+                                    <!-- Vertical Slider -->
+                                    <div
+                                        id="custom-slider-container"
+                                        class="relative h-[100px] w-4 flex justify-center cursor-pointer"
+                                    >
+                                        <div
+                                            class="w-1 h-full bg-white/10 rounded-full"
+                                        >
+                                        </div>
+                                        <div
+                                            id="custom-slider-thumb"
+                                            class="absolute w-4 h-4 bg-indigo-500 rounded-full cursor-grab"
+                                            style="top: calc(50% - 8px);"
+                                        >
+                                        </div>
+                                    </div>
+                                    <!-- Hidden input to store the value -->
+                                    <input
+                                        type="hidden"
+                                        id="coverOffsetYRange"
+                                        value="50"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="timeline-picker">
+                                <div class="year-stepper-mini">
+                                    <span
+                                        class="text-[9px] font-black text-white/30 uppercase italic tracking-widest"
+                                        >Cronología</span
+                                    >
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="year-nav-icon"
+                                            onclick="changePickYear(-1)"
+                                        >
+                                            <i class="fa-solid fa-chevron-left"
+                                            ></i>
+                                        </div>
+                                        <span
+                                            class="year-value"
+                                            id="pickYearDisplay">2024</span
+                                        >
+                                        <div
+                                            class="year-nav-icon"
+                                            onclick="changePickYear(1)"
+                                        >
+                                            <i class="fa-solid fa-chevron-right"
+                                            ></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="month-grid-compact">
+                                    {
+                                        [
+                                            "ENE",
+                                            "FEB",
+                                            "MAR",
+                                            "ABR",
+                                            "MAY",
+                                            "JUN",
+                                            "JUL",
+                                            "AGO",
+                                            "SEP",
+                                            "OCT",
+                                            "NOV",
+                                            "DIC",
+                                        ].map((m, i) => (
+                                            <button
+                                                class="month-btn-item"
+                                                onclick={`toggleMonthPick('${(i + 1).toString().padStart(2, "0")}')`}
+                                                id={`month-btn-${(i + 1).toString().padStart(2, "0")}`}
+                                            >
+                                                {m}
+                                            </button>
+                                        ))
+                                    }
+                                </div>
+                                <div
+                                    id="monthlyTagsContainer"
+                                    class="flex flex-wrap gap-1 mt-2"
+                                >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button
+                            id="saveMediaBtn"
+                            type="button"
+                            class="w-full bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                            >Guardar Cambios</button
+                        >
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="charEditor" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-        <div class="bg-[#0c0c0e] border border-white/10 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
-            <div class="h-56 bg-black relative shrink-0 w-full group">
-                <img id="charCover" src="" class="absolute inset-0 w-full h-full object-cover opacity-80 object-top">
-                <div class="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent"></div>
-                <div class="absolute bottom-4 left-6 right-6">
-                    <h2 id="charNameDisplay" class="text-2xl font-black text-white leading-none drop-shadow-lg shadow-black"></h2>
-                </div>
-            </div>
-            
-            <button onclick="closeCharEditor()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20 backdrop-blur-md"><i class="fa-solid fa-xmark"></i></button>
-
-            <div class="p-6 flex flex-col gap-5 bg-[#0c0c0e]">
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-[9px] font-bold text-gray-600 uppercase mb-1 block">Nombre</label>
-                        <input type="text" id="charNameInput" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-2.5 text-white font-bold outline-none text-xs focus:border-white/20 transition">
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-gray-600 uppercase mb-1 block">Origen</label>
-                        <input type="text" id="charSourceInput" placeholder="Juego / Anime" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-2.5 text-white text-xs outline-none focus:border-white/20 transition">
+        <div
+            id="charEditor"
+            class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <!-- Contenedor principal, ahora con flex-row y más ancho/alto para parecerse al editor principal -->
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-row relative h-[620px]"
+            >
+                <!-- Columna Izquierda: Portada del Personaje -->
+                <div
+                    class="w-[240px] bg-black relative shrink-0 overflow-hidden"
+                >
+                    <img
+                        id="charCover"
+                        src=""
+                        class="absolute inset-0 w-full h-full object-cover object-top opacity-80 mask-fade-right"
+                    />
+                    <div
+                        class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"
+                    >
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-white/5">
-                    <label class="text-[9px] font-bold text-gray-600 uppercase mb-2 block">Historial Mensual</label>
-                    <div class="flex items-center bg-[#121215] border border-white/10 rounded-lg overflow-hidden h-8 w-full mb-2">
-                        <div class="relative flex-1">
-                            <select id="charTagMonth" class="appearance-none bg-transparent text-gray-300 text-[10px] font-bold py-1 pl-3 pr-6 outline-none cursor-pointer uppercase w-full">
-                                <option value="01">Ene</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Abr</option>
-                                <option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option>
-                                <option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
-                            </select>
+                <!-- Columna Derecha: Formulario -->
+                <div
+                    class="flex-1 p-8 flex flex-col relative min-w-0 bg-[#0c0c0e]"
+                >
+                    <button
+                        onclick="closeCharEditor()"
+                        class="absolute top-4 right-4 text-gray-500 hover:text-white transition"
+                        ><i class="fa-solid fa-xmark text-lg"></i></button
+                    >
+
+                    <div class="mb-6 pr-8">
+                        <h2
+                            id="charNameDisplay"
+                            class="text-2xl font-black text-white leading-tight line-clamp-2"
+                        >
+                        </h2>
+                    </div>
+
+                    <div class="flex-1 flex flex-col justify-start">
+                        <div>
+                            <label class="form-label">Nombre</label>
+                            <input
+                                type="text"
+                                id="charNameInput"
+                                class="form-input"
+                            />
                         </div>
-                        <div class="w-px h-4 bg-white/10"></div>
-                        <input type="number" id="charTagYear" class="bg-transparent text-gray-300 text-[10px] font-bold py-1 px-2 w-12 text-center outline-none" placeholder="Año">
-                        <button onclick="addCharMonthTag()" class="bg-white/10 hover:bg-white/20 text-white h-full px-3 transition border-l border-white/10"><i class="fa-solid fa-plus text-[9px]"></i></button>
-                    </div>
-                    <div id="charTagsContainer" class="flex flex-wrap gap-2 min-h-[20px]"></div>
-                </div>
+                        <div>
+                            <label class="form-label">Obra de Origen</label>
+                            <input
+                                type="text"
+                                id="charSourceInput"
+                                class="form-input"
+                            />
+                        </div>
 
-                <div class="flex gap-2 mt-2">
-                    <button id="deleteCharBtn" class="bg-red-500/10 text-red-500 h-10 w-10 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button>
-                    <button onclick="saveCharacter()" class="flex-1 bg-white text-black h-10 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg active:scale-95 text-xs uppercase">Guardar</button>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div
+                                class="bg-[#121215] border border-white/5 rounded-lg p-3"
+                            >
+                                <div
+                                    class="flex justify-between items-center mb-3"
+                                >
+                                    <span
+                                        class="text-[9px] font-bold text-gray-500 uppercase"
+                                        >Ajuste Cover</span
+                                    >
+                                    <span
+                                        id="charCoverOffsetText"
+                                        class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-10 text-center"
+                                        >50%</span
+                                    >
+                                </div>
+                                <div
+                                    class="flex items-center justify-center gap-3"
+                                >
+                                    <div
+                                        class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
+                                    >
+                                        <div
+                                            class="flex gap-2 h-10 mb-2 shrink-0"
+                                        >
+                                            <div
+                                                class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0"
+                                            >
+                                                <span
+                                                    class="text-[8px] text-gray-500 font-bold leading-none mb-0.5"
+                                                    >AÑO</span
+                                                >
+                                                <span
+                                                    class="text-[9px] text-pink-400 font-black leading-none tracking-wide"
+                                                    >MES</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex-1 relative rounded overflow-hidden shadow-sm"
+                                            >
+                                                <img
+                                                    id="charEditorPreviewCover"
+                                                    src=""
+                                                    class="absolute inset-0 w-full h-full object-cover"
+                                                    style="object-position: center 50%;"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]"
+                                        >
+                                            <h4
+                                                id="charEditorPreviewTitle"
+                                                class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2"
+                                            >
+                                                Personaje
+                                            </h4>
+                                        </div>
+                                    </div>
+                                    <div
+                                        id="char-custom-slider-container"
+                                        class="relative h-[100px] w-4 flex justify-center cursor-pointer"
+                                    >
+                                        <div
+                                            class="w-1 h-full bg-white/10 rounded-full"
+                                        >
+                                        </div>
+                                        <div
+                                            id="char-custom-slider-thumb"
+                                            class="absolute w-4 h-4 bg-indigo-500 rounded-full cursor-grab"
+                                            style="top: calc(50% - 8px);"
+                                        >
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="hidden"
+                                        id="charCoverOffsetYRange"
+                                        value="50"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="timeline-picker">
+                                <div class="year-stepper-mini">
+                                    <span
+                                        class="text-[9px] font-black text-white/30 uppercase italic tracking-widest"
+                                        >Cronología</span
+                                    >
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="year-nav-icon"
+                                            onclick="changeCharPickYear(-1)"
+                                        >
+                                            <i class="fa-solid fa-chevron-left"
+                                            ></i>
+                                        </div>
+                                        <span
+                                            class="year-value"
+                                            id="charPickYearDisplay">2024</span
+                                        >
+                                        <div
+                                            class="year-nav-icon"
+                                            onclick="changeCharPickYear(1)"
+                                        >
+                                            <i class="fa-solid fa-chevron-right"
+                                            ></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="month-grid-compact">
+                                    {
+                                        [
+                                            "ENE",
+                                            "FEB",
+                                            "MAR",
+                                            "ABR",
+                                            "MAY",
+                                            "JUN",
+                                            "JUL",
+                                            "AGO",
+                                            "SEP",
+                                            "OCT",
+                                            "NOV",
+                                            "DIC",
+                                        ].map((m, i) => (
+                                            <button
+                                                class="month-btn-item"
+                                                onclick={`toggleCharMonthPick('${(i + 1).toString().padStart(2, "0")}')`}
+                                                id={`char-month-btn-${(i + 1).toString().padStart(2, "0")}`}
+                                            >
+                                                {m}
+                                            </button>
+                                        ))
+                                    }
+                                </div>
+                                <div
+                                    id="charMonthlyTagsContainer"
+                                    class="flex flex-wrap gap-1 mt-2"
+                                >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button
+                            id="saveCharBtn"
+                            class="w-full bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                            >Guardar Personaje</button
+                        >
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script define:vars={{ localLibrary, favoritesOrdered, db }}>
-        window.localLibrary = localLibrary;
-        window.favoritesList = favoritesOrdered; 
-        window.favoritesTitles = db.favorites || []; 
-        window.monthlyPicksGlobal = db.monthlyPicks || []; 
-        window.charactersGlobal = db.characters || [];
-        window.monthlyCharsGlobal = db.monthlyChars || [];
-    </script>
+        <script define:vars={{ localLibrary, favoritesOrdered, db }}>
+            window.localLibrary = localLibrary;
+            window.favoritesList = favoritesOrdered;
+            window.favoritesTitles = db.favorites || [];
+            window.monthlyPicksGlobal = db.monthlyPicks || [];
+            window.charactersGlobal = db.characters || [];
+            window.monthlyCharsGlobal = db.monthlyChars || [];
+            window.sagas = db.sagas || {};
+        </script>
 
-    <script is:inline>
-        let currentSelection = null;
-        let lastSearchResults = [];
-        let isFavorite = false;
-        
-        document.getElementById('tagYear').value = new Date().getFullYear();
-        document.getElementById('charTagYear').value = new Date().getFullYear();
+        <script type="module">
+            import { calculateRating } from "/src/utils/rating.js";
+            window.calculateRating = calculateRating;
+        </script>
 
-        // --- SISTEMA DE MODOS ---
-        window.switchMode = (mode) => {
-            document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-white', 'bg-white/10'));
-            
-            document.getElementById(`${mode}-panel`).classList.remove('hidden');
-            const btn = document.querySelector(`button[onclick="switchMode('${mode}')"]`);
-            if(btn) btn.classList.add('active', 'text-white', 'bg-white/10');
+        <script is:inline>
+            // CSS para el panel de sagas
+            const sagaStyles = `
+                .saga-list { background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 8px; min-height: 100px; display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; align-content: start; }
+                .saga-item { position: relative; aspect-ratio: 2 / 3; border-radius: 4px; cursor: grab; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+                .saga-item-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+                .saga-item.sortable-ghost { background: #6366f1; opacity: 0.5; }
+                .saga-container { background-color: #0c0c0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; }
+                .saga-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+                .saga-title-input { background: transparent; color: white; font-weight: bold; border: none; outline: none; width: 100%; font-size: 14px; }
+                .delete-saga-btn { color: #71717a; cursor: pointer; }
+                .delete-saga-btn:hover { color: #f87171; }
 
-            if(mode === 'library') renderLocalLibrary();
-            if(mode === 'favorites') renderFavoritesSortable();
-            if(mode === 'characters') renderCharacterPanel();
-        }
-        switchMode('search'); 
+                /* Estilos para el picker de meses deshabilitado */
+                .month-btn-item.disabled {
+                    background: rgba(255, 255, 255, 0.02);
+                    color: #404040;
+                    cursor: not-allowed;
+                    border-color: rgba(255, 255, 255, 0.03);
+                    text-decoration: line-through;
+                    text-decoration-color: rgba(239, 68, 68, 0.4);
+                }
+                .month-btn-item.disabled:hover {
+                    background: rgba(255, 255, 255, 0.02);
+                    color: #404040;
+                }
+            `;
+            const styleSheet = document.createElement("style");
+            styleSheet.innerText = sagaStyles;
+            document.head.appendChild(styleSheet);
 
-        // --- RENDER GRID ---
-        function renderCard(item, onclickFunc, isChar = false) {
-            const isFav = window.favoritesTitles.includes(item.title);
-            return `
-            <div onclick='${onclickFunc}(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="group relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer bg-[#18181b] ring-1 ring-white/5 hover:ring-white/20 hover:scale-[1.03] transition-all duration-300 shadow-lg">
-                <img src="${item.cover}" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity ${isChar ? 'object-top' : ''}">
-                ${!isChar && isFav ? '<div class="absolute top-1.5 left-1.5 text-red-500 drop-shadow-md text-[10px]"><i class="fa-solid fa-heart"></i></div>' : ''}
-                <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black via-black/80 to-transparent"><p class="text-[9px] font-bold text-white truncate leading-tight">${item.title}</p></div>
-            </div>`;
-        }
+            let currentSelection = null;
+            let isFavorite = false;
+            let currentPickYear = new Date().getFullYear();
+            let currentCharPickYear = new Date().getFullYear();
 
-        function renderLocalLibrary(filterText = '') {
-            const filtered = window.localLibrary.filter(item => item.title.toLowerCase().includes(filterText.toLowerCase()));
-            document.getElementById('localGrid').innerHTML = filtered.map(item => renderCard(item, 'openEditorLocal')).join('');
-        }
-        document.getElementById('localFilter').addEventListener('input', (e) => renderLocalLibrary(e.target.value));
+            // --- Lógica para ordenación de la biblioteca local ---
+            let localCurrentSort = "saga";
+            let localIsAscending = false;
+            const sagaOrderMap = new Map();
+            let sagaIndex = 0;
+            for (const sagaName in window.sagas) {
+                if (
+                    Object.prototype.hasOwnProperty.call(window.sagas, sagaName)
+                ) {
+                    window.sagas[sagaName].forEach((title, gameIndex) => {
+                        sagaOrderMap.set(title, {
+                            sagaName,
+                            sagaIndex,
+                            gameIndex,
+                        });
+                    });
+                    sagaIndex++;
+                }
+            }
 
-        // --- BUSCADORES ---
-        document.getElementById('searchForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const query = document.getElementById('searchInput').value;
-            const type = document.getElementById('mediaType').value;
-            if(!query) return;
-            document.getElementById('searchResults').innerHTML = `<div class="col-span-full py-10 text-center text-gray-500 text-xs">Buscando...</div>`;
-            try {
-                const res = await fetch(`/api/search.json?q=${encodeURIComponent(query)}&type=${type}`);
-                const data = await res.json();
-                window.lastSearchResults = data;
-                document.getElementById('searchResults').innerHTML = data.map((item, idx) => renderCard(item, 'openEditorSearch')).join('');
-            } catch (e) { document.getElementById('searchResults').innerHTML = `<p class="col-span-full text-center text-red-400 text-xs">Error</p>`; }
-        });
+            // Busca esta función en tu <script is:inline>
+            window.handleCardClick = (actionName, encodedItem) => {
+                try {
+                    const item = JSON.parse(decodeURIComponent(encodedItem));
 
-        document.getElementById('charSearchForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const query = document.getElementById('charInput').value;
-            if(!query) return;
-            document.getElementById('charResults').innerHTML = `<div class="col-span-full py-10 text-center text-gray-500 text-xs">Buscando...</div>`;
-            try {
-                const res = await fetch(`/api/search.json?q=${encodeURIComponent(query)}&type=character`);
-                const data = await res.json();
-                document.getElementById('charResults').innerHTML = data.map(item => renderCard(item, 'openCharEditor', true)).join('');
-            } catch (e) { document.getElementById('charResults').innerHTML = "Error"; }
-        });
+                    // Abrir editores de obras
+                    if (actionName === "openEditorSearch")
+                        openEditorSearch(item);
+                    if (actionName === "openEditorLocal") openEditorLocal(item);
 
-        function renderCharacterPanel() {
-            document.getElementById('savedCharsGrid').innerHTML = window.charactersGlobal.map(item => renderCard(item, 'openCharEditor', true)).join('');
-        }
+                    // --- ESTA ES LA LÍNEA QUE TE FALTA ---
+                    if (actionName === "openCharEditor") openCharEditor(item); // Esta línea es correcta, el problema estaba en otro lado.
+                } catch (e) {
+                    console.error("Error al procesar el click:", e);
+                }
+            };
 
-        // --- EDITOR OBRAS ---
-        window.openEditorSearch = (idx) => {
-            const item = window.lastSearchResults[idx];
-            if(!item.id) item.id = Date.now();
-            const type = document.getElementById('mediaType').value;
-            fillEditor({ ...item, type: type === 'game' ? 'games' : (type === 'manga' ? 'manga' : 'anime') });
-        };
-        window.openEditorLocal = (item) => fillEditor(item);
+            // --- 2. DEFINIR LA FUNCIÓN PARA ABRIR EL EDITOR DE PERSONAJES ---
+            window.openCharEditor = (item) => {
+                // Guardamos el personaje actual para poder usarlo al dar a "Guardar"
+                currentSelection = item;
 
-        function fillEditor(data) {
-            currentSelection = data;
-            document.getElementById('editor').classList.remove('hidden');
-            document.getElementById('editorTitle').innerText = data.title;
-            document.getElementById('editorYear').innerText = data.year || '----';
-            document.getElementById('editorCover').src = data.cover;
-            
-            const statusToSelect = data.status || 'Jugando';
-            document.querySelectorAll('input[name="status"]').forEach(r => { r.checked = (r.value === statusToSelect); });
-            updateStarsVisual(data.score || 0);
-            isFavorite = window.favoritesTitles.includes(data.title);
-            updateFavBtn();
-            renderMonthTags();
-            checkScoreLock();
-        }
-        window.closeEditor = () => document.getElementById('editor').classList.add('hidden');
+                // Obtenemos los elementos del modal (asegúrate de que los IDs coincidan con tu HTML)
+                const modal = document.getElementById("charEditor");
+                const img = document.getElementById("charCover");
+                const nameDisplay = document.getElementById("charNameDisplay");
+                const nameInput = document.getElementById("charNameInput");
+                const sourceInput = document.getElementById("charSourceInput");
 
-        // --- EDITOR PERSONAJES ---
-        let currentCharSelection = null;
-        window.openCharEditor = (item) => {
-            currentCharSelection = item;
-            document.getElementById('charEditor').classList.remove('hidden');
-            document.getElementById('charCover').src = item.cover || item.img;
-            const name = item.title || item.name;
-            document.getElementById('charNameDisplay').innerText = name;
-            document.getElementById('charNameInput').value = name;
-            document.getElementById('charSourceInput').value = item.source || '';
-            const exists = window.charactersGlobal.some(c => c.title === name);
-            document.getElementById('deleteCharBtn').style.display = exists ? 'flex' : 'none';
-            renderCharMonthTags();
-        };
-        window.closeCharEditor = () => document.getElementById('charEditor').classList.add('hidden');
+                if (modal && img) {
+                    img.src = item.cover;
+                    nameDisplay.innerText = item.title;
+                    nameInput.value = item.title;
+                    sourceInput.value = item.source || ""; // Aquí aparece la obra original
+                    document.getElementById(
+                        "charEditorPreviewTitle",
+                    ).innerText = item.title;
 
-        // --- TAGS MENSUALES OBRAS ---
-        window.addMonthTag = () => {
-            const m = document.getElementById('tagMonth').value; const y = document.getElementById('tagYear').value;
-            if(!m || !y) return;
-            const dateStr = `${y}-${m}`;
-            const exists = window.monthlyPicksGlobal.some(entry => entry.month === dateStr && entry.title === currentSelection.title);
-            if(!exists) {
-                window.monthlyPicksGlobal.push({ month: dateStr, title: currentSelection.title, cover: currentSelection.cover });
-                window.monthlyPicksGlobal.sort((a,b) => b.month.localeCompare(a.month)); 
+                    const charOffsetY =
+                        item.coverOffsetY !== undefined
+                            ? item.coverOffsetY
+                            : 50;
+                    document.getElementById("charCoverOffsetYRange").value =
+                        charOffsetY;
+                    document.getElementById("charEditorPreviewCover").src =
+                        item.cover;
+                    document.getElementById(
+                        "charEditorPreviewCover",
+                    ).style.objectPosition = `center ${charOffsetY}%`;
+                    document.getElementById("charCoverOffsetText").innerText =
+                        `${charOffsetY}%`;
+                    setSliderPosition("char-custom-slider-thumb", charOffsetY);
+
+                    currentCharPickYear = new Date().getFullYear();
+                    document.getElementById("charPickYearDisplay").innerText =
+                        currentCharPickYear;
+                    renderCharMonthTags();
+
+                    // Mostramos el modal
+                    modal.classList.remove("hidden");
+                }
+            };
+
+            // Función para cerrar el editor de personajes
+            window.closeCharEditor = () => {
+                document.getElementById("charEditor").classList.add("hidden");
+            };
+
+            function renderCard(item, actionName, isChar = false) {
+                const isFav = window.favoritesTitles.includes(item.title);
+                // encodeURIComponent doesn't escape single quotes, which breaks the onclick attribute.
+                // We need to manually encode it for it to be a valid JS string inside the attribute.
+                const safeItem = encodeURIComponent(
+                    JSON.stringify(item),
+                ).replace(/'/g, "%27");
+
+                // Si es personaje, no mostramos estrellas
+                const starRating =
+                    !isChar && window.calculateRating
+                        ? window.calculateRating(item.score || 0)
+                        : 0;
+
+                return `
+    <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card">
+        <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy">
+        ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
+        ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
+        <div class="asearch-info">
+            <h4 class="asearch-title">${item.title}</h4>
+            ${!isChar && starRating > 0 ? `<div class="asearch-rating"><span>${starRating}</span><i class="fa-solid fa-star"></i></div>` : ""}
+            ${isChar && item.source ? `<p class="text-[9px] text-pink-400 font-bold uppercase mt-2">${item.source}</p>` : ""}
+        </div>
+    </div>`;
+            }
+
+            window.setLocalSort = (sort, btn) => {
+                localCurrentSort = sort;
+                const orderBtn = document.getElementById("localOrderBtn");
+                orderBtn.style.display = sort === "saga" ? "none" : "flex";
+                if (sort === "saga") localIsAscending = false;
+                document.querySelectorAll(".sort-btn-local").forEach((b) => {
+                    b.classList.remove("bg-white/5", "text-white");
+                    b.classList.add("text-gray-500");
+                });
+                btn.classList.remove("text-gray-500");
+                btn.classList.add("bg-white/5", "text-white");
+                renderLocalLibrary(
+                    document.getElementById("localFilter").value,
+                );
+            };
+
+            window.toggleLocalOrder = () => {
+                if (localCurrentSort === "saga") return;
+                localIsAscending = !localIsAscending;
+                const btn = document.getElementById("localOrderBtn");
+                btn.innerHTML = localIsAscending
+                    ? '<i class="fa-solid fa-arrow-up-wide-short text-xs"></i>'
+                    : '<i class="fa-solid fa-arrow-down-wide-short text-xs"></i>';
+                renderLocalLibrary(
+                    document.getElementById("localFilter").value,
+                );
+            };
+
+            function renderLocalLibrary(filterText = "") {
+                const filtered = window.localLibrary.filter((item) =>
+                    item.title.toLowerCase().includes(filterText.toLowerCase()),
+                );
+
+                filtered.sort((a, b) => {
+                    if (localCurrentSort === "saga") {
+                        const sagaA = sagaOrderMap.get(a.title);
+                        const sagaB = sagaOrderMap.get(b.title);
+                        const sortKeyA = sagaA ? sagaA.sagaName : a.title;
+                        const sortKeyB = sagaB ? sagaB.sagaName : b.title;
+                        if (sortKeyA !== sortKeyB) {
+                            return sortKeyA.localeCompare(sortKeyB);
+                        }
+                        if (sagaA && sagaB) {
+                            return sagaA.gameIndex - sagaB.gameIndex;
+                        }
+                        return 0;
+                    }
+                    let valA, valB;
+                    if (localCurrentSort === "score") {
+                        valA = Number(a.score || 0);
+                        valB = Number(b.score || 0);
+                    } else if (localCurrentSort === "year") {
+                        valA = a.finishDate || "0";
+                        valB = b.finishDate || "0";
+                    } else {
+                        // title
+                        valA = a.title.toLowerCase();
+                        valB = b.title.toLowerCase();
+                    }
+                    if (valA < valB) return localIsAscending ? -1 : 1;
+                    if (valA > valB) return localIsAscending ? 1 : -1;
+                    return 0;
+                });
+
+                document.getElementById("localGrid").innerHTML = filtered
+                    .map((item) => renderCard(item, "openEditorLocal"))
+                    .join("");
+            }
+            document
+                .getElementById("localFilter")
+                .addEventListener("input", (e) =>
+                    renderLocalLibrary(e.target.value),
+                );
+
+            window.openEditorSearch = (item) => {
+                const type = document.getElementById("mediaType").value;
+                const existing = window.localLibrary.find(
+                    (l) => l.title === item.title,
+                );
+                const dataToFill = existing
+                    ? existing
+                    : {
+                          ...item,
+                          type:
+                              type === "game"
+                                  ? "games"
+                                  : type === "manga"
+                                    ? "manga"
+                                    : "anime",
+                      };
+                fillEditor(dataToFill);
+            };
+            window.openEditorLocal = (item) => fillEditor(item);
+
+            function fillEditor(data) {
+                currentSelection = data;
+                document.getElementById("editor").classList.remove("hidden");
+                document.getElementById("editorTitle").innerText = data.title;
+                document.getElementById("editorYear").innerText =
+                    data.year || "----";
+                document.getElementById("editorCover").src = data.cover;
+
+                const status = data.status || "Jugando";
+                document
+                    .querySelectorAll('input[name="status"]')
+                    .forEach((r) => {
+                        r.checked = r.value === status;
+                    });
+
+                document.getElementById("startDate").value =
+                    data.startDate || "";
+                document.getElementById("finishDate").value =
+                    data.finishDate || "";
+
+                // --- Lógica para el nuevo PREVIEW de la cover ---
+                document.getElementById("editorPreviewCover").src = data.cover;
+                document.getElementById("editorPreviewTitle").innerText =
+                    data.title;
+                const offsetY =
+                    data.coverOffsetY !== undefined ? data.coverOffsetY : 50;
+                document.getElementById("coverOffsetYRange").value = offsetY;
+                document.getElementById(
+                    "editorPreviewCover",
+                ).style.objectPosition = `center ${offsetY}%`;
+                document.getElementById("coverOffsetText").innerText =
+                    `${offsetY}%`;
+                setSliderPosition("custom-slider-thumb", offsetY);
+
+                currentPickYear = new Date().getFullYear();
+
+                document.getElementById("pickYearDisplay").innerText =
+                    currentPickYear;
+
+                updateStarsVisual(data.score || 0);
+                isFavorite = window.favoritesTitles.includes(data.title);
+                updateFavBtn();
                 renderMonthTags();
+                checkScoreLock();
             }
-        };
-        window.removeMonthTag = (dateStr) => {
-            window.monthlyPicksGlobal = window.monthlyPicksGlobal.filter(entry => !(entry.month === dateStr && entry.title === currentSelection.title));
-            renderMonthTags();
-        };
-        function renderMonthTags() {
-            const container = document.getElementById('monthlyTagsContainer');
-            const tags = window.monthlyPicksGlobal.filter(entry => entry.title === currentSelection.title);
-            if(tags.length === 0) { container.innerHTML = '<span class="text-[10px] text-gray-700 italic pl-1">Sin historial</span>'; return; }
-            container.innerHTML = tags.map(tag => {
-                const [y, m] = tag.month.split('-');
-                return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
-            }).join('');
-        }
 
-        // --- TAGS MENSUALES PERSONAJES ---
-        window.addCharMonthTag = () => {
-            const m = document.getElementById('charTagMonth').value; const y = document.getElementById('charTagYear').value;
-            const name = document.getElementById('charNameInput').value;
-            if(!m || !y || !name) return;
-            const dateStr = `${y}-${m}`;
-            const exists = window.monthlyCharsGlobal.some(entry => entry.month === dateStr && entry.name === name);
-            if(!exists) {
-                window.monthlyCharsGlobal.push({ month: dateStr, name: name, cover: document.getElementById('charCover').src });
-                window.monthlyCharsGlobal.sort((a,b) => b.month.localeCompare(a.month));
+            window.closeEditor = () =>
+                document.getElementById("editor").classList.add("hidden");
+
+            window.changePickYear = (delta) => {
+                currentPickYear += delta;
+                document.getElementById("pickYearDisplay").innerText =
+                    currentPickYear;
+                renderMonthTags();
+            };
+
+            window.toggleMonthPick = (month) => {
+                const dateStr = `${currentPickYear}-${month}`;
+                const exists = window.monthlyPicksGlobal.some(
+                    (e) =>
+                        e.month === dateStr &&
+                        e.title === currentSelection.title,
+                );
+
+                if (exists) {
+                    window.monthlyPicksGlobal =
+                        window.monthlyPicksGlobal.filter(
+                            (e) =>
+                                !(
+                                    e.month === dateStr &&
+                                    e.title === currentSelection.title
+                                ),
+                        );
+                } else {
+                    window.monthlyPicksGlobal.push({
+                        month: dateStr,
+                        title: currentSelection.title,
+                        cover: currentSelection.cover,
+                    });
+                    window.monthlyPicksGlobal.sort((a, b) =>
+                        b.month.localeCompare(a.month),
+                    );
+                }
+                renderMonthTags();
+            };
+
+            window.changeCharPickYear = (delta) => {
+                currentCharPickYear += delta;
+                document.getElementById("charPickYearDisplay").innerText =
+                    currentCharPickYear;
                 renderCharMonthTags();
+            };
+
+            window.toggleCharMonthPick = (month) => {
+                const dateStr = `${currentCharPickYear}-${month}`;
+                const exists = window.monthlyCharsGlobal.some(
+                    (e) =>
+                        e.month === dateStr &&
+                        e.name === currentSelection.title,
+                );
+
+                if (exists) {
+                    window.monthlyCharsGlobal =
+                        window.monthlyCharsGlobal.filter(
+                            (e) =>
+                                !(
+                                    e.month === dateStr &&
+                                    e.name === currentSelection.title
+                                ),
+                        );
+                } else {
+                    window.monthlyCharsGlobal.push({
+                        month: dateStr,
+                        name: currentSelection.title,
+                        cover: currentSelection.cover,
+                    });
+                    window.monthlyCharsGlobal.sort((a, b) =>
+                        b.month.localeCompare(a.month),
+                    );
+                }
+                renderCharMonthTags();
+            };
+
+            function renderCharMonthTags() {
+                const container = document.getElementById(
+                    "charMonthlyTagsContainer",
+                );
+                const tagsForCurrentWork = window.monthlyCharsGlobal.filter(
+                    (entry) => entry.name === currentSelection.title,
+                );
+                container.innerHTML = tagsForCurrentWork
+                    .map((tag) => `<div class="mini-tag">${tag.month}</div>`)
+                    .join("");
+
+                document
+                    .querySelectorAll("#charEditor .month-btn-item")
+                    .forEach((btn, index) => {
+                        const month = (index + 1).toString().padStart(2, "0");
+                        const dateStr = `${currentCharPickYear}-${month}`;
+
+                        const isSelectedForThisWork = tagsForCurrentWork.some(
+                            (tag) => tag.month === dateStr,
+                        );
+
+                        const isTakenByAnotherWork =
+                            window.monthlyCharsGlobal.some(
+                                (entry) =>
+                                    entry.month === dateStr &&
+                                    entry.name !== currentSelection.title,
+                            );
+
+                        btn.classList.remove("selected", "disabled");
+                        btn.disabled = false;
+
+                        if (isSelectedForThisWork) {
+                            btn.classList.add("selected");
+                        } else if (isTakenByAnotherWork) {
+                            btn.classList.add("disabled");
+                            btn.disabled = true;
+                        }
+                    });
             }
-        };
-        window.removeCharMonthTag = (dateStr) => {
-            const name = document.getElementById('charNameInput').value;
-            window.monthlyCharsGlobal = window.monthlyCharsGlobal.filter(entry => !(entry.month === dateStr && entry.name === name));
-            renderCharMonthTags();
-        };
-        function renderCharMonthTags() {
-            const container = document.getElementById('charTagsContainer');
-            const name = document.getElementById('charNameInput').value;
-            const tags = window.monthlyCharsGlobal.filter(entry => entry.name === name);
-            if(tags.length === 0) { container.innerHTML = '<span class="text-[9px] text-gray-600 italic">Sin historial</span>'; return; }
-            container.innerHTML = tags.map(tag => {
-                const [y, m] = tag.month.split('-');
-                return `<div class="tag-pill">${m}/${y.slice(2)} <button onclick="removeCharMonthTag('${tag.month}')"><i class="fa-solid fa-xmark text-[9px]"></i></button></div>`;
-            }).join('');
-        }
 
-        // --- GUARDADO ---
-        window.saveCharacter = async () => {
-            const name = document.getElementById('charNameInput').value;
-            const source = document.getElementById('charSourceInput').value;
-            const cover = document.getElementById('charCover').src;
-            const index = window.charactersGlobal.findIndex(c => c.title === (currentCharSelection.title || currentCharSelection.name));
-            const newChar = { title: name, cover: cover, source: source };
-            if(index >= 0) window.charactersGlobal[index] = newChar; else window.charactersGlobal.push(newChar);
+            function renderMonthTags() {
+                const container = document.getElementById(
+                    "monthlyTagsContainer",
+                );
+                const tagsForCurrentWork = window.monthlyPicksGlobal.filter(
+                    (entry) => entry.title === currentSelection.title,
+                );
+                container.innerHTML = tagsForCurrentWork
+                    .map((tag) => `<div class="mini-tag">${tag.month}</div>`)
+                    .join("");
 
-            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', characters: window.charactersGlobal, monthlyChars: window.monthlyCharsGlobal }) });
-            closeCharEditor();
-            renderCharacterPanel();
-        };
+                document
+                    .querySelectorAll(".month-btn-item")
+                    .forEach((btn, index) => {
+                        const month = (index + 1).toString().padStart(2, "0");
+                        const dateStr = `${currentPickYear}-${month}`;
 
-        document.getElementById('deleteCharBtn').addEventListener('click', async () => {
-            if(!confirm("¿Borrar?")) return;
-            window.charactersGlobal = window.charactersGlobal.filter(c => c.title !== (currentCharSelection.title || currentCharSelection.name));
-            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', characters: window.charactersGlobal, monthlyChars: window.monthlyCharsGlobal }) });
-            closeCharEditor();
-            renderCharacterPanel();
-        });
+                        const isSelectedForThisWork = tagsForCurrentWork.some(
+                            (tag) => tag.month === dateStr,
+                        );
 
-        document.getElementById('saveMediaBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('saveMediaBtn');
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`; btn.disabled = true;
-            const status = document.querySelector('input[name="status"]:checked').value;
-            const finalScore = status === 'Completado' ? Number(document.getElementById('scoreRange').value) : 0;
-            if (isFavorite && !window.favoritesTitles.includes(currentSelection.title)) window.favoritesTitles.push(currentSelection.title);
-            else if (!isFavorite) window.favoritesTitles = window.favoritesTitles.filter(t => t !== currentSelection.title);
+                        const isTakenByAnotherWork =
+                            window.monthlyPicksGlobal.some(
+                                (entry) =>
+                                    entry.month === dateStr &&
+                                    entry.title !== currentSelection.title,
+                            );
 
-            const payloadFile = { ...currentSelection, status, score: finalScore };
-            const payloadDB = { type: 'update_db', favorites: window.favoritesTitles, monthlyPicks: window.monthlyPicksGlobal };
-            await Promise.all([ fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadFile) }), fetch('/api/save.json', { method: 'POST', body: JSON.stringify(payloadDB) }) ]);
-            closeEditor();
-            btn.innerText = "Guardar Cambios"; btn.disabled = false;
-        });
+                        btn.classList.remove("selected", "disabled");
+                        btn.disabled = false;
 
-        // --- HELPERS ---
-        function updateStarsVisual(value) {
-            document.getElementById('scoreRange').value = value;
-            const visualScore = value / 2;
-            document.getElementById('scoreText').innerText = visualScore;
-            let html = '';
-            for (let i = 1; i <= 5; i++) {
-                let iconClass = "fa-regular fa-star text-[#333]"; 
-                let colorClass = "text-[#333]";
-                if (visualScore >= i) { iconClass = "fa-solid fa-star"; colorClass = "text-white"; } 
-                else if (visualScore >= i - 0.5) { iconClass = "fa-solid fa-star-half-stroke"; colorClass = "text-white"; }
-                html += `<span class="relative inline-block px-0.5 group/star"><i class="${iconClass} ${colorClass} group-hover/star:text-white"></i><div class="absolute left-0 top-0 bottom-0 w-1/2 z-10" onclick="setScore(${i * 2 - 1})"></div><div class="absolute right-0 top-0 bottom-0 w-1/2 z-10" onclick="setScore(${i * 2})"></div></span>`;
+                        if (isSelectedForThisWork) {
+                            btn.classList.add("selected");
+                        } else if (isTakenByAnotherWork) {
+                            btn.classList.add("disabled");
+                            btn.disabled = true;
+                        }
+                    });
             }
-            document.getElementById('starsVisual').innerHTML = html;
-        }
-        window.setScore = (val) => { if(!document.getElementById('scoreRange').disabled) updateStarsVisual(val); };
 
-        window.checkScoreLock = () => {
-            const status = document.querySelector('input[name="status"]:checked').value;
-            const range = document.getElementById('scoreRange');
-            const container = document.getElementById('scoreContainer');
-            if (status === 'Completado') { range.disabled = false; container.style.opacity = '1'; container.style.pointerEvents = 'auto'; } 
-            else { range.disabled = true; container.style.opacity = '0.3'; container.style.pointerEvents = 'none'; updateStarsVisual(0); }
-        };
+            // --- GUARDAR ---
+            // --- DENTRO DEL SCRIPT IS:INLINE DE admin.astro ---
 
-        window.toggleFav = () => { isFavorite = !isFavorite; updateFavBtn(); }
-        function updateFavBtn() {
-            const btn = document.getElementById('favBtn');
-            if(isFavorite) { btn.innerHTML = `<i class="fa-solid fa-heart text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]"></i>`; btn.classList.add('scale-110'); } 
-            else { btn.innerHTML = `<i class="fa-regular fa-heart"></i>`; btn.classList.remove('scale-110'); }
-        }
+            document
+                .getElementById("saveMediaBtn")
+                .addEventListener("click", async () => {
+                    const btn = document.getElementById("saveMediaBtn");
+                    const originalText = btn.innerText;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
+                    btn.disabled = true;
 
-        function renderFavoritesSortable() {
-            const container = document.getElementById('favList');
-            const favObjects = window.favoritesTitles.map(title => window.localLibrary.find(item => item.title === title)).filter(Boolean);
-            container.innerHTML = favObjects.map(item => renderCard(item, '')).join('');
-            new Sortable(container, { animation: 150 });
-        }
-        document.getElementById('saveOrderBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('saveOrderBtn'); btn.innerText = "...";
-            const newOrderTitles = [];
-            document.querySelectorAll('#favList .group p').forEach(el => newOrderTitles.push(el.innerText));
-            window.favoritesTitles = newOrderTitles;
-            await fetch('/api/save.json', { method: 'POST', body: JSON.stringify({ type: 'update_db', favorites: newOrderTitles }) });
-            btn.innerText = "Hecho"; setTimeout(() => btn.innerText = "Guardar Orden", 1500);
-        });
-    </script>
-</body>
+                    // 1. Recoger valores del DOM
+                    const status = document.querySelector(
+                        'input[name="status"]:checked',
+                    ).value;
+                    const scoreVal =
+                        document.getElementById("scoreRange").value;
+                    const startDate =
+                        document.getElementById("startDate").value;
+                    const finishDate =
+                        document.getElementById("finishDate").value;
+                    const coverOffsetY =
+                        document.getElementById("coverOffsetYRange").value;
+
+                    // 2. Preparar los payloads
+                    const fileData = {
+                        title: currentSelection.title,
+                        cover: currentSelection.cover,
+                        year: currentSelection.year,
+                        type: currentSelection.type,
+                        status: status,
+                        score: status === "Completado" ? Number(scoreVal) : 0,
+                        startDate: startDate,
+                        finishDate: finishDate,
+                        coverOffsetY: Number(coverOffsetY),
+                    };
+
+                    if (
+                        isFavorite &&
+                        !window.favoritesTitles.includes(currentSelection.title)
+                    ) {
+                        window.favoritesTitles.push(currentSelection.title);
+                    } else if (!isFavorite) {
+                        window.favoritesTitles = window.favoritesTitles.filter(
+                            (t) => t !== currentSelection.title,
+                        );
+                    }
+
+                    const combinedPayload = {
+                        fileData: fileData,
+                        dbData: {
+                            favorites: window.favoritesTitles,
+                            monthlyPicks: window.monthlyPicksGlobal,
+                        },
+                    };
+
+                    try {
+                        const res = await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(combinedPayload),
+                        });
+
+                        if (res.ok) {
+                            // Éxito: recargar para que Astro reconozca los nuevos archivos .json
+                            btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado! Recargando...`;
+                            // Pequeña espera y recarga con cache-busting para asegurar que se obtienen los datos más recientes.
+                            setTimeout(() => {
+                                // Añadimos un timestamp para evitar que el navegador sirva una versión cacheada de la página.
+                                window.location.href =
+                                    window.location.pathname +
+                                    "?t=" +
+                                    new Date().getTime();
+                            }, 500);
+                        } else {
+                            throw new Error(
+                                "Fallo en la respuesta del servidor",
+                            );
+                        }
+                    } catch (e) {
+                        console.error("Error al guardar:", e);
+                        alert("Error al guardar los datos. Revisa la consola.");
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                    }
+                });
+
+            function updateStarsVisual(value) {
+                document.getElementById("scoreRange").value = value;
+                const visualScore = value / 2;
+                document.getElementById("scoreText").innerText = (
+                    value / 2
+                ).toFixed(value % 2 === 0 ? 0 : 1);
+                let html = "";
+                for (let i = 1; i <= 5; i++) {
+                    let iconClass = "fa-regular fa-star";
+                    let colorClass = "text-gray-600"; // Color visible para estrellas vacías
+                    if (visualScore >= i) {
+                        iconClass = "fa-solid fa-star";
+                        colorClass = "text-white";
+                    } else if (visualScore >= i - 0.5) {
+                        iconClass = "fa-solid fa-star-half-stroke";
+                        colorClass = "text-white";
+                    }
+                    html += `<span class="relative inline-block px-0.5 group/star"><i class="${iconClass} ${colorClass} group-hover/star:text-white transition-colors"></i><div class="absolute left-0 top-0 bottom-0 w-1/2 z-10" onclick="setScore(${i * 2 - 1})"></div><div class="absolute right-0 top-0 bottom-0 w-1/2 z-10" onclick="setScore(${i * 2})"></div></span>`;
+                }
+                document.getElementById("starsVisual").innerHTML = html;
+            }
+
+            window.setScore = (val) => {
+                if (!document.getElementById("scoreRange").disabled)
+                    updateStarsVisual(val);
+            };
+
+            window.checkScoreLock = () => {
+                const status = document.querySelector(
+                    'input[name="status"]:checked',
+                ).value;
+                const range = document.getElementById("scoreRange");
+                const container = document.getElementById("scoreContainer");
+                if (status === "Completado") {
+                    range.disabled = false;
+                    container.style.opacity = "1";
+                    container.style.pointerEvents = "auto";
+                } else {
+                    range.disabled = true;
+                    container.style.opacity = "0.3";
+                    container.style.pointerEvents = "none";
+                    updateStarsVisual(0);
+                }
+            };
+
+            window.toggleFav = () => {
+                isFavorite = !isFavorite;
+                updateFavBtn();
+            };
+
+            function updateFavBtn() {
+                const btn = document.getElementById("favBtn");
+                if (isFavorite) {
+                    btn.innerHTML = `<i class="fa-solid fa-heart text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]"></i>`;
+                    btn.classList.add("scale-110");
+                } else {
+                    btn.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+                    btn.classList.remove("scale-110");
+                }
+            }
+
+            document
+                .getElementById("searchForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const q = document.getElementById("searchInput").value;
+                    const t = document.getElementById("mediaType").value;
+                    if (!q) return;
+                    document.getElementById("searchResults").innerHTML = "...";
+                    try {
+                        const res = await fetch(
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=${t}`,
+                        );
+                        const data = await res.json();
+                        document.getElementById("searchResults").innerHTML =
+                            data
+                                .map((i) => renderCard(i, "openEditorSearch"))
+                                .join("");
+                    } catch (e) {
+                        console.error("Error en búsqueda:", e);
+                        document.getElementById("searchResults").innerHTML =
+                            `<p class="col-span-full text-red-400">Error al buscar</p>`;
+                    }
+                });
+
+            window.switchMode = (mode) => {
+                document
+                    .querySelectorAll(".panel")
+                    .forEach((p) => p.classList.add("hidden"));
+                document
+                    .querySelectorAll(".nav-btn")
+                    .forEach((b) => b.classList.remove("active"));
+                document
+                    .getElementById(`${mode}-panel`)
+                    .classList.remove("hidden");
+
+                const btn = document.querySelector(
+                    `button[onclick="switchMode('${mode}')"]`,
+                );
+                if (btn) btn.classList.add("active");
+
+                if (mode === "library") renderLocalLibrary();
+                if (mode === "favorites") renderFavWorksSortable();
+                if (mode === "characters") {
+                    document.getElementById("charResults").innerHTML = "";
+                    // Al entrar, mostramos los personajes que ya tienes en database.json
+                    const savedGrid = document.getElementById("savedCharsGrid");
+                    if (
+                        window.charactersGlobal &&
+                        window.charactersGlobal.length > 0
+                    ) {
+                        savedGrid.innerHTML = window.charactersGlobal
+                            .map((i) => renderCard(i, "openCharEditor", true))
+                            .join("");
+                    } else {
+                        savedGrid.innerHTML =
+                            '<p class="col-span-full text-white/5 text-[10px] py-4 pl-2">Biblioteca de personajes vacía.</p>';
+                    }
+                }
+                if (mode === "sagas") {
+                    renderSagasPanel();
+                }
+            };
+
+            function renderFavWorksSortable() {
+                const container = document.getElementById("favList");
+                // Buscamos los objetos completos en la librería usando solo los títulos guardados
+                const list = window.favoritesTitles
+                    .map((title) =>
+                        window.localLibrary.find(
+                            (item) => item.title === title,
+                        ),
+                    )
+                    .filter(Boolean); // Eliminamos los que no encuentre por si acaso
+
+                if (list.length === 0) {
+                    container.innerHTML =
+                        '<p class="col-span-full text-center text-white/20 py-20">No tienes obras en favoritos aún.</p>';
+                    return;
+                }
+
+                // Dibujamos las tarjetas
+                container.innerHTML = list
+                    .map((item) => renderCard(item, "openEditorLocal"))
+                    .join("");
+
+                // Activamos la capacidad de arrastrar (Sortable)
+                new Sortable(container, {
+                    animation: 150,
+                    ghostClass: "opacity-50",
+                });
+            }
+
+            function renderFavCharsSortable() {
+                const container = document.getElementById("favCharsList");
+                const list = window.charactersGlobal || [];
+
+                if (list.length === 0) {
+                    container.innerHTML =
+                        '<p class="col-span-full text-center text-white/20 py-20">No tienes personajes en favoritos aún.</p>';
+                    return;
+                }
+
+                container.innerHTML = list
+                    .map((item) => renderCard(item, "openCharEditor", true))
+                    .join("");
+
+                new Sortable(container, {
+                    animation: 150,
+                    ghostClass: "opacity-50",
+                });
+            }
+
+            window.switchFavView = (type) => {
+                const worksView = document.getElementById("fav-works-view");
+                const charsView = document.getElementById("fav-chars-view");
+                const btnWorks = document.getElementById("btn-fav-works");
+                const btnChars = document.getElementById("btn-fav-chars");
+                const bg = document.getElementById("fav-tab-bg");
+
+                if (type === "works") {
+                    worksView.classList.remove("hidden");
+                    charsView.classList.add("hidden");
+                    bg.style.transform = "translateX(0)";
+                    btnWorks.classList.remove("opacity-50");
+                    btnChars.classList.add("opacity-50");
+                } else {
+                    worksView.classList.add("hidden");
+                    charsView.classList.remove("hidden");
+                    bg.style.transform = "translateX(100%)";
+                    btnChars.classList.remove("opacity-50");
+                    btnWorks.classList.add("opacity-50");
+                    renderFavCharsSortable();
+                }
+            };
+
+            document
+                .getElementById("saveCharOrderBtn")
+                .addEventListener("click", async () => {
+                    const btn = document.getElementById("saveCharOrderBtn");
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+                    btn.disabled = true;
+
+                    const newOrderTitles = Array.from(
+                        document.querySelectorAll(
+                            "#favCharsList .asearch-title",
+                        ),
+                    ).map((el) => el.innerText);
+                    const newOrderedChars = newOrderTitles
+                        .map((title) =>
+                            window.charactersGlobal.find(
+                                (c) => c.title === title,
+                            ),
+                        )
+                        .filter(Boolean);
+                    window.charactersGlobal = newOrderedChars;
+
+                    try {
+                        await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                dbData: { characters: newOrderedChars },
+                            }),
+                        });
+                        btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    } catch (e) {
+                        console.error(e);
+                        btn.innerHTML = "Error";
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    }
+                });
+
+            document
+                .getElementById("saveOrderBtn")
+                .addEventListener("click", async () => {
+                    const btn = document.getElementById("saveOrderBtn");
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
+                    btn.disabled = true;
+
+                    // Obtenemos los títulos en el nuevo orden en el que han quedado las tarjetas
+                    const newOrder = Array.from(
+                        document.querySelectorAll("#favList .asearch-title"),
+                    ).map((el) => el.innerText);
+
+                    window.favoritesTitles = newOrder;
+
+                    try {
+                        await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                dbData: { favorites: newOrder },
+                            }),
+                        });
+                        btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    } catch (e) {
+                        console.error(e);
+                        btn.innerHTML = "Error al guardar";
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    }
+                });
+
+            // --- SAGAS ---
+            function renderSagaItem(game) {
+                if (!game) return "";
+                return `
+                    <div class="saga-item" data-title="${game.title}" title="${game.title}">
+                        <img src="${game.cover}" class="saga-item-cover" loading="lazy">
+                    </div>
+                `;
+            }
+
+            function renderSagasPanel() {
+                const unassignedContainer =
+                    document.getElementById("unassigned-games");
+                const sagasContainer =
+                    document.getElementById("sagas-container");
+
+                const findItem = (title) =>
+                    window.localLibrary.find((item) => item.title === title);
+
+                const allItemTitles = new Set(
+                    window.localLibrary.map((item) => item.title),
+                );
+                const assignedTitles = new Set(
+                    Object.values(window.sagas).flat(),
+                );
+                const unassignedItems = [...allItemTitles]
+                    .filter((title) => !assignedTitles.has(title))
+                    .map(findItem)
+                    .filter(Boolean);
+
+                unassignedContainer.innerHTML = unassignedItems
+                    .map(renderSagaItem)
+                    .join("");
+
+                sagasContainer.innerHTML = Object.entries(window.sagas)
+                    .map(([sagaName, games]) => {
+                        const gameObjects = games.map(findItem).filter(Boolean);
+                        return `
+                        <div class="saga-container" data-saga-name="${sagaName}">
+                            <div class="saga-header">
+                                <input type="text" class="saga-title-input" value="${sagaName}">
+                                <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
+                            </div>
+                            <div class="saga-list">
+                                ${gameObjects.map(renderSagaItem).join("")}
+                            </div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+
+                // Init Sortable
+                new Sortable(unassignedContainer, {
+                    group: "sagas",
+                    animation: 150,
+                    ghostClass: "sortable-ghost",
+                });
+                document
+                    .querySelectorAll("#sagas-container .saga-list")
+                    .forEach((el) => {
+                        new Sortable(el, {
+                            group: "sagas",
+                            animation: 150,
+                            ghostClass: "sortable-ghost",
+                        });
+                    });
+            }
+
+            document
+                .getElementById("addSagaBtn")
+                .addEventListener("click", () => {
+                    const sagasContainer =
+                        document.getElementById("sagas-container");
+                    const newSagaName = `Nueva Saga ${Object.keys(window.sagas).length + 1}`;
+                    const newSagaEl = document.createElement("div");
+                    newSagaEl.className = "saga-container";
+                    newSagaEl.dataset.sagaName = newSagaName;
+                    newSagaEl.innerHTML = `
+                    <div class="saga-header">
+                        <input type="text" class="saga-title-input" value="${newSagaName}">
+                        <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
+                    </div>
+                    <div class="saga-list"></div>
+                `;
+                    sagasContainer.appendChild(newSagaEl);
+                    new Sortable(newSagaEl.querySelector(".saga-list"), {
+                        group: "sagas",
+                        animation: 150,
+                        ghostClass: "sortable-ghost",
+                    });
+                });
+
+            document
+                .getElementById("saveSagasBtn")
+                .addEventListener("click", async () => {
+                    const btn = document.getElementById("saveSagasBtn");
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+                    btn.disabled = true;
+
+                    const newSagas = {};
+                    document
+                        .querySelectorAll("#sagas-container .saga-container")
+                        .forEach((container) => {
+                            const sagaName = container
+                                .querySelector(".saga-title-input")
+                                .value.trim();
+                            if (sagaName) {
+                                const games = Array.from(
+                                    container.querySelectorAll(".saga-item"),
+                                ).map((item) => item.dataset.title);
+                                newSagas[sagaName] = games;
+                            }
+                        });
+
+                    window.sagas = newSagas;
+
+                    try {
+                        await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                dbData: { sagas: newSagas },
+                            }),
+                        });
+                        btn.innerHTML = `<i class="fa-solid fa-check"></i>`;
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    } catch (e) {
+                        console.error(e);
+                        btn.innerHTML = "Error";
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    }
+                });
+
+            // --- BUSCADOR DE PERSONAJES ---
+            const charForm = document.getElementById("charSearchForm");
+
+            if (charForm) {
+                charForm.addEventListener("submit", async (e) => {
+                    e.preventDefault(); // CRÍTICO: Evita que el Enter te lleve a otro lado
+
+                    const q = document.getElementById("charInput").value;
+                    if (!q) return;
+
+                    const resultsGrid = document.getElementById("charResults");
+                    resultsGrid.innerHTML =
+                        '<p class="col-span-full text-indigo-400 text-xs py-4 text-center animate-pulse">Consultando Giant Bomb...</p>';
+
+                    try {
+                        const res = await fetch(
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=character`,
+                        );
+                        const data = await res.json();
+
+                        if (!data || data.length === 0) {
+                            resultsGrid.innerHTML =
+                                '<p class="col-span-full text-white/20 text-xs py-4 text-center">No se encontraron personajes.</p>';
+                        } else {
+                            // Usamos la función renderCard que ya tienes, pasando true al final para indicar que es personaje
+                            resultsGrid.innerHTML = data
+                                .map((i) =>
+                                    renderCard(i, "openCharEditor", true),
+                                )
+                                .join("");
+                        }
+                    } catch (e) {
+                        console.error("Error en la búsqueda:", e);
+                        resultsGrid.innerHTML =
+                            '<p class="col-span-full text-red-500/50 text-xs py-4 text-center">Error de conexión con el servidor.</p>';
+                    }
+                });
+            }
+
+            // --- GUARDAR PERSONAJE ---
+            document
+                .getElementById("saveCharBtn")
+                .addEventListener("click", async () => {
+                    if (!currentSelection) return;
+
+                    const name = document.getElementById("charNameInput").value;
+                    const source =
+                        document.getElementById("charSourceInput").value;
+                    const coverOffsetY = document.getElementById(
+                        "charCoverOffsetYRange",
+                    ).value;
+
+                    const updatedChar = {
+                        ...currentSelection,
+                        title: name,
+                        source: source,
+                        coverOffsetY: Number(coverOffsetY),
+                    };
+
+                    const existingIndex = window.charactersGlobal.findIndex(
+                        (c) => c.id === updatedChar.id,
+                    );
+
+                    if (existingIndex > -1) {
+                        window.charactersGlobal[existingIndex] = updatedChar;
+                    } else {
+                        window.charactersGlobal.push(updatedChar);
+                    }
+
+                    const payload = {
+                        dbData: {
+                            characters: window.charactersGlobal,
+                            monthlyChars: window.monthlyCharsGlobal,
+                        },
+                    };
+
+                    try {
+                        const res = await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload),
+                        });
+                        if (!res.ok) throw new Error("Server error");
+                        closeCharEditor();
+                        switchMode("characters"); // Recarga la vista de personajes
+                    } catch (e) {
+                        console.error("Error saving character:", e);
+                        alert("Error al guardar el personaje.");
+                    }
+                });
+
+            switchMode("search");
+
+            // --- Custom Slider Logic ---
+            function setSliderPosition(thumbId, value) {
+                const thumb = document.getElementById(thumbId);
+                if (thumb) {
+                    const percentage = 100 - value; // Invert value for top position
+                    thumb.style.top = `calc(${percentage}% - 8px)`;
+                }
+            }
+
+            function initCustomSlider(containerId, thumbId, onUpdate) {
+                const container = document.getElementById(containerId);
+                const thumb = document.getElementById(thumbId);
+                if (!container || !thumb) return;
+
+                let isDragging = false;
+
+                const onDrag = (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const rect = container.getBoundingClientRect();
+                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                    const percentage = Math.max(
+                        0,
+                        Math.min(100, (y / rect.height) * 100),
+                    );
+
+                    thumb.style.top = `calc(${percentage}% - 8px)`;
+                    onUpdate(100 - percentage); // Invert for object-position
+                };
+
+                const stopDrag = () => {
+                    isDragging = false;
+                    document.removeEventListener("mousemove", onDrag);
+                    document.removeEventListener("mouseup", stopDrag);
+                    document.removeEventListener("touchmove", onDrag);
+                    document.removeEventListener("touchend", stopDrag);
+                };
+
+                const startDrag = (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                    document.addEventListener("mousemove", onDrag);
+                    document.addEventListener("mouseup", stopDrag);
+                    document.addEventListener("touchmove", onDrag);
+                    document.addEventListener("touchend", stopDrag);
+                };
+
+                thumb.addEventListener("mousedown", startDrag);
+                thumb.addEventListener("touchstart", startDrag);
+                container.addEventListener("click", (e) => {
+                    if (e.target === thumb) return;
+                    const rect = container.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    const percentage = Math.max(
+                        0,
+                        Math.min(100, (y / rect.height) * 100),
+                    );
+                    thumb.style.top = `calc(${percentage}% - 8px)`;
+                    onUpdate(100 - percentage);
+                });
+            }
+
+            initCustomSlider(
+                "custom-slider-container",
+                "custom-slider-thumb",
+                (pos) => {
+                    const position = Math.round(pos);
+                    document.getElementById(
+                        "editorPreviewCover",
+                    ).style.objectPosition = `center ${position}%`;
+                    document.getElementById("coverOffsetText").innerText =
+                        `${position}%`;
+                    document.getElementById("coverOffsetYRange").value =
+                        position;
+                },
+            );
+
+            initCustomSlider(
+                "char-custom-slider-container",
+                "char-custom-slider-thumb",
+                (pos) => {
+                    const position = Math.round(pos);
+                    document.getElementById(
+                        "charEditorPreviewCover",
+                    ).style.objectPosition = `center ${position}%`;
+                    document.getElementById("charCoverOffsetText").innerText =
+                        `${position}%`;
+                    document.getElementById("charCoverOffsetYRange").value =
+                        position;
+                },
+            );
+
+            // Auto-update finish date year based on start date year
+            document
+                .getElementById("startDate")
+                .addEventListener("change", (e) => {
+                    const startDateValue = e.target.value;
+                    if (!startDateValue) return;
+
+                    const startYear = startDateValue.substring(0, 4);
+
+                    const finishDateInput =
+                        document.getElementById("finishDate");
+                    const finishDateValue = finishDateInput.value;
+
+                    if (finishDateValue) {
+                        const restOfFinishDate = finishDateValue.substring(4); // -MM-DD
+                        finishDateInput.value = `${startYear}${restOfFinishDate}`;
+                    }
+                });
+        </script>
+    </body>
 </html>

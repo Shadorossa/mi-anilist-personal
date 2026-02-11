@@ -1,18 +1,332 @@
 {
   "favorites": [
+    "Gintama: The Final",
     "The Legend of Heroes: Trails into Reverie",
-    "Silent Hill 2"
+    "Silent Hill 2",
+    "Metal Gear Solid 2: Sons of Liberty"
   ],
   "monthlyPicks": [
     {
+      "month": "2026-02",
+      "title": "The Legend of Heroes: Trails Beyond the Horizon",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9s6o.jpg"
+    },
+    {
+      "month": "2026-01",
+      "title": "Rance 03: The Fall of Leazas",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co4xsw.jpg"
+    },
+    {
+      "month": "2025-12",
+      "title": "Rance 01: Quest for Hikari",
+      "cover": "/img/covers/rance-01-quest-for-hikari.jpg"
+    },
+    {
+      "month": "2025-11",
+      "title": "The Legend of Heroes: Trails through Daybreak II",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8l3f.jpg"
+    },
+    {
+      "month": "2025-10",
+      "title": "The Legend of Heroes: Trails through Daybreak",
+      "cover": "/img/covers/the-legend-of-heroes-trails-through-daybreak.jpg"
+    },
+    {
+      "month": "2025-09",
+      "title": "Bayonetta 2",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9e9.jpg"
+    },
+    {
       "month": "2025-06",
       "title": "The Legend of Heroes: Trails into Reverie",
-      "cover": "/img/covers/the-legend-of-heroes--trails-into-reverie.jpg"
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3bb2.jpg"
+    },
+    {
+      "month": "2025-05",
+      "title": "The Legend of Heroes: Trails of Cold Steel IV",
+      "cover": "/img/covers/the-legend-of-heroes-trails-of-cold-steel-iv.jpg"
+    },
+    {
+      "month": "2025-04",
+      "title": "The Legend of Heroes: Trails to Azure",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8gl.jpg"
+    },
+    {
+      "month": "2025-03",
+      "title": "The Legend of Heroes: Trails from Zero",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8gm.jpg"
+    },
+    {
+      "month": "2025-01",
+      "title": "The Legend of Heroes: Trails in the Sky the 3rd",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co23da.jpg"
+    },
+    {
+      "month": "2024-12",
+      "title": "The Legend of Heroes: Trails in the Sky SC",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co74em.jpg"
+    },
+    {
+      "month": "2024-02",
+      "title": "Persona 3 Reload",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co6z12.jpg"
     },
     {
       "month": "2024-01",
       "title": "Silent Hill 2",
       "cover": "/img/covers/silent-hill-2.jpg"
+    },
+    {
+      "month": "2023-05",
+      "title": "Metal Gear Solid 4: Guns of the Patriots",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5eju.jpg"
+    },
+    {
+      "month": "2023-03",
+      "title": "Metal Gear Solid 3: Snake Eater",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5ei5.jpg"
+    },
+    {
+      "month": "2023-02",
+      "title": "Metal Gear Solid 2: Sons of Liberty",
+      "cover": "/img/covers/metal-gear-solid-2-sons-of-liberty.png"
+    },
+    {
+      "month": "2021-07",
+      "title": "Gintama: The Final",
+      "cover": "https://cdn.myanimelist.net/images/anime/1245/116760l.jpg"
+    },
+    {
+      "month": "2021-03",
+      "title": "Gintama°",
+      "cover": "https://cdn.myanimelist.net/images/anime/3/72078l.jpg"
+    }
+  ],
+  "sagas": {
+    "The Legend of Heroes: Trails": [
+      "The Legend of Heroes: Trails Beyond the Horizon",
+      "The Legend of Heroes: Trails through Daybreak II",
+      "The Legend of Heroes: Trails through Daybreak",
+      "The Legend of Heroes: Trails into Reverie",
+      "The Legend of Heroes: Trails of Cold Steel IV",
+      "The Legend of Heroes: Trails of Cold Steel III",
+      "The Legend of Heroes: Trails of Cold Steel II",
+      "The Legend of Heroes: Trails of Cold Steel",
+      "The Legend of Heroes: Trails to Azure",
+      "The Legend of Heroes: Trails from Zero",
+      "The Legend of Heroes: Trails in the Sky the 3rd",
+      "The Legend of Heroes: Trails in the Sky SC",
+      "The Legend of Heroes: Trails in the Sky"
+    ],
+    "Silent Hill": [
+      "Silent Hill 4: The Room",
+      "Silent Hill 3",
+      "Silent Hill 2",
+      "Silent Hill",
+      "Silent Hill f"
+    ],
+    "Rance": [
+      "Rance X: Showdown",
+      "Rance IX: The Helmanian Revolution",
+      "Rance Quest Magnum",
+      "Sengoku Rance",
+      "Rance VI: Collapse of Zeth",
+      "Rance 03: The Fall of Leazas",
+      "Rance 02: The Rebellious Maidens",
+      "Rance 01: Quest for Hikari",
+      "Kichikuou Rance"
+    ],
+    "Bayonetta": [
+      "Bayonetta 2"
+    ],
+    "Like a Dragon": [
+      "Yakuza Kiwami",
+      "Yakuza 0"
+    ],
+    "Persona": [
+      "Persona 3 Reload"
+    ],
+    "Gintama": [
+      "Gintama: The Final",
+      "Gintama°",
+      "Gintama': Enchousen",
+      "Gintama"
+    ],
+    "Metal Gear": [
+      "Metal Gear Solid 4: Guns of the Patriots",
+      "Metal Gear Solid 3: Snake Eater",
+      "Metal Gear Solid 2: Sons of Liberty",
+      "Metal Gear 2: Solid Snake",
+      "Metal Gear",
+      "Metal Gear Solid"
+    ],
+    "Final Fantasy": [
+      "Final Fantasy"
+    ]
+  },
+  "characters": [
+    {
+      "id": 53961,
+      "title": "Renne Bright",
+      "cover": "/img/chara/renne-bright.png",
+      "source": "Trails in the Sky 2nd",
+      "coverOffsetY": 38
+    },
+    {
+      "id": 168690,
+      "title": "Souichi Kiruma",
+      "cover": "/img/chara/souichi-kiruma.png",
+      "source": "Usogui",
+      "coverOffsetY": 25
+    },
+    {
+      "id": 672,
+      "title": "Gintoki Sakata",
+      "cover": "/img/chara/gintoki-sakata.jpg",
+      "source": "Gintama",
+      "coverOffsetY": 25
+    },
+    {
+      "id": 10285,
+      "title": "Beatrice",
+      "cover": "/img/chara/beatrice.png",
+      "source": "Umineko no Naku Koro ni",
+      "coverOffsetY": 41
+    },
+    {
+      "id": 30247,
+      "title": "Estelle Bright",
+      "cover": "/img/chara/estelle-bright.png",
+      "source": "Trails in the Sky 1st",
+      "coverOffsetY": 54
+    },
+    {
+      "id": 126065,
+      "title": "Michel Bollinger",
+      "cover": "/img/chara/michel-bollinger.png",
+      "source": "The House in Fata Morgana"
+    },
+    {
+      "id": 190373,
+      "title": "Rufus Albarea",
+      "cover": "/img/chara/rufus-albarea.png",
+      "source": "Trails of Cold Steel",
+      "coverOffsetY": 33
+    },
+    {
+      "id": 2948,
+      "title": "Shinsuke Takasugi",
+      "cover": "/img/chara/shinsuke-takasugi.png",
+      "source": "Gintama"
+    },
+    {
+      "id": 302808,
+      "title": "Shizuna Misurugi",
+      "cover": "/img/chara/shizuna-misurugi.png",
+      "source": "Trails through Daybreak",
+      "coverOffsetY": 33
+    },
+    {
+      "id": 36045,
+      "title": "Erika Furudo",
+      "cover": "/img/chara/erika-furudo.png",
+      "source": "Umineko no Naku Koro ni Chiru",
+      "coverOffsetY": 35
+    },
+    {
+      "id": 127452,
+      "title": "Rean Schwarzer",
+      "cover": "/img/chara/rean-schwarzer.png",
+      "source": "Trails of Cold Steel",
+      "coverOffsetY": 36
+    },
+    {
+      "id": 3066,
+      "title": "Reinhard von Lohengramm",
+      "cover": "/img/chara/reinhard-von-lohengramm.png",
+      "source": "Ginga Eiyuu Densetsu",
+      "coverOffsetY": 32
+    },
+    {
+      "id": 68809,
+      "title": "Baku Madarame",
+      "cover": "/img/chara/baku-madarame.png",
+      "source": "Usogui"
+    },
+    {
+      "id": 72237,
+      "title": "Lloyd Bannings",
+      "cover": "/img/chara/lloyd-bannings.png",
+      "source": "Trails from Zero"
+    },
+    {
+      "id": 249642,
+      "title": "Shirley Orlando",
+      "cover": "/img/chara/shirley-orlando.png",
+      "source": "Trails to Azure",
+      "coverOffsetY": 50
+    }
+  ],
+  "monthlyChars": [
+    {
+      "month": "2025-11",
+      "name": "Shizuna Misurugi",
+      "cover": "/img/chara/shizuna-misurugi.png"
+    },
+    {
+      "month": "2025-10",
+      "name": "Renne Bright",
+      "cover": "/img/chara/renne-bright.png"
+    },
+    {
+      "month": "2025-07",
+      "name": "Erika Furudo",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b36045-M9i8Oa3sSXlR.png"
+    },
+    {
+      "month": "2025-06",
+      "name": "Rufus Albarea",
+      "cover": "/img/chara/rufus-albarea.png"
+    },
+    {
+      "month": "2025-05",
+      "name": "Rean Schwarzer",
+      "cover": "/img/chara/rean-schwarzer.png"
+    },
+    {
+      "month": "2025-04",
+      "name": "Rean Schwarzer",
+      "cover": "/img/chara/rean-schwarzer.png"
+    },
+    {
+      "month": "2025-03",
+      "name": "Renne Bright",
+      "cover": "/img/chara/renne-bright.png"
+    },
+    {
+      "month": "2025-01",
+      "name": "Estelle Bright",
+      "cover": "/img/chara/estelle-bright.png"
+    },
+    {
+      "month": "2024-12",
+      "name": "Estelle Bright",
+      "cover": "/img/chara/estelle-bright.png"
+    },
+    {
+      "month": "2023-08",
+      "name": "Souichi Kiruma",
+      "cover": "/img/chara/souichi-kiruma.png"
+    },
+    {
+      "month": "2021-04",
+      "name": "Gintoki Sakata",
+      "cover": "/img/chara/gintoki-sakata.jpg"
+    },
+    {
+      "month": "2021-03",
+      "name": "Gintoki Sakata",
+      "cover": "/img/chara/gintoki-sakata.jpg"
     }
   ]
 }

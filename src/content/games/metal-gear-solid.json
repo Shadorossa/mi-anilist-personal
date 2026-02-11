@@ -1,0 +1,11 @@
+{
+  "title": "Metal Gear Solid",
+  "cover": "/img/covers/metal-gear-solid.png",
+  "year": "1998",
+  "type": "games",
+  "status": "Completado",
+  "score": 8,
+  "startDate": "2022-12-17",
+  "finishDate": "2022-12-26",
+  "coverOffsetY": 75
+}

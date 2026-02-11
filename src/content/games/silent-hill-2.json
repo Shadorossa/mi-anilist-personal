@@ -1,7 +1,11 @@
 {
   "title": "Silent Hill 2",
   "cover": "/img/covers/silent-hill-2.jpg",
+  "year": "2001",
+  "type": "games",
+  "status": "Completado",
   "score": 10,
-  "year": 2001,
-  "status": "Completado"
+  "startDate": "",
+  "finishDate": "",
+  "coverOffsetY": 25
 }

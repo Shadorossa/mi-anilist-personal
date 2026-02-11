@@ -1,37 +1,93 @@
 ---
-import { getCollection } from "astro:content";
+import fs from "node:fs";
+import path from "node:path";
 
 // Componentes
 import ProfileHeader from "../components/ProfileHeader.astro";
 import HallOfFame from "../components/HallOfFame.astro";
 import MonthlyHistory from "../components/MonthlyHistory.astro"; // <-- IMPORTAR EL NUEVO
+import SectionWrapper from "../components/SectionWrapper.astro";
 import LibraryGrid from "../components/LibraryGrid.astro";
 
 // 1. CONFIGURACIÓN
 let profile = { username: "Admin", bio: "Cargando..." };
-try { const config = await import("../content/config.json"); profile = config.default || config; } catch (e) {}
+try {
+    const config = await import("../content/config.json");
+    profile = config.default || config;
+} catch (e) {}
 
 // 2. DB
 let db = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
-try { const d = await import("../content/database.json"); db = d.default || d; } catch (e) {}
+try {
+    const d = await import("../content/database.json");
+    db = d.default || d;
+} catch (e) {}
 
-const bannerPath = "/img/profile/banner.png"; 
+const bannerPath = "/img/profile/banner.png";
 const avatarPath = "/img/profile/pic.png";
 
+function resolveImagePath(basePath) {
+    if (
+        !basePath ||
+        basePath.startsWith("http") ||
+        /\.\w{3,4}$/.test(basePath)
+    ) {
+        return basePath; // It's a full URL or already has an extension.
+    }
+    const publicDir = path.resolve("./public");
+    const potentialPath = path.join(publicDir, basePath);
+    const dir = path.dirname(potentialPath);
+    const slug = path.basename(potentialPath);
+
+    const commonExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+    for (const ext of commonExtensions) {
+        if (fs.existsSync(path.join(dir, `${slug}${ext}`)))
+            return `${basePath}${ext}`;
+    }
+    return basePath; // Fallback to original path if not found.
+}
+
+function readCollection(collectionName) {
+    const dirPath = path.resolve(`./src/content/${collectionName}`);
+    if (!fs.existsSync(dirPath)) return [];
+    const files = fs.readdirSync(dirPath);
+    return files
+        .filter((file) => file.endsWith(".json"))
+        .map((file) => {
+            try {
+                const filePath = path.join(dirPath, file);
+                const content = fs.readFileSync(filePath, "utf-8");
+                const data = JSON.parse(content);
+                const type =
+                    collectionName === "games" ? "game" : collectionName;
+                return { ...data, id: file, type: type };
+            } catch (e) {
+                return null;
+            }
+        })
+        .filter((item) => item !== null);
+}
+
 // 3. OBRAS
-const games = await getCollection("games").catch(() => []);
-const anime = await getCollection("anime").catch(() => []);
-const manga = await getCollection("manga").catch(() => []);
-const allContent = [ 
-    ...games.map((i) => ({ ...i.data, id: i.id, type: "game" })), 
-    ...anime.map((i) => ({ ...i.data, id: i.id, type: "anime" })), 
-    ...manga.map((i) => ({ ...i.data, id: i.id, type: "manga" })) 
+const allContent = [
+    ...readCollection("games"),
+    ...readCollection("anime"),
+    ...readCollection("manga"),
 ];
 
-const stats = { 
-    total: allContent.length, 
-    playing: allContent.filter((i) => i.status === "Jugando").length, 
-    favs: db.favorites.length 
+const stats = {
+    total: allContent.length,
+    playing: allContent.filter(
+        (i) =>
+            i.status === "Jugando" ||
+            i.status === "Viendo" ||
+            i.status === "Leyendo",
+    ).length,
+    completed: allContent.filter((i) => i.status === "Completado").length,
+    pending: allContent.filter((i) => i.status === "Pendiente").length,
+    dropped: allContent.filter((i) => i.status === "Abandonado").length,
+    paused: allContent.filter((i) => i.status === "Pausado").length,
+    favs: db.favorites.length,
 };
 
 // 4. FAVORITOS
@@ -40,50 +96,121 @@ const favorites = db.favorites
     .filter((item) => item !== undefined);
 
 // 5. MENSUALES (OBRAS)
-const monthlyWorks = (db.monthlyPicks || []).map(pick => {
-    const [y, m] = pick.month.split("-");
-    const dateObj = new Date(parseInt(y), parseInt(m) - 1);
-    const monthName = dateObj.toLocaleString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
-    return { title: pick.title, cover: pick.cover, year: y, month: monthName, rawDate: pick.month };
-}).sort((a, b) => b.rawDate.localeCompare(a.rawDate));
+const monthlyWorks = (db.monthlyPicks || [])
+    .map((pick) => {
+        const fullItem = allContent.find((item) => item.title === pick.title);
+        const [y, m] = pick.month.split("-");
+        const dateObj = new Date(parseInt(y), parseInt(m) - 1);
+        const monthName = dateObj
+            .toLocaleString("es-ES", { month: "short" })
+            .toUpperCase()
+            .replace(".", "");
+        return {
+            title: pick.title,
+            cover: fullItem?.cover || pick.cover,
+            year: y,
+            month: monthName,
+            rawDate: pick.month,
+            coverOffsetY: fullItem?.coverOffsetY,
+        };
+    })
+    .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
 // 6. MENSUALES (PERSONAJES)
-const monthlyChars = (db.monthlyChars || []).map(pick => {
-    const [y, m] = pick.month.split("-");
-    const dateObj = new Date(parseInt(y), parseInt(m) - 1);
-    const monthName = dateObj.toLocaleString("es-ES", { month: "short" }).toUpperCase().replace(".", "");
-    return { title: pick.name, cover: pick.cover, year: y, month: monthName, rawDate: pick.month };
-}).sort((a, b) => b.rawDate.localeCompare(a.rawDate));
+const monthlyChars = (db.monthlyChars || [])
+    .map((pick) => {
+        const fullChar = (db.characters || []).find(
+            (c) => c.title === pick.name,
+        );
+        const [y, m] = pick.month.split("-");
+        const dateObj = new Date(parseInt(y), parseInt(m) - 1);
+        const monthName = dateObj
+            .toLocaleString("es-ES", { month: "short" })
+            .toUpperCase()
+            .replace(".", "");
+        return {
+            title: pick.name,
+            cover: resolveImagePath(pick.cover),
+            year: y,
+            month: monthName,
+            rawDate: pick.month,
+            coverOffsetY: fullChar?.coverOffsetY,
+        };
+    })
+    .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
 // 7. HALL OF FAME PERSONAJES
 let customCharacters = [];
-if (db.characters && db.characters.length > 0) { 
-    customCharacters = db.characters.map(c => ({ name: c.title, img: c.cover, source: c.source })); 
-} else { 
-    customCharacters = [ { name: "Malenia", source: "Elden Ring", img: "https://placehold.co/400x600" } ]; 
+if (db.characters && db.characters.length > 0) {
+    customCharacters = db.characters.map((c) => ({
+        name: c.title,
+        img: resolveImagePath(c.cover),
+        source: c.source,
+    }));
+} else {
+    customCharacters = [
+        {
+            name: "Malenia",
+            source: "Elden Ring",
+            img: "https://placehold.co/400x600",
+        },
+    ];
 }
 ---
 
 <html lang="es" class="dark">
-<head>
-    <meta charset="UTF-8" />
-    <title>{profile.username} | Colección</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style> 
-        body { background-color: #050505; color: #e4e4e7; background-image: radial-gradient( circle at 50% 0%, #1a1a20 0%, #050505 70% ); } 
-        .hide-scroll::-webkit-scrollbar { display: none; } 
-    </style>
-</head>
-<body class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white">
-    <ProfileHeader profile={profile} bannerPath={bannerPath} avatarPath={avatarPath} stats={stats} />
-    
-    <main class="max-w-7xl mx-auto px-4 md:px-8 space-y-16">
-        <HallOfFame favorites={favorites} characters={customCharacters} />
+    <head>
+        <meta charset="UTF-8" />
+        <title>{profile.username} | Colección</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <style>
+            body {
+                background-color: #050505;
+                color: #e4e4e7;
+                background-image: radial-gradient(
+                    circle at 50% 0%,
+                    #1a1a20 0%,
+                    #050505 70%
+                );
+            }
+            .hide-scroll::-webkit-scrollbar {
+                display: none;
+            }
+        </style>
+    </head>
+    <body
+        class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white"
+    >
+        <ProfileHeader
+            profile={profile}
+            bannerPath={bannerPath}
+            avatarPath={avatarPath}
+            stats={stats}
+        />
 
-        <MonthlyHistory works={monthlyWorks} chars={monthlyChars} />
+        <main class="max-w-7xl mx-auto px-4 md:px-8">
+            <SectionWrapper title="Hall of Fame">
+                <HallOfFame
+                    favorites={favorites}
+                    characters={customCharacters}
+                />
+            </SectionWrapper>
 
-        <LibraryGrid items={allContent} />
-    </main>
-</body>
+            <div class="h-px w-full bg-white/10"></div>
+
+            <SectionWrapper title="Historial">
+                <MonthlyHistory works={monthlyWorks} chars={monthlyChars} />
+            </SectionWrapper>
+
+            <div class="h-px w-full bg-white/10"></div>
+
+            <SectionWrapper title="Biblioteca">
+                <LibraryGrid items={allContent} sagas={db.sagas} />
+            </SectionWrapper>
+        </main>
+    </body>
 </html>

@@ -1,137 +1,244 @@
 ---
 const { favorites = [], characters = [] } = Astro.props;
 
-// Rellenar hasta 10 huecos exactos
 const padArray = (arr, size) => {
     const padded = [...arr];
-    while (padded.length < size) {
-        padded.push(null);
-    }
+    while (padded.length < size) padded.push(null);
     return padded.slice(0, size);
 };
 
 const fixedFavorites = padArray(favorites, 10);
-const fixedCharacters = padArray(characters, 10);
 ---
 
-<section class="py-8">
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tighter">
-            <span id="hof-icon" class="text-yellow-500"><i class="fa-solid fa-crown"></i></span>
-            <span id="hof-title">Hall of Fame</span>
-        </h2>
+<div class="w-full">
+    <div class="flex gap-6 items-center">
+        <div class="flex-1 min-w-0">
+            <div
+                id="view-works"
+                class="flex h-[400px] w-full gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl"
+            >
+                {
+                    fixedFavorites.map((item, index) => (
+                        <div
+                            class={`relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 ${item ? "hover:flex-[3] cursor-pointer bg-black" : "bg-[#121215] flex-1"}`}
+                        >
+                            {item ? (
+                                <>
+                                    <img
+                                        src={item.cover}
+                                        alt={item.title}
+                                        class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                                        loading="lazy"
+                                    />
 
-        <div class="bg-[#0a0a0c] p-1 rounded-full border border-white/10 flex relative w-24 h-10 shadow-inner">
-            <div id="tab-bg" class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-transform duration-300 ease-out border border-white/5"></div>
-            <button onclick="switchView('works')" id="btn-works" class="relative z-10 w-1/2 h-full flex items-center justify-center text-white transition-colors">
-                <i class="fa-solid fa-gamepad text-sm"></i>
+                                    <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+
+                                    <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
+                                        <span class="text-[10px] font-bold text-white/40 group-hover:text-yellow-500">
+                                            #{index + 1}
+                                        </span>
+                                    </div>
+
+                                    <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                        <h3
+                                            class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                            style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                        >
+                                            {item.title}
+                                        </h3>
+                                    </div>
+
+                                    <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                        <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                            {item.title}
+                                        </h3>
+                                        <div class="h-0.5 w-6 bg-yellow-500 mt-2 opacity-70" />
+                                    </div>
+                                </>
+                            ) : (
+                                <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                                    <span class="text-white/10 font-bold text-lg group-hover:text-white/20">
+                                        #{index + 1}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                }
+            </div>
+
+            <div id="view-chars" class="hidden relative group/carousel">
+                <div class="fade-x">
+                    <div
+                        id="hof-chars-scroll"
+                        class="hide-scroll overflow-x-auto scroll-smooth"
+                    >
+                        <div
+                            class="flex h-[400px] gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl"
+                            style={characters.length > 10
+                                ? `width: ${characters.length * 10}%`
+                                : "width: 100%"}
+                        >
+                            {
+                                (characters.length > 10
+                                    ? characters
+                                    : padArray(characters, 10)
+                                ).map((char, index) => (
+                                    <div
+                                        class:list={[
+                                            "relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0",
+                                            char
+                                                ? "hover:flex-[3] cursor-pointer bg-black"
+                                                : "bg-[#121215]",
+                                        ]}
+                                    >
+                                        {char ? (
+                                            <>
+                                                <img
+                                                    src={char.img}
+                                                    class="absolute inset-0 w-full h-full object-cover object-top opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                                                    loading="lazy"
+                                                />
+                                                <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+
+                                                <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
+                                                    <span class="text-[10px] font-bold text-white/40 group-hover:text-pink-500">
+                                                        #{index + 1}
+                                                    </span>
+                                                </div>
+
+                                                <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                                    <h3
+                                                        class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                                        style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                                    >
+                                                        {char.name}
+                                                    </h3>
+                                                </div>
+
+                                                <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                                    <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                                        {char.name}
+                                                    </h3>
+                                                    <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                        {char.source}
+                                                    </p>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                                                <span class="text-white/10 font-bold text-lg group-hover:text-white/20">
+                                                    #{index + 1}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+                {
+                    characters.length > 10 && (
+                        <>
+                            <button
+                                onclick="scrollHistoryGrid('hof-chars-scroll', -1)"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
+                            >
+                                <i class="fa-solid fa-chevron-left" />
+                            </button>
+                            <button
+                                onclick="scrollHistoryGrid('hof-chars-scroll', 1)"
+                                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
+                            >
+                                <i class="fa-solid fa-chevron-right" />
+                            </button>
+                        </>
+                    )
+                }
+            </div>
+        </div>
+        <div class="flex flex-col items-center gap-2">
+            <button
+                onclick="switchView('works')"
+                id="btn-works"
+                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white"
+            >
+                <i class="fa-solid fa-crown"></i>
             </button>
-            <button onclick="switchView('chars')" id="btn-chars" class="relative z-10 w-1/2 h-full flex items-center justify-center text-gray-600 hover:text-white transition-colors">
-                <i class="fa-solid fa-mask text-sm"></i>
+            <div class="w-px h-4 bg-white/10"></div>
+            <button
+                onclick="switchView('chars')"
+                id="btn-chars"
+                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+            >
+                <i class="fa-solid fa-mask"></i>
             </button>
         </div>
     </div>
-
-    <div id="view-works" class="flex h-[400px] w-full gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-        {fixedFavorites.map((item, index) => (
-            <div class={`relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 ${item ? 'hover:flex-[3] cursor-pointer bg-black' : 'bg-[#121215] flex-1'}`}>
-                
-                {item ? (
-                    <>
-                        <img 
-                            src={item.cover} 
-                            alt={item.title} 
-                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
-                            loading="lazy"
-                        />
-                        
-                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500"></div>
-
-                        <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
-                            <span class="text-[10px] font-bold text-white/40 group-hover:text-yellow-500">#{index + 1}</span>
-                        </div>
-
-                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
-                             <h3 class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap" style="writing-mode: vertical-rl; transform: rotate(180deg);">
-                                 {item.title}
-                             </h3>
-                        </div>
-
-                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
-                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">{item.title}</h3>
-                            <div class="h-0.5 w-6 bg-yellow-500 mt-2 opacity-70"></div>
-                        </div>
-                    </>
-                ) : (
-                    <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/5 transition-colors">
-                        <span class="text-white/5 font-bold text-lg group-hover:text-white/10">#{index + 1}</span>
-                    </div>
-                )}
-            </div>
-        ))}
-    </div>
-
-    <div id="view-chars" class="hidden flex h-[400px] w-full gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-        {fixedCharacters.map((char, index) => (
-            <div class={`relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 ${char ? 'hover:flex-[3] cursor-pointer bg-black' : 'bg-[#121215] flex-1'}`}>
-                
-                {char ? (
-                    <>
-                        <img 
-                            src={char.img} 
-                            class="absolute inset-0 w-full h-full object-cover object-top opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
-                            loading="lazy"
-                        />
-                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500"></div>
-
-                        <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
-                            <span class="text-[10px] font-bold text-white/40 group-hover:text-pink-500">#{index + 1}</span>
-                        </div>
-
-                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
-                             <h3 class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap" style="writing-mode: vertical-rl; transform: rotate(180deg);">
-                                 {char.name}
-                             </h3>
-                        </div>
-
-                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
-                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">{char.name}</h3>
-                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">{char.source}</p>
-                        </div>
-                    </>
-                ) : (
-                    <div class="absolute inset-0 flex items-center justify-center group-hover:bg-white/5 transition-colors">
-                        <span class="text-white/5 font-bold text-lg group-hover:text-white/10">#{index + 1}</span>
-                    </div>
-                )}
-            </div>
-        ))}
-    </div>
-</section>
+</div>
 
 <script is:inline>
-    window.switchView = (type) => {
-        const worksView = document.getElementById('view-works');
-        const charsView = document.getElementById('view-chars');
-        const btnWorks = document.getElementById('btn-works');
-        const btnChars = document.getElementById('btn-chars');
-        const bg = document.getElementById('tab-bg');
-        const icon = document.getElementById('hof-icon');
-
-        if(type === 'works') {
-            worksView.classList.remove('hidden'); worksView.classList.add('flex');
-            charsView.classList.add('hidden'); charsView.classList.remove('flex');
-            bg.style.transform = 'translateX(0)';
-            btnWorks.classList.add('text-white'); btnWorks.classList.remove('text-gray-600');
-            btnChars.classList.add('text-gray-600'); btnChars.classList.remove('text-white');
-            icon.innerHTML = '<i class="fa-solid fa-crown"></i>'; icon.className = 'text-yellow-500';
-        } else {
-            worksView.classList.add('hidden'); worksView.classList.remove('flex');
-            charsView.classList.remove('hidden'); charsView.classList.add('flex');
-            bg.style.transform = 'translateX(100%)';
-            btnChars.classList.add('text-white'); btnChars.classList.remove('text-gray-600');
-            btnWorks.classList.add('text-gray-600'); btnWorks.classList.remove('text-white');
-            icon.innerHTML = '<i class="fa-solid fa-mask"></i>'; icon.className = 'text-pink-500';
+    window.scrollHistoryGrid = (elementId, direction) => {
+        const container = document.getElementById(elementId);
+        if (container) {
+            const scrollAmount = container.clientWidth; // Scroll a full page (10 items)
+            container.scrollBy({
+                left: scrollAmount * direction,
+                behavior: "smooth",
+            });
         }
-    }
+    };
+
+    window.switchView = (type) => {
+        const worksView = document.getElementById("view-works");
+        const charsView = document.getElementById("view-chars");
+        const btnWorks = document.getElementById("btn-works");
+        const btnChars = document.getElementById("btn-chars");
+
+        if (type === "works") {
+            worksView.classList.remove("hidden");
+            worksView.classList.add("flex");
+            charsView.classList.add("hidden");
+            charsView.classList.remove("relative");
+            btnWorks.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
+            btnChars.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
+        } else {
+            worksView.classList.add("hidden");
+            charsView.classList.remove("hidden");
+            charsView.classList.add("relative");
+            btnChars.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
+            btnWorks.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
+        }
+    };
 </script>
+
+<style>
+    .fade-x {
+        -webkit-mask-image: linear-gradient(
+            to right,
+            transparent,
+            black 20px,
+            black calc(100% - 20px),
+            transparent
+        );
+        mask-image: linear-gradient(
+            to right,
+            transparent,
+            black 20px,
+            black calc(100% - 20px),
+            transparent
+        );
+    }
+    .hide-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scroll {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+</style>

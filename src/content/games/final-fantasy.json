@@ -1,0 +1,11 @@
+{
+  "title": "Final Fantasy",
+  "cover": "/img/covers/final-fantasy.png",
+  "year": "2021",
+  "type": "games",
+  "status": "Completado",
+  "score": 3,
+  "startDate": "2023-04-29",
+  "finishDate": "2023-04-29",
+  "coverOffsetY": 11
+}

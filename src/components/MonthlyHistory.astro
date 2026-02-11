@@ -1,114 +1,243 @@
 ---
 const { works = [], chars = [] } = Astro.props;
-
-// Mostrar solo los últimos 12
-const visibleWorks = works.slice(0, 12);
-const visibleChars = chars.slice(0, 12);
 ---
 
-<section class="border-t border-white/5 pt-10 pb-4">
-    
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-white flex items-center gap-2 opacity-90">
-            <span id="hist-icon" class="text-indigo-500"><i class="fa-solid fa-calendar-days"></i></span>
-            <span>Historial Mensual</span>
-        </h2>
+<div class="w-full">
+    <div class="flex gap-6 items-center">
+        <div class="flex-1 min-w-0">
+            <!-- Works History -->
+            <div id="hist-works-wrapper" class="relative group/carousel">
+                <div class="fade-x">
+                    <div
+                        id="hist-works-scroll"
+                        class="hide-scroll overflow-x-auto scroll-smooth"
+                    >
+                        <div
+                            class="grid grid-flow-col grid-rows-2 auto-cols-[180px] sm:auto-cols-[200px] gap-3 animate-fade-in"
+                        >
+                            {
+                                works.map((pick) => (
+                                    <div class="bg-[#121215] border border-white/5 rounded-lg p-2 group hover:bg-white/5 hover:border-white/10 transition-all duration-300 cursor-default h-full flex flex-col">
+                                        <div class="flex gap-2 h-10 mb-2 shrink-0">
+                                            <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
+                                                <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">
+                                                    {pick.year}
+                                                </span>
+                                                <span class="text-[9px] text-indigo-400 font-black leading-none tracking-wide">
+                                                    {pick.month}
+                                                </span>
+                                            </div>
+                                            <div class="flex-1 relative rounded overflow-hidden shadow-sm">
+                                                <img
+                                                    src={pick.cover}
+                                                    class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                    loading="lazy"
+                                                    style={`object-position: center ${pick.coverOffsetY !== undefined ? pick.coverOffsetY : 50}%`}
+                                                />
+                                            </div>
+                                        </div>
 
-        <div class="bg-[#121215] p-1 rounded-full border border-white/5 flex relative w-24 h-8 shadow-inner">
-            <div id="hist-bg" class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-transform duration-300 ease-out border border-white/5"></div>
-            <button onclick="switchHistory('works')" id="btn-hist-works" class="relative z-10 w-1/2 h-full flex items-center justify-center text-white transition-colors">
-                <i class="fa-solid fa-gamepad text-[10px]"></i>
+                                        <div class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]">
+                                            <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-center group-hover:text-white transition-colors line-clamp-2">
+                                                {pick.title}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+                {
+                    works.length > 6 && (
+                        <>
+                            <button
+                                onclick="scrollHistoryGrid('hist-works-scroll', -1)"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
+                            >
+                                <i class="fa-solid fa-chevron-left" />
+                            </button>
+                            <button
+                                onclick="scrollHistoryGrid('hist-works-scroll', 1)"
+                                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
+                            >
+                                <i class="fa-solid fa-chevron-right" />
+                            </button>
+                        </>
+                    )
+                }
+                {
+                    works.length === 0 && (
+                        <div class="h-[150px] flex items-center justify-center text-center text-xs text-gray-600 italic">
+                            No hay obras registradas.
+                        </div>
+                    )
+                }
+            </div>
+
+            <!-- Chars History -->
+            <div id="hist-chars-wrapper" class="hidden relative group/carousel">
+                <div class="fade-x">
+                    <div
+                        id="hist-chars-scroll"
+                        class="hide-scroll overflow-x-auto scroll-smooth"
+                    >
+                        <div
+                            class="grid grid-flow-col grid-rows-2 auto-cols-[180px] sm:auto-cols-[200px] gap-3 animate-fade-in"
+                        >
+                            {
+                                chars.map((pick) => (
+                                    <div class="bg-[#121215] border border-white/5 rounded-lg p-2 group hover:bg-white/5 hover:border-white/10 transition-all duration-300 cursor-default h-full flex flex-col">
+                                        <div class="flex gap-2 h-10 mb-2 shrink-0">
+                                            <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
+                                                <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">
+                                                    {pick.year}
+                                                </span>
+                                                <span class="text-[9px] text-pink-400 font-black leading-none tracking-wide">
+                                                    {pick.month}
+                                                </span>
+                                            </div>
+                                            <div class="flex-1 relative rounded overflow-hidden shadow-sm">
+                                                <img
+                                                    src={pick.cover}
+                                                    class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                    loading="lazy"
+                                                    style={`object-position: center ${pick.coverOffsetY !== undefined ? pick.coverOffsetY : 50}%`}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]">
+                                            <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-center group-hover:text-white transition-colors line-clamp-2">
+                                                {pick.title}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+                {
+                    chars.length > 6 && (
+                        <>
+                            <button
+                                onclick="scrollHistoryGrid('hist-chars-scroll', -1)"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
+                            >
+                                <i class="fa-solid fa-chevron-left" />
+                            </button>
+                            <button
+                                onclick="scrollHistoryGrid('hist-chars-scroll', 1)"
+                                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full z-10 w-8 h-8 rounded-full text-gray-600 opacity-0 group-hover/carousel:opacity-100 transition-all flex items-center justify-center hover:bg-white/10 hover:text-white"
+                            >
+                                <i class="fa-solid fa-chevron-right" />
+                            </button>
+                        </>
+                    )
+                }
+                {
+                    chars.length === 0 && (
+                        <div class="h-[150px] flex items-center justify-center text-center text-xs text-gray-600 italic">
+                            No hay personajes registrados.
+                        </div>
+                    )
+                }
+            </div>
+        </div>
+        <div class="flex flex-col items-center gap-2">
+            <button
+                onclick="switchHistory('works')"
+                id="btn-hist-works"
+                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white"
+            >
+                <i class="fa-solid fa-gamepad"></i>
             </button>
-            <button onclick="switchHistory('chars')" id="btn-hist-chars" class="relative z-10 w-1/2 h-full flex items-center justify-center text-gray-600 hover:text-white transition-colors">
-                <i class="fa-solid fa-mask text-[10px]"></i>
+            <div class="w-px h-4 bg-white/10"></div>
+            <button
+                onclick="switchHistory('chars')"
+                id="btn-hist-chars"
+                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+            >
+                <i class="fa-solid fa-mask"></i>
             </button>
         </div>
     </div>
-
-    <div id="hist-works" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 animate-fade-in">
-        {visibleWorks.map((pick) => (
-            <div class="bg-[#121215] border border-white/5 rounded-lg p-2 group hover:bg-white/5 hover:border-white/10 transition-all duration-300 cursor-default h-full flex flex-col">
-                
-                <div class="flex gap-2 h-10 mb-2 shrink-0">
-                    <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
-                        <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">{pick.year}</span>
-                        <span class="text-[9px] text-indigo-400 font-black leading-none tracking-wide">{pick.month}</span>
-                    </div>
-                    <div class="flex-1 relative rounded overflow-hidden shadow-sm">
-                        <img src={pick.cover} class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" loading="lazy" />
-                    </div>
-                </div>
-
-                <div class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]">
-                    <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-center group-hover:text-white transition-colors line-clamp-2">
-                        {pick.title}
-                    </h4>
-                </div>
-            </div>
-        ))}
-        {visibleWorks.length === 0 && <div class="col-span-full py-8 text-center text-xs text-gray-600 italic">No hay obras registradas.</div>}
-    </div>
-
-    <div id="hist-chars" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 animate-fade-in">
-        {visibleChars.map((pick) => (
-            <div class="bg-[#121215] border border-white/5 rounded-lg p-2 group hover:bg-white/5 hover:border-white/10 transition-all duration-300 cursor-default h-full flex flex-col">
-                
-                <div class="flex gap-2 h-10 mb-2 shrink-0">
-                    <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
-                        <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">{pick.year}</span>
-                        <span class="text-[9px] text-pink-400 font-black leading-none tracking-wide">{pick.month}</span>
-                    </div>
-                    <div class="flex-1 relative rounded overflow-hidden shadow-sm">
-                        <img src={pick.cover} class="absolute inset-0 w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity" loading="lazy" />
-                    </div>
-                </div>
-
-                <div class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]">
-                    <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-center group-hover:text-white transition-colors line-clamp-2">
-                        {pick.title}
-                    </h4>
-                </div>
-            </div>
-        ))}
-        {visibleChars.length === 0 && <div class="col-span-full py-8 text-center text-xs text-gray-600 italic">No hay personajes registrados.</div>}
-    </div>
-
-</section>
+</div>
 
 <script is:inline>
     window.switchHistory = (type) => {
-        const wContainer = document.getElementById('hist-works');
-        const cContainer = document.getElementById('hist-chars');
-        const bg = document.getElementById('hist-bg');
-        const btnW = document.getElementById('btn-hist-works');
-        const btnC = document.getElementById('btn-hist-chars');
-        const icon = document.getElementById('hist-icon');
+        const wContainer = document.getElementById("hist-works-wrapper");
+        const cContainer = document.getElementById("hist-chars-wrapper");
+        const btnW = document.getElementById("btn-hist-works");
+        const btnC = document.getElementById("btn-hist-chars");
 
-        if (type === 'works') {
-            wContainer.classList.remove('hidden'); wContainer.classList.add('grid');
-            cContainer.classList.add('hidden'); cContainer.classList.remove('grid');
+        if (type === "works") {
+            wContainer.classList.remove("hidden");
+            cContainer.classList.add("hidden");
 
-            bg.style.transform = 'translateX(0)';
-            btnW.classList.add('text-white'); btnW.classList.remove('text-gray-600');
-            btnC.classList.add('text-gray-600'); btnC.classList.remove('text-white');
-            
-            icon.innerHTML = '<i class="fa-solid fa-calendar-days"></i>';
-            icon.className = 'text-indigo-500';
+            btnW.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
+            btnC.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
         } else {
-            wContainer.classList.add('hidden'); wContainer.classList.remove('grid');
-            cContainer.classList.remove('hidden'); cContainer.classList.add('grid');
+            wContainer.classList.add("hidden");
+            cContainer.classList.remove("hidden");
 
-            bg.style.transform = 'translateX(100%)';
-            btnC.classList.add('text-white'); btnC.classList.remove('text-gray-600');
-            btnW.classList.add('text-gray-600'); btnW.classList.remove('text-white');
-
-            icon.innerHTML = '<i class="fa-solid fa-calendar-days"></i>';
-            icon.className = 'text-pink-500';
+            btnC.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
+            btnW.className =
+                "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
         }
-    }
+    };
+
+    window.scrollHistoryGrid = (elementId, direction) => {
+        const container = document.getElementById(elementId);
+        if (container) {
+            const scrollAmount = container.clientWidth * 0.8; // Scroll 80% of the visible width
+            container.scrollBy({
+                left: scrollAmount * direction,
+                behavior: "smooth",
+            });
+        }
+    };
 </script>
 
 <style>
-    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-x {
+        -webkit-mask-image: linear-gradient(
+            to right,
+            transparent,
+            black 20px,
+            black calc(100% - 20px),
+            transparent
+        );
+        mask-image: linear-gradient(
+            to right,
+            transparent,
+            black 20px,
+            black calc(100% - 20px),
+            transparent
+        );
+    }
+    .hide-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scroll {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>

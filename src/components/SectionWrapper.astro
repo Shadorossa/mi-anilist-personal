@@ -1,0 +1,21 @@
+---
+const { title } = Astro.props;
+---
+
+<section class="flex gap-6 md:gap-8 items-start py-10">
+    <!-- Título Vertical -->
+    <div class="hidden md:flex flex-col items-center gap-2 sticky top-24">
+        <h2
+            class="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]"
+            style="writing-mode: vertical-rl; transform: rotate(180deg);"
+        >
+            {title}
+        </h2>
+        <div class="w-px h-16 bg-white/10 mt-2"></div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="flex-1 min-w-0">
+        <slot />
+    </div>
+</section>
