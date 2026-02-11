@@ -102,7 +102,14 @@ const favoritesOrdered = db.favorites
                 <button
                     onclick="switchMode('characters')"
                     class="nav-btn"
-                    title="Personajes"><i class="fa-solid fa-mask"></i></button
+                    title="Buscar Personajes"
+                    ><i class="fa-solid fa-magnifying-glass"></i></button
+                >
+                <button
+                    onclick="switchMode('my-characters')"
+                    class="nav-btn"
+                    title="Mis Personajes"
+                    ><i class="fa-solid fa-users"></i></button
                 >
                 <div class="h-px bg-white/5 w-full"></div>
                 <button
@@ -221,7 +228,7 @@ const favoritesOrdered = db.favorites
             </div>
 
             <div id="characters-panel" class="panel hidden">
-                <div class="flex flex-col h-full min-h-0">
+                <div class="flex flex-col h-full min-h-0 gap-6">
                     <div class="search-bar-container shrink-0">
                         <select
                             disabled
@@ -229,7 +236,11 @@ const favoritesOrdered = db.favorites
                         >
                             <option>Personajes</option>
                         </select>
-                        <form id="charSearchForm" class="search-form">
+                        <form
+                            id="charSearchForm"
+                            class="search-form"
+                            onsubmit="event.preventDefault();"
+                        >
                             <input
                                 type="text"
                                 id="charInput"
@@ -243,8 +254,14 @@ const favoritesOrdered = db.favorites
                         </form>
                     </div>
                     <div class="custom-scrollbar h-full space-y-10">
-                        <div>
+                        <div class="flex justify-between items-center">
                             <h3 class="panel-subheader">Mis Personajes</h3>
+                            <button
+                                onclick="createNewCharacter()"
+                                class="text-indigo-400 hover:text-indigo-300 text-xs font-bold uppercase tracking-wider px-2 py-1 rounded hover:bg-indigo-500/10"
+                            >
+                                Crear Nuevo
+                            </button>
                             <div id="savedCharsGrid" class="asearch-grid mt-4">
                             </div>
                         </div>
@@ -333,15 +350,29 @@ const favoritesOrdered = db.favorites
                     </div>
                 </div>
                 <div class="flex-1 flex gap-6 min-h-0">
-                    <div class="w-1/4 flex flex-col">
-                        <h3 class="panel-subheader mb-2">Obras sin asignar</h3>
-                        <div
-                            id="unassigned-games"
-                            class="saga-list custom-scrollbar flex-1"
-                        >
+                    <div class="w-1/3 flex flex-col gap-4">
+                        <div>
+                            <h3 class="panel-subheader mb-2">
+                                Coincidencias Sugeridas
+                            </h3>
+                            <div
+                                id="potential-matches"
+                                class="saga-list custom-scrollbar h-48"
+                            >
+                            </div>
+                        </div>
+                        <div class="flex-1 flex flex-col min-h-0">
+                            <h3 class="panel-subheader mb-2">
+                                Obras sin asignar
+                            </h3>
+                            <div
+                                id="unassigned-games"
+                                class="saga-list custom-scrollbar flex-1"
+                            >
+                            </div>
                         </div>
                     </div>
-                    <div class="w-3/4 flex flex-col">
+                    <div class="w-2/3 flex flex-col">
                         <h3 class="panel-subheader mb-2">Sagas</h3>
                         <div
                             id="sagas-container"
@@ -352,6 +383,37 @@ const favoritesOrdered = db.favorites
                 </div>
             </div>
         </main>
+
+        <div
+            id="sagaCoverPickerModal"
+            class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col h-[600px]"
+            >
+                <div
+                    class="p-6 border-b border-white/5 flex justify-between items-center"
+                >
+                    <h3
+                        id="sagaCoverPickerTitle"
+                        class="text-lg font-bold text-white"
+                    >
+                        Seleccionar Portada para Saga
+                    </h3>
+                    <button
+                        onclick="closeSagaCoverPicker()"
+                        class="text-gray-500 hover:text-white transition"
+                        ><i class="fa-solid fa-xmark text-lg"></i></button
+                    >
+                </div>
+                <div
+                    id="sagaCoverPickerGrid"
+                    class="asearch-grid p-6 overflow-y-auto custom-scrollbar"
+                >
+                    <!-- Covers will be injected here -->
+                </div>
+            </div>
+        </div>
 
         <div
             id="editor"
@@ -740,6 +802,7 @@ const favoritesOrdered = db.favorites
                                 >
                                     <div
                                         class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
+                                        class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
                                     >
                                         <div
                                             class="flex gap-2 h-10 mb-2 shrink-0"
@@ -925,6 +988,47 @@ const favoritesOrdered = db.favorites
             let currentPickYear = new Date().getFullYear();
             let currentCharPickYear = new Date().getFullYear();
 
+            let currentSagaForHof = null;
+
+            window.createNewCharacter = () => {
+                currentSelection = {
+                    id: `custom-${Date.now()}`, // Unique ID for new characters
+                    title: "",
+                    source: "",
+                    cover: "https://placehold.co/240x360/111/333?text=Pegar+Imagen",
+                    isNew: true, // Flag to indicate it's a new character
+                };
+                openCharEditor(currentSelection);
+            };
+
+            window.addSagaToHof = (sagaName) => {
+                currentSagaForHof = sagaName;
+                const sagaGames = window.sagas[sagaName] || [];
+                const gameObjects = sagaGames
+                    .map((title) =>
+                        window.localLibrary.find(
+                            (item) => item.title === title,
+                        ),
+                    )
+                    .filter(Boolean);
+
+                const grid = document.getElementById("sagaCoverPickerGrid");
+                document.getElementById("sagaCoverPickerTitle").innerText =
+                    `Seleccionar Portada para "${sagaName}"`;
+
+                grid.innerHTML = gameObjects
+                    .map(
+                        (game) => `
+                    <div class="asearch-card !rounded-lg" onclick="selectSagaCover('${game.cover}')">
+                        <img src="${game.cover}" class="obj-center"><div class="asearch-info !opacity-100 !bg-black/50"><h4 class="asearch-title !text-[9px]">${game.title}</h4></div></div>`,
+                    )
+                    .join("");
+
+                document
+                    .getElementById("sagaCoverPickerModal")
+                    .classList.remove("hidden");
+            };
+
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
             let localIsAscending = false;
@@ -945,6 +1049,30 @@ const favoritesOrdered = db.favorites
                 }
             }
 
+            window.selectSagaCover = (coverUrl) => {
+                const sagaObject = {
+                    isSaga: true,
+                    title: currentSagaForHof,
+                    cover: coverUrl,
+                };
+
+                const existingIndex = window.favoritesTitles.findIndex(
+                    (fav) =>
+                        typeof fav === "object" &&
+                        fav.title === sagaObject.title,
+                );
+                if (existingIndex === -1) {
+                    window.favoritesTitles.unshift(sagaObject);
+                    alert(
+                        `"${sagaObject.title}" añadida al Hall of Fame. Ve al editor para guardarla y ordenarla.`,
+                    );
+                } else {
+                    alert("Esta saga ya está en el Hall of Fame.");
+                }
+
+                closeSagaCoverPicker();
+            };
+
             // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
                 try {
@@ -960,6 +1088,12 @@ const favoritesOrdered = db.favorites
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
                 }
+            };
+
+            window.closeSagaCoverPicker = () => {
+                document
+                    .getElementById("sagaCoverPickerModal")
+                    .classList.add("hidden");
             };
 
             // --- 2. DEFINIR LA FUNCIÓN PARA ABRIR EL EDITOR DE PERSONAJES ---
@@ -1014,21 +1148,30 @@ const favoritesOrdered = db.favorites
             };
 
             function renderCard(item, actionName, isChar = false) {
-                const isFav = window.favoritesTitles.includes(item.title);
-                // encodeURIComponent doesn't escape single quotes, which breaks the onclick attribute.
-                // We need to manually encode it for it to be a valid JS string inside the attribute.
                 const safeItem = encodeURIComponent(
                     JSON.stringify(item),
                 ).replace(/'/g, "%27");
 
-                // Si es personaje, no mostramos estrellas
+                if (item.isSaga) {
+                    return `
+                    <div data-item='${safeItem}' class="asearch-card">
+                        <img src="${item.cover}" class="obj-center">
+                        <div class="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">Saga</div>
+                        <div class="asearch-info !opacity-100 !bg-gradient-to-t from-black/80 to-transparent">
+                            <h4 class="asearch-title !transform-none">${item.title}</h4>
+                        </div>
+                    </div>`;
+                }
+
+                const isFav = window.favoritesTitles.includes(item.title);
+
                 const starRating =
                     !isChar && window.calculateRating
                         ? window.calculateRating(item.score || 0)
                         : 0;
 
                 return `
-    <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card">
+    <div onclick="handleCardClick('${actionName}', '${safeItem}')" data-item='${safeItem}' class="asearch-card">
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy">
         ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
@@ -1550,14 +1693,18 @@ const favoritesOrdered = db.favorites
 
             function renderFavWorksSortable() {
                 const container = document.getElementById("favList");
-                // Buscamos los objetos completos en la librería usando solo los títulos guardados
                 const list = window.favoritesTitles
-                    .map((title) =>
-                        window.localLibrary.find(
-                            (item) => item.title === title,
-                        ),
-                    )
-                    .filter(Boolean); // Eliminamos los que no encuentre por si acaso
+                    .map((fav) => {
+                        if (typeof fav === "string") {
+                            const work = window.localLibrary.find(
+                                (item) => item.title === fav,
+                            );
+                            if (work) return { ...work, isSaga: false }; // Ensure isSaga is false
+                            return null;
+                        }
+                        return fav; // It's a saga object
+                    })
+                    .filter(Boolean);
 
                 if (list.length === 0) {
                     container.innerHTML =
@@ -1675,8 +1822,27 @@ const favoritesOrdered = db.favorites
 
                     // Obtenemos los títulos en el nuevo orden en el que han quedado las tarjetas
                     const newOrder = Array.from(
-                        document.querySelectorAll("#favList .asearch-title"),
-                    ).map((el) => el.innerText);
+                        document.querySelectorAll("#favList .asearch-card"),
+                    )
+                        .map((card) => {
+                            // The data-item attribute is on a child for sagas, so we need to find the card itself
+                            const cardElement = card.closest(".asearch-card");
+                            const itemDataString = cardElement.dataset.item;
+                            if (!itemDataString) return null;
+                            const itemData = JSON.parse(
+                                decodeURIComponent(itemDataString),
+                            );
+
+                            if (itemData.isSaga) {
+                                return {
+                                    isSaga: true,
+                                    title: itemData.title,
+                                    cover: itemData.cover,
+                                }; // Save the whole object for sagas
+                            }
+                            return itemData.title; // Save just the title for works
+                        })
+                        .filter(Boolean);
 
                     window.favoritesTitles = newOrder;
 
@@ -1714,10 +1880,12 @@ const favoritesOrdered = db.favorites
             }
 
             function renderSagasPanel() {
-                const unassignedContainer =
-                    document.getElementById("unassigned-games");
                 const sagasContainer =
                     document.getElementById("sagas-container");
+                const potentialMatchesContainer =
+                    document.getElementById("potential-matches");
+                const unassignedContainer =
+                    document.getElementById("unassigned-games");
 
                 const findItem = (title) =>
                     window.localLibrary.find((item) => item.title === title);
@@ -1728,23 +1896,21 @@ const favoritesOrdered = db.favorites
                 const assignedTitles = new Set(
                     Object.values(window.sagas).flat(),
                 );
-                const unassignedItems = [...allItemTitles]
-                    .filter((title) => !assignedTitles.has(title))
-                    .map(findItem)
-                    .filter(Boolean);
-
-                unassignedContainer.innerHTML = unassignedItems
-                    .map(renderSagaItem)
-                    .join("");
 
                 sagasContainer.innerHTML = Object.entries(window.sagas)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
                     .map(([sagaName, games]) => {
                         const gameObjects = games.map(findItem).filter(Boolean);
                         return `
                         <div class="saga-container" data-saga-name="${sagaName}">
                             <div class="saga-header">
-                                <input type="text" class="saga-title-input" value="${sagaName}">
-                                <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
+                                <input type="text" class="saga-title-input" value="${sagaName}" />
+                                <div class="flex items-center gap-3">
+                                    <i class="fa-solid fa-crown text-yellow-500/50 hover:text-yellow-500 cursor-pointer transition-colors" title="Añadir al Hall of Fame" onclick="addSagaToHof('${
+                                        sagaName
+                                    }')"></i>
+                                    <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
+                                </div>
                             </div>
                             <div class="saga-list">
                                 ${gameObjects.map(renderSagaItem).join("")}
@@ -1754,7 +1920,42 @@ const favoritesOrdered = db.favorites
                     })
                     .join("");
 
-                // Init Sortable
+                const unassignedItems = [...allItemTitles]
+                    .filter((title) => !assignedTitles.has(title))
+                    .map(findItem)
+                    .filter(Boolean);
+
+                const potentialMatches = [];
+                const completelyUnassigned = [];
+                const sagaNamesLower = Object.keys(window.sagas).map((s) =>
+                    s.toLowerCase(),
+                );
+
+                unassignedItems.forEach((item) => {
+                    const itemTitleLower = item.title.toLowerCase();
+                    const isPotentialMatch = sagaNamesLower.some((sagaName) =>
+                        itemTitleLower.startsWith(sagaName),
+                    );
+                    if (isPotentialMatch) {
+                        potentialMatches.push(item);
+                    } else {
+                        completelyUnassigned.push(item);
+                    }
+                });
+
+                potentialMatchesContainer.innerHTML = potentialMatches
+                    .map(renderSagaItem)
+                    .join("");
+                unassignedContainer.innerHTML = completelyUnassigned
+                    .map(renderSagaItem)
+                    .join("");
+
+                // Init Sortable on all lists
+                new Sortable(potentialMatchesContainer, {
+                    group: "sagas",
+                    animation: 150,
+                    ghostClass: "sortable-ghost",
+                });
                 new Sortable(unassignedContainer, {
                     group: "sagas",
                     animation: 150,
@@ -1770,30 +1971,6 @@ const favoritesOrdered = db.favorites
                         });
                     });
             }
-
-            document
-                .getElementById("addSagaBtn")
-                .addEventListener("click", () => {
-                    const sagasContainer =
-                        document.getElementById("sagas-container");
-                    const newSagaName = `Nueva Saga ${Object.keys(window.sagas).length + 1}`;
-                    const newSagaEl = document.createElement("div");
-                    newSagaEl.className = "saga-container";
-                    newSagaEl.dataset.sagaName = newSagaName;
-                    newSagaEl.innerHTML = `
-                    <div class="saga-header">
-                        <input type="text" class="saga-title-input" value="${newSagaName}">
-                        <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
-                    </div>
-                    <div class="saga-list"></div>
-                `;
-                    sagasContainer.appendChild(newSagaEl);
-                    new Sortable(newSagaEl.querySelector(".saga-list"), {
-                        group: "sagas",
-                        animation: 150,
-                        ghostClass: "sortable-ghost",
-                    });
-                });
 
             document
                 .getElementById("saveSagasBtn")
@@ -1881,6 +2058,37 @@ const favoritesOrdered = db.favorites
                     }
                 });
             }
+
+            const charCoverWrapper =
+                document.getElementById("charCover").parentElement;
+            charCoverWrapper.addEventListener("paste", (e) => {
+                if (
+                    !document
+                        .getElementById("charEditor")
+                        .classList.contains("hidden")
+                ) {
+                    const items = (e.clipboardData || window.clipboardData)
+                        .items;
+                    for (const item of items) {
+                        if (item.type.indexOf("image") === 0) {
+                            const blob = item.getAsFile();
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                const dataUrl = event.target.result;
+                                document.getElementById("charCover").src =
+                                    dataUrl;
+                                document.getElementById(
+                                    "charEditorPreviewCover",
+                                ).src = dataUrl;
+                                currentSelection.cover = dataUrl;
+                            };
+                            reader.readAsDataURL(blob);
+                            e.preventDefault();
+                            break;
+                        }
+                    }
+                }
+            });
 
             // --- GUARDAR PERSONAJE ---
             document

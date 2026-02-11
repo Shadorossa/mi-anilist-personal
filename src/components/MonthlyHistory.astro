@@ -191,6 +191,73 @@ const { works = [], chars = [] } = Astro.props;
         }
     };
 
+    function setupDraggableCarousel(carouselId) {
+        const slider = document.getElementById(carouselId);
+        if (!slider || slider.dataset.draggable) return;
+        slider.dataset.draggable = true;
+        slider.style.cursor = "grab";
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        const startDragging = (e) => {
+            e.preventDefault();
+            isDown = true;
+            slider.classList.add("active-drag");
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+            document.addEventListener("mousemove", onDragging);
+            document.addEventListener("mouseup", stopDragging);
+        };
+
+        const onDragging = (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = x - startX; // No multiplier for max smoothness
+            slider.scrollLeft = scrollLeft - walk;
+        };
+
+        const stopDragging = () => {
+            isDown = false;
+            slider.classList.remove("active-drag");
+            document.removeEventListener("mousemove", onDragging);
+            document.removeEventListener("mouseup", stopDragging);
+        };
+
+        slider.addEventListener("mousedown", startDragging);
+    }
+
+    setupDraggableCarousel("hist-works-scroll");
+    setupDraggableCarousel("hist-chars-scroll");
+
+    document.addEventListener("keydown", (e) => {
+        const worksWrapper = document.getElementById("hist-works-wrapper");
+        let activeSlider = null;
+
+        if (worksWrapper && !worksWrapper.classList.contains("hidden")) {
+            activeSlider = document.getElementById("hist-works-scroll");
+        } else {
+            activeSlider = document.getElementById("hist-chars-scroll");
+        }
+
+        if (activeSlider) {
+            const rect = activeSlider.getBoundingClientRect();
+            const isInViewport =
+                rect.top < window.innerHeight && rect.bottom >= 0;
+            if (
+                isInViewport &&
+                (e.key === "ArrowLeft" || e.key === "ArrowRight")
+            ) {
+                activeSlider.scrollBy({
+                    left: e.key === "ArrowLeft" ? -300 : 300,
+                    behavior: "smooth",
+                });
+            }
+        }
+    });
+
     window.scrollHistoryGrid = (elementId, direction) => {
         const container = document.getElementById(elementId);
         if (container) {
@@ -226,6 +293,11 @@ const { works = [], chars = [] } = Astro.props;
     .hide-scroll {
         -ms-overflow-style: none; /* IE and Edge */
         scrollbar-width: none; /* Firefox */
+    }
+    .active-drag {
+        cursor: grabbing !important;
+        scroll-behavior: auto;
+        user-select: none;
     }
     .animate-fade-in {
         animation: fadeIn 0.4s ease-out forwards;

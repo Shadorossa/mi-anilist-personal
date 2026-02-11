@@ -1,9 +1,17 @@
 {
   "favorites": [
     "Gintama: The Final",
-    "The Legend of Heroes: Trails into Reverie",
+    {
+      "isSaga": true,
+      "title": "The Legend of Heroes: Trails",
+      "cover": "/img/covers/the-legend-of-heroes-trails-beyond-the-horizon.jpg"
+    },
     "Silent Hill 2",
-    "Metal Gear Solid 2: Sons of Liberty"
+    {
+      "isSaga": true,
+      "title": "Metal Gear",
+      "cover": "/img/covers/metal-gear-solid.png"
+    }
   ],
   "monthlyPicks": [
     {
@@ -57,6 +65,11 @@
       "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8gm.jpg"
     },
     {
+      "month": "2025-02",
+      "title": "Final Fantasy VII Rebirth",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9k6.jpg"
+    },
+    {
       "month": "2025-01",
       "title": "The Legend of Heroes: Trails in the Sky the 3rd",
       "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co23da.jpg"
@@ -92,6 +105,11 @@
       "cover": "/img/covers/metal-gear-solid-2-sons-of-liberty.png"
     },
     {
+      "month": "2022-09",
+      "title": "Devil May Cry 3: Dante's Awakening",
+      "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1u6u.jpg"
+    },
+    {
       "month": "2021-07",
       "title": "Gintama: The Final",
       "cover": "https://cdn.myanimelist.net/images/anime/1245/116760l.jpg"
@@ -103,6 +121,61 @@
     }
   ],
   "sagas": {
+    "Bayonetta": [
+      "Bayonetta Origins: Cereza and the Lost Demon",
+      "Bayonetta 3",
+      "Bayonetta 2",
+      "Bayonetta"
+    ],
+    "Final Fantasy": [
+      "Final Fantasy VII Rebirth",
+      "Final Fantasy VII Remake Intergrade",
+      "Final Fantasy II",
+      "Final Fantasy"
+    ],
+    "Gintama": [
+      "Gintama: The Final",
+      "Gintama°",
+      "Gintama': Enchousen",
+      "Gintama"
+    ],
+    "Hollow Knight": [
+      "Hollow Knight: Silksong"
+    ],
+    "Like a Dragon": [
+      "Yakuza Kiwami",
+      "Yakuza 0"
+    ],
+    "Metal Gear": [
+      "Metal Gear Solid 4: Guns of the Patriots",
+      "Metal Gear Solid 3: Snake Eater",
+      "Metal Gear Solid 2: Sons of Liberty",
+      "Metal Gear Solid",
+      "Metal Gear 2: Solid Snake",
+      "Metal Gear"
+    ],
+    "Persona": [
+      "Persona 3 Reload"
+    ],
+    "Rance": [
+      "Rance X: Showdown",
+      "Rance IX: The Helmanian Revolution",
+      "Rance Quest Magnum",
+      "Sengoku Rance",
+      "Rance VI: Collapse of Zeth",
+      "Rance 5D: The Lonely Girl",
+      "Rance 03: The Fall of Leazas",
+      "Rance 02: The Rebellious Maidens",
+      "Rance 01: Quest for Hikari",
+      "Kichikuou Rance"
+    ],
+    "Silent Hill": [
+      "Silent Hill f",
+      "Silent Hill 4: The Room",
+      "Silent Hill 3",
+      "Silent Hill 2",
+      "Silent Hill"
+    ],
     "The Legend of Heroes: Trails": [
       "The Legend of Heroes: Trails Beyond the Horizon",
       "The Legend of Heroes: Trails through Daybreak II",
@@ -117,51 +190,6 @@
       "The Legend of Heroes: Trails in the Sky the 3rd",
       "The Legend of Heroes: Trails in the Sky SC",
       "The Legend of Heroes: Trails in the Sky"
-    ],
-    "Silent Hill": [
-      "Silent Hill 4: The Room",
-      "Silent Hill 3",
-      "Silent Hill 2",
-      "Silent Hill",
-      "Silent Hill f"
-    ],
-    "Rance": [
-      "Rance X: Showdown",
-      "Rance IX: The Helmanian Revolution",
-      "Rance Quest Magnum",
-      "Sengoku Rance",
-      "Rance VI: Collapse of Zeth",
-      "Rance 03: The Fall of Leazas",
-      "Rance 02: The Rebellious Maidens",
-      "Rance 01: Quest for Hikari",
-      "Kichikuou Rance"
-    ],
-    "Bayonetta": [
-      "Bayonetta 2"
-    ],
-    "Like a Dragon": [
-      "Yakuza Kiwami",
-      "Yakuza 0"
-    ],
-    "Persona": [
-      "Persona 3 Reload"
-    ],
-    "Gintama": [
-      "Gintama: The Final",
-      "Gintama°",
-      "Gintama': Enchousen",
-      "Gintama"
-    ],
-    "Metal Gear": [
-      "Metal Gear Solid 4: Guns of the Patriots",
-      "Metal Gear Solid 3: Snake Eater",
-      "Metal Gear Solid 2: Sons of Liberty",
-      "Metal Gear 2: Solid Snake",
-      "Metal Gear",
-      "Metal Gear Solid"
-    ],
-    "Final Fantasy": [
-      "Final Fantasy"
     ]
   },
   "characters": [
@@ -257,7 +285,8 @@
       "id": 72237,
       "title": "Lloyd Bannings",
       "cover": "/img/chara/lloyd-bannings.png",
-      "source": "Trails from Zero"
+      "source": "Trails from Zero",
+      "coverOffsetY": 44
     },
     {
       "id": 249642,
@@ -265,9 +294,33 @@
       "cover": "/img/chara/shirley-orlando.png",
       "source": "Trails to Azure",
       "coverOffsetY": 50
+    },
+    {
+      "id": 87496,
+      "title": "Bayonetta",
+      "cover": "/img/chara/bayonetta.png",
+      "source": "Bayonetta",
+      "coverOffsetY": 26
+    },
+    {
+      "id": 136284,
+      "title": "Shizuka Masou",
+      "cover": "/img/chara/shizuka-masou.png",
+      "source": "Rance 02",
+      "coverOffsetY": 39
     }
   ],
   "monthlyChars": [
+    {
+      "month": "2026-02",
+      "name": "Shizuna Misurugi",
+      "cover": "/img/chara/shizuna-misurugi.png"
+    },
+    {
+      "month": "2026-01",
+      "name": "Shizuka Masou",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b136284-HV4FwSGchPsq.png"
+    },
     {
       "month": "2025-11",
       "name": "Shizuna Misurugi",
@@ -277,6 +330,11 @@
       "month": "2025-10",
       "name": "Renne Bright",
       "cover": "/img/chara/renne-bright.png"
+    },
+    {
+      "month": "2025-09",
+      "name": "Bayonetta",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b87496-pBhFLnxrCi7y.jpg"
     },
     {
       "month": "2025-07",

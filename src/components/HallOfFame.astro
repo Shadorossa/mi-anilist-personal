@@ -20,9 +20,48 @@ const fixedFavorites = padArray(favorites, 10);
                 {
                     fixedFavorites.map((item, index) => (
                         <div
-                            class={`relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 ${item ? "hover:flex-[3] cursor-pointer bg-black" : "bg-[#121215] flex-1"}`}
+                            class:list={[
+                                "relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0",
+                                item
+                                    ? "hover:flex-[3] cursor-pointer bg-black"
+                                    : "bg-[#121215] flex-1",
+                                item?.isSaga &&
+                                    "border-l-2 border-l-yellow-600/40",
+                            ]}
                         >
-                            {item ? (
+                            {item?.isSaga ? (
+                                <>
+                                    <img
+                                        src={item.cover}
+                                        alt={item.title}
+                                        class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+                                        loading="lazy"
+                                    />
+                                    <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+                                    <div class="absolute top-4 right-4 text-[9px] font-bold uppercase bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        Saga
+                                    </div>
+                                    <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
+                                        <span class="text-[10px] font-bold text-white/40 group-hover:text-yellow-500">
+                                            #{index + 1}
+                                        </span>
+                                    </div>
+                                    <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                        <h3
+                                            class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                            style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                        >
+                                            {item.title}
+                                        </h3>
+                                    </div>
+                                    <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                        <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                            {item.title}
+                                        </h3>
+                                        <div class="h-0.5 w-6 bg-yellow-500 mt-2 opacity-70" />
+                                    </div>
+                                </>
+                            ) : item ? (
                                 <>
                                     <img
                                         src={item.cover}
@@ -190,6 +229,44 @@ const fixedFavorites = padArray(favorites, 10);
         }
     };
 
+    function setupDraggableCarousel(carouselId) {
+        const slider = document.getElementById(carouselId);
+        if (!slider || slider.dataset.draggable) return;
+        slider.dataset.draggable = true;
+        slider.style.cursor = "grab";
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        const startDragging = (e) => {
+            e.preventDefault();
+            isDown = true;
+            slider.classList.add("active-drag");
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+            document.addEventListener("mousemove", onDragging);
+            document.addEventListener("mouseup", stopDragging);
+        };
+
+        const onDragging = (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = x - startX; // No multiplier for max smoothness
+            slider.scrollLeft = scrollLeft - walk;
+        };
+
+        const stopDragging = () => {
+            isDown = false;
+            slider.classList.remove("active-drag");
+            document.removeEventListener("mousemove", onDragging);
+            document.removeEventListener("mouseup", stopDragging);
+        };
+
+        slider.addEventListener("mousedown", startDragging);
+    }
+
     window.switchView = (type) => {
         const worksView = document.getElementById("view-works");
         const charsView = document.getElementById("view-chars");
@@ -213,8 +290,35 @@ const fixedFavorites = padArray(favorites, 10);
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
             btnWorks.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white";
+            setupDraggableCarousel("hof-chars-scroll");
         }
     };
+
+    document.addEventListener("keydown", (e) => {
+        const charsView = document.getElementById("view-chars");
+        if (charsView && !charsView.classList.contains("hidden")) {
+            const slider = document.getElementById("hof-chars-scroll");
+            if (slider) {
+                const rect = slider.getBoundingClientRect();
+                const isInViewport =
+                    rect.top < window.innerHeight && rect.bottom >= 0;
+                if (isInViewport) {
+                    const scrollAmount = 300;
+                    if (e.key === "ArrowLeft") {
+                        slider.scrollBy({
+                            left: -scrollAmount,
+                            behavior: "smooth",
+                        });
+                    } else if (e.key === "ArrowRight") {
+                        slider.scrollBy({
+                            left: scrollAmount,
+                            behavior: "smooth",
+                        });
+                    }
+                }
+            }
+        }
+    });
 </script>
 
 <style>
@@ -240,5 +344,10 @@ const fixedFavorites = padArray(favorites, 10);
     .hide-scroll {
         -ms-overflow-style: none; /* IE and Edge */
         scrollbar-width: none; /* Firefox */
+    }
+    .active-drag {
+        cursor: grabbing !important;
+        scroll-behavior: auto;
+        user-select: none;
     }
 </style>

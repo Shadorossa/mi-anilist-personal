@@ -16,6 +16,25 @@ function findLocalImage(baseDir: string, slug: string): string | null {
 
 const DEFAULT_IMAGE_EXTENSION = '.png'; // Prioritize saving as PNG
 
+function romanToArabic(roman) {
+  if (typeof roman !== 'string') return null;
+  roman = roman.toUpperCase();
+  const romanMap = { 'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000 };
+  let result = 0;
+  for (let i = 0; i < roman.length; i++) {
+    const current = romanMap[roman[i]];
+    const next = romanMap[roman[i + 1]];
+    if (current === undefined) return null; // Invalid character
+    if (next !== undefined && next > current) {
+      result += next - current;
+      i++;
+    } else {
+      result += current;
+    }
+  }
+  return result;
+}
+
 export const POST = async ({ request }: { request: Request }) => {
   try {
     const body = await request.json();
@@ -70,6 +89,7 @@ export const POST = async ({ request }: { request: Request }) => {
         favorites: favorites !== undefined ? favorites : currentDB.favorites,
         monthlyPicks: monthlyPicks !== undefined ? monthlyPicks : currentDB.monthlyPicks,
         characters: characters !== undefined ? processedCharacters : currentDB.characters,
+        likedCharacters: body.dbData.likedCharacters !== undefined ? body.dbData.likedCharacters : currentDB.likedCharacters,
         monthlyChars: monthlyChars !== undefined ? monthlyChars : currentDB.monthlyChars,
         sagas: sagas !== undefined ? sagas : currentDB.sagas
       };
@@ -151,9 +171,16 @@ export const POST = async ({ request }: { request: Request }) => {
             if (fullDb.sagas) {
               const newGameTitle = title;
               const getTitleNumber = (t: string): number | null => {
-                // Matches a number preceded by a space to identify it as part of a sequence.
-                const match = t.match(/\s(\d+)/);
-                return match ? parseInt(match[1], 10) : null;
+                // Matches an arabic number at the end of the string.
+                let match = t.match(/\s(\d+)$/);
+                if (match) return parseInt(match[1], 10);
+
+                // Matches a roman numeral at the end of the string.
+                match = t.match(/\s(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))$/i);
+                if (match && match[1]) {
+                  return romanToArabic(match[1]);
+                }
+                return null;
               };
 
               const newGameNumber = getTitleNumber(newGameTitle);

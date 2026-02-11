@@ -91,9 +91,17 @@ const stats = {
 };
 
 // 4. FAVORITOS
-const favorites = db.favorites
-    .map((title) => allContent.find((item) => item.title === title))
-    .filter((item) => item !== undefined);
+const favorites = (db.favorites || [])
+    .map((fav) => {
+        if (typeof fav === "string") {
+            return allContent.find((item) => item.title === fav);
+        }
+        if (typeof fav === "object" && fav.isSaga) {
+            return fav; // It's already in the right format {isSaga, title, cover}
+        }
+        return null;
+    })
+    .filter(Boolean);
 
 // 5. MENSUALES (OBRAS)
 const monthlyWorks = (db.monthlyPicks || [])
@@ -156,6 +164,17 @@ if (db.characters && db.characters.length > 0) {
         },
     ];
 }
+
+let likedCharacters = [];
+if (db.likedCharacters && db.likedCharacters.length > 0) {
+    likedCharacters = db.likedCharacters
+        .map((c) => ({
+            name: c.title,
+            img: resolveImagePath(c.cover),
+            source: c.source,
+        }))
+        .sort((a, b) => a.source.localeCompare(b.source));
+}
 ---
 
 <html lang="es" class="dark">
@@ -197,6 +216,7 @@ if (db.characters && db.characters.length > 0) {
                 <HallOfFame
                     favorites={favorites}
                     characters={customCharacters}
+                    likedCharacters={likedCharacters}
                 />
             </SectionWrapper>
 
