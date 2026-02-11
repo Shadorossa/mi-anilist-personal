@@ -102,14 +102,22 @@ const favoritesOrdered = db.favorites
                 <button
                     onclick="switchMode('characters')"
                     class="nav-btn"
+<<<<<<< HEAD
                     title="Buscar Personajes"
                     ><i class="fa-solid fa-magnifying-glass"></i></button
+=======
+                    title="Buscar Personajes"><i class="fa-solid fa-mask"></i></button
+>>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
                 >
                 <button
                     onclick="switchMode('my-characters')"
                     class="nav-btn"
+<<<<<<< HEAD
                     title="Mis Personajes"
                     ><i class="fa-solid fa-users"></i></button
+=======
+                    title="Mis Personajes"><i class="fa-solid fa-users"></i></button
+>>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
                 >
                 <div class="h-px bg-white/5 w-full"></div>
                 <button
@@ -254,6 +262,7 @@ const favoritesOrdered = db.favorites
                         </form>
                     </div>
                     <div class="custom-scrollbar h-full space-y-10">
+<<<<<<< HEAD
                         <div class="flex justify-between items-center">
                             <h3 class="panel-subheader">Mis Personajes</h3>
                             <button
@@ -266,6 +275,9 @@ const favoritesOrdered = db.favorites
                             </div>
                         </div>
                         <div class="border-t border-white/5 pt-6">
+=======
+                        <div>
+>>>>>>> 79b0f67652e79402e95df30f321f0c02cdf1f6d0
                             <h3 class="panel-subheader">
                                 Resultados de Búsqueda
                             </h3>
@@ -273,6 +285,21 @@ const favoritesOrdered = db.favorites
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="my-characters-panel" class="panel hidden">
+                <div class="flex justify-between items-center mb-4 shrink-0">
+                    <h2 class="panel-header">Mis Personajes</h2>
+                    <input
+                        type="text"
+                        id="myCharsFilter"
+                        placeholder="Filtrar..."
+                        class="form-input !w-48 !text-xs"
+                    />
+                </div>
+                <div class="custom-scrollbar h-full">
+                    <div id="myCharsGrid" class="asearch-grid"></div>
                 </div>
             </div>
 
@@ -1672,24 +1699,38 @@ const favoritesOrdered = db.favorites
                 if (mode === "favorites") renderFavWorksSortable();
                 if (mode === "characters") {
                     document.getElementById("charResults").innerHTML = "";
-                    // Al entrar, mostramos los personajes que ya tienes en database.json
-                    const savedGrid = document.getElementById("savedCharsGrid");
-                    if (
-                        window.charactersGlobal &&
-                        window.charactersGlobal.length > 0
-                    ) {
-                        savedGrid.innerHTML = window.charactersGlobal
-                            .map((i) => renderCard(i, "openCharEditor", true))
-                            .join("");
-                    } else {
-                        savedGrid.innerHTML =
-                            '<p class="col-span-full text-white/5 text-[10px] py-4 pl-2">Biblioteca de personajes vacía.</p>';
                     }
+                    if (mode === "my-characters") {
+                        renderMyCharacters();
                 }
                 if (mode === "sagas") {
                     renderSagasPanel();
                 }
             };
+
+            function renderMyCharacters(filter = "") {
+                const grid = document.getElementById("myCharsGrid");
+                if (!grid) return;
+                let list = window.charactersGlobal || [];
+                if (filter) {
+                    list = list.filter((c) =>
+                        c.title.toLowerCase().includes(filter.toLowerCase()),
+                    );
+                }
+                if (list.length > 0) {
+                    grid.innerHTML = list
+                        .map((i) => renderCard(i, "openCharEditor", true))
+                        .join("");
+                } else {
+                    grid.innerHTML =
+                        '<p class="col-span-full text-white/5 text-[10px] py-4 pl-2">Biblioteca de personajes vacía.</p>';
+                }
+            }
+            document
+                .getElementById("myCharsFilter")
+                .addEventListener("input", (e) =>
+                    renderMyCharacters(e.target.value),
+                );
 
             function renderFavWorksSortable() {
                 const container = document.getElementById("favList");
@@ -2135,7 +2176,15 @@ const favoritesOrdered = db.favorites
                         });
                         if (!res.ok) throw new Error("Server error");
                         closeCharEditor();
-                        switchMode("characters"); // Recarga la vista de personajes
+                        if (
+                            !document
+                                .getElementById("my-characters-panel")
+                                .classList.contains("hidden")
+                        ) {
+                            renderMyCharacters(
+                                document.getElementById("myCharsFilter").value,
+                            );
+                        }
                     } catch (e) {
                         console.error("Error saving character:", e);
                         alert("Error al guardar el personaje.");
