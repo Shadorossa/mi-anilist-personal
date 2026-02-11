@@ -17,7 +17,14 @@ try {
 } catch (e) {}
 
 // 2. DB
-let db = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [] };
+let db = {
+    favorites: [],
+    monthlyPicks: [],
+    characters: [],
+    monthlyChars: [],
+    interestedCharacters: [],
+    dislikedCharacters: [],
+};
 try {
     const d = await import("../content/database.json");
     db = d.default || d;
@@ -97,7 +104,24 @@ const favorites = (db.favorites || [])
             return allContent.find((item) => item.title === fav);
         }
         if (typeof fav === "object" && fav.isSaga) {
-            return fav; // It's already in the right format {isSaga, title, cover}
+            const sagaTitles = db.sagas?.[fav.title] || [];
+            if (sagaTitles.length > 0) {
+                const sagaItems = sagaTitles
+                    .map((title) =>
+                        allContent.find((item) => item.title === title),
+                    )
+                    .filter(Boolean);
+                if (
+                    sagaItems.length > 0 &&
+                    sagaItems.every(
+                        (item) =>
+                            item.type === "anime" || item.type === "manga",
+                    )
+                ) {
+                    return { ...fav, isAnimeCollection: true };
+                }
+            }
+            return fav;
         }
         return null;
     })
@@ -178,6 +202,36 @@ if (db.likedCharacters && db.likedCharacters.length > 0) {
             return a.name.localeCompare(b.name);
         });
 }
+
+let interestedCharacters = [];
+if (db.interestedCharacters && db.interestedCharacters.length > 0) {
+    interestedCharacters = db.interestedCharacters
+        .map((c) => ({
+            name: c.title,
+            img: resolveImagePath(c.cover),
+            source: c.source || "Sin Origen",
+        }))
+        .sort((a, b) => {
+            const sourceCompare = a.source.localeCompare(b.source);
+            if (sourceCompare !== 0) return sourceCompare;
+            return a.name.localeCompare(b.name);
+        });
+}
+
+let dislikedCharacters = [];
+if (db.dislikedCharacters && db.dislikedCharacters.length > 0) {
+    dislikedCharacters = db.dislikedCharacters
+        .map((c) => ({
+            name: c.title,
+            img: resolveImagePath(c.cover),
+            source: c.source || "Sin Origen",
+        }))
+        .sort((a, b) => {
+            const sourceCompare = a.source.localeCompare(b.source);
+            if (sourceCompare !== 0) return sourceCompare;
+            return a.name.localeCompare(b.name);
+        });
+}
 ---
 
 <html lang="es" class="dark">
@@ -220,6 +274,8 @@ if (db.likedCharacters && db.likedCharacters.length > 0) {
                     favorites={favorites}
                     characters={customCharacters}
                     likedCharacters={likedCharacters}
+                    dislikedCharacters={dislikedCharacters}
+                    interestedCharacters={interestedCharacters}
                 />
             </SectionWrapper>
 

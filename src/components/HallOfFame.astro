@@ -1,5 +1,11 @@
 ---
-const { favorites = [], characters = [], likedCharacters = [] } = Astro.props;
+const {
+    favorites = [],
+    characters = [],
+    likedCharacters = [],
+    interestedCharacters = [],
+    dislikedCharacters = [],
+} = Astro.props;
 
 const padArray = (arr, size) => {
     const padded = [...arr];
@@ -24,6 +30,16 @@ const likedCharacterRows = chunkArray(likedCharacters, 20);
 const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
     padArray(row, 20),
 );
+
+const interestedCharacterRows = chunkArray(interestedCharacters, 20);
+const paddedInterestedCharacterRows = interestedCharacterRows.map((row) =>
+    padArray(row, 20),
+);
+
+const dislikedCharacterRows = chunkArray(dislikedCharacters, 20);
+const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
+    padArray(row, 20),
+);
 ---
 
 <div class="w-full" id="hall-of-fame-component">
@@ -41,8 +57,13 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
                                 item
                                     ? "hover:flex-[3] cursor-pointer bg-black"
                                     : "bg-[#121215] flex-1",
-                                item?.isSaga &&
-                                    "border-l-2 border-l-yellow-600/40",
+                                {
+                                    "border-l": item?.isSaga,
+                                    "border-l-cyan-500/30":
+                                        item?.isAnimeCollection,
+                                    "border-l-yellow-500/30":
+                                        item?.isSaga && !item.isAnimeCollection,
+                                },
                             ]}
                         >
                             {item?.isSaga ? (
@@ -54,8 +75,17 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
                                         loading="lazy"
                                     />
                                     <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
-                                    <div class="absolute top-4 right-4 text-[9px] font-bold uppercase bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        Saga
+                                    <div
+                                        class:list={[
+                                            "absolute top-4 right-4 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+                                            item.isAnimeCollection
+                                                ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                                                : "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+                                        ]}
+                                    >
+                                        {item.isAnimeCollection
+                                            ? "Obra Completa"
+                                            : "Saga"}
                                     </div>
                                     <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
                                         <span class="text-[10px] font-bold text-white/40 group-hover:text-yellow-500">
@@ -236,9 +266,23 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
             <button
                 onclick="toggleLikedCharsModal(true)"
                 id="btn-liked-toggle"
-                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+                class="hidden w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
             >
                 <i class="fa-solid fa-thumbs-up"></i>
+            </button>
+            <button
+                onclick="toggleInterestedCharsModal(true)"
+                id="btn-interested-toggle"
+                class="hidden w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+            >
+                <i class="fa-solid fa-eye"></i>
+            </button>
+            <button
+                onclick="toggleDislikedCharsModal(true)"
+                id="btn-disliked-toggle"
+                class="hidden w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+            >
+                <i class="fa-solid fa-thumbs-down"></i>
             </button>
         </div>
     </div>
@@ -252,10 +296,20 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
     <div
         class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
     >
-        <div class="flex items-center justify-between mb-4 shrink-0">
-            <h2 class="text-lg font-bold text-white">
-                Personajes que me gustan
-            </h2>
+        <div class="flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4 mb-4">
+                <div
+                    class="w-12 h-12 flex items-center justify-center bg-pink-500/10 text-pink-400 rounded-2xl border border-pink-500/20"
+                >
+                    <i class="fa-solid fa-thumbs-up text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white">Me Gustan</h2>
+                    <p class="text-sm text-gray-500">
+                        Una colección de personajes que aprecio.
+                    </p>
+                </div>
+            </div>
             <button
                 onclick="toggleLikedCharsModal(false)"
                 class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
@@ -269,6 +323,174 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
             {
                 likedCharacters.length > 0 ? (
                     paddedLikedCharacterRows.map((row) => (
+                        <div class="flex h-[150px] w-full gap-1">
+                            {row.map((char) =>
+                                char ? (
+                                    <div
+                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[3] cursor-pointer bg-black"
+                                        title={char.name}
+                                    >
+                                        <img
+                                            src={char.img}
+                                            alt={char.name}
+                                            loading="lazy"
+                                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                                        />
+                                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                            <h3
+                                                class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                                style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                            >
+                                                {char.name}
+                                            </h3>
+                                        </div>
+                                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                                {char.name}
+                                            </h3>
+                                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                {char.source}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div class="relative flex-1 min-w-0 bg-[#121215] border-r border-black/50 last:border-0" />
+                                ),
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <div class="flex items-center justify-center h-full">
+                        <p class="text-gray-600">
+                            No hay personajes en esta lista.
+                        </p>
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Interested Characters Fullscreen Modal -->
+<div
+    id="interested-chars-modal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
+>
+    <div
+        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
+    >
+        <div class="flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4 mb-4">
+                <div
+                    class="w-12 h-12 flex items-center justify-center bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20"
+                >
+                    <i class="fa-solid fa-eye text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white">Interesan</h2>
+                    <p class="text-sm text-gray-500">
+                        Personajes que sigo de cerca.
+                    </p>
+                </div>
+            </div>
+            <button
+                onclick="toggleInterestedCharsModal(false)"
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div
+            class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2 space-y-2"
+        >
+            {
+                interestedCharacters.length > 0 ? (
+                    paddedInterestedCharacterRows.map((row) => (
+                        <div class="flex h-[150px] w-full gap-1">
+                            {row.map((char) =>
+                                char ? (
+                                    <div
+                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[3] cursor-pointer bg-black"
+                                        title={char.name}
+                                    >
+                                        <img
+                                            src={char.img}
+                                            alt={char.name}
+                                            loading="lazy"
+                                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
+                                        />
+                                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
+                                            <h3
+                                                class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
+                                                style="writing-mode: vertical-rl; transform: rotate(180deg);"
+                                            >
+                                                {char.name}
+                                            </h3>
+                                        </div>
+                                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
+                                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
+                                                {char.name}
+                                            </h3>
+                                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                {char.source}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div class="relative flex-1 min-w-0 bg-[#121215] border-r border-black/50 last:border-0" />
+                                ),
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <div class="flex items-center justify-center h-full">
+                        <p class="text-gray-600">
+                            No hay personajes en esta lista.
+                        </p>
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Disliked Characters Fullscreen Modal -->
+<div
+    id="disliked-chars-modal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
+>
+    <div
+        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
+    >
+        <div class="flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4 mb-4">
+                <div
+                    class="w-12 h-12 flex items-center justify-center bg-red-500/10 text-red-400 rounded-2xl border border-red-500/20"
+                >
+                    <i class="fa-solid fa-thumbs-down text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white">No Me Gustan</h2>
+                    <p class="text-sm text-gray-500">
+                        Personajes que no son de mi agrado.
+                    </p>
+                </div>
+            </div>
+            <button
+                onclick="toggleDislikedCharsModal(false)"
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div
+            class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2 space-y-2"
+        >
+            {
+                dislikedCharacters.length > 0 ? (
+                    paddedDislikedCharacterRows.map((row) => (
                         <div class="flex h-[150px] w-full gap-1">
                             {row.map((char) =>
                                 char ? (
@@ -381,6 +603,9 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
         const paginationControls = document.getElementById(
             "char-pagination-controls",
         );
+        const btnLiked = document.getElementById("btn-liked-toggle");
+        const btnInterested = document.getElementById("btn-interested-toggle");
+        const btnDisliked = document.getElementById("btn-disliked-toggle");
 
         if (type === "works") {
             worksView.classList.remove("hidden");
@@ -390,6 +615,9 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
                 paginationControls.classList.add("hidden");
                 paginationControls.classList.remove("flex");
             }
+            btnLiked.classList.add("hidden");
+            btnInterested.classList.add("hidden");
+            btnDisliked.classList.add("hidden");
 
             btnWorks.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
@@ -403,6 +631,9 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
                 paginationControls.classList.remove("hidden");
                 paginationControls.classList.add("flex");
             }
+            btnLiked.classList.remove("hidden");
+            btnInterested.classList.remove("hidden");
+            btnDisliked.classList.remove("hidden");
 
             btnChars.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
@@ -448,6 +679,28 @@ const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
 
     window.toggleLikedCharsModal = (show) => {
         const modal = document.getElementById("liked-chars-modal");
+        if (show) {
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden"; // Prevent background scroll
+        } else {
+            modal.classList.add("hidden");
+            document.body.style.overflow = ""; // Restore background scroll
+        }
+    };
+
+    window.toggleDislikedCharsModal = (show) => {
+        const modal = document.getElementById("disliked-chars-modal");
+        if (show) {
+            modal.classList.remove("hidden");
+            document.body.style.overflow = "hidden"; // Prevent background scroll
+        } else {
+            modal.classList.add("hidden");
+            document.body.style.overflow = ""; // Restore background scroll
+        }
+    };
+
+    window.toggleInterestedCharsModal = (show) => {
+        const modal = document.getElementById("interested-chars-modal");
         if (show) {
             modal.classList.remove("hidden");
             document.body.style.overflow = "hidden"; // Prevent background scroll
