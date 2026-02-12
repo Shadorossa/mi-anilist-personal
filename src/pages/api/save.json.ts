@@ -113,13 +113,29 @@ export const POST = async ({ request }: { request: Request }) => {
         let collectionFolder = type;
         if (type === 'game') collectionFolder = 'games';
 
-        const slug = title.toLowerCase()
+        // El título tal como estará en el JSON (con -M para mangas)
+        const finalTitle = title.endsWith(' -M') ? title.slice(0, -3) : title;
+
+        // El título base para el nombre del archivo JSON (sin -M)
+        //const baseTitleForJson = finalTitle.endsWith(' -M') ? finalTitle.slice(0, -3) : finalTitle;
+        const baseTitleForJson = finalTitle;
+
+
+        const jsonSlug = baseTitleForJson.toLowerCase()
           .replace(/[^a-z0-9\s-°'’]/g, '') // Permitir ', °, ’ y guiones
           .trim()
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-');
 
-        const fileName = `${slug}.json`;
+        // El slug para el archivo de la portada (con -M)
+        //const coverSlug = finalTitle.toLowerCase()
+        const coverSlug = title.toLowerCase()
+          .replace(/[^a-z0-9\s-°'’]/g, '')
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+
+        const fileName = `${jsonSlug}.json`;
         const filePath = path.resolve(`./src/content/${collectionFolder}/${fileName}`);
 
         const coverDir = path.resolve('./public/img/covers');
@@ -129,12 +145,12 @@ export const POST = async ({ request }: { request: Request }) => {
             fs.mkdirSync(coverDir, { recursive: true });
           }
 
-          const existingLocalFileName = findLocalImage(coverDir, slug);
+          const existingLocalFileName = findLocalImage(coverDir, coverSlug);
           if (existingLocalFileName) {
             finalCoverPath = `/img/covers/${existingLocalFileName}`;
           } else {
             // If no local file exists, download and save as PNG
-            const newCoverFileName = `${slug}${DEFAULT_IMAGE_EXTENSION}`;
+            const newCoverFileName = `${coverSlug}${DEFAULT_IMAGE_EXTENSION}`;
             const newLocalCoverPath = path.resolve(coverDir, newCoverFileName);
             const newPublicCoverPath = `/img/covers/${newCoverFileName}`;
 
@@ -152,7 +168,7 @@ export const POST = async ({ request }: { request: Request }) => {
         }
 
         const mediaData = {
-          title, cover: finalCoverPath, year,
+          title: finalTitle, cover: finalCoverPath, year,
           type: collectionFolder,
           status: status || 'Jugando',
           score: Number(score) || 0,

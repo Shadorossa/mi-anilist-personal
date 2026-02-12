@@ -365,7 +365,7 @@
       "title": "Souichi Kiruma",
       "cover": "/img/chara/souichi-kiruma.png",
       "coverOffsetY": 25,
-      "sourceId": "usogui-m.json"
+      "sourceId": "usogui.json"
     },
     {
       "id": 672,
@@ -448,7 +448,7 @@
       "id": 68809,
       "title": "Baku Madarame",
       "cover": "/img/chara/baku-madarame.png",
-      "sourceId": "usogui-m.json",
+      "sourceId": "usogui.json",
       "coverOffsetY": 50
     },
     {
@@ -641,6 +641,34 @@
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b243128-clWgppM3BdSF.png",
       "sourceId": "the-legend-of-heroes-trails-from-zero.json",
       "coverOffsetY": 30
+    },
+    {
+      "id": 309953,
+      "title": "Ryunosuke Naruhodou",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b309953-ONLuROB2qjSy.jpg",
+      "sourceId": "the-great-ace-attorney-adventures.json",
+      "coverOffsetY": 29
+    },
+    {
+      "id": 168688,
+      "title": "Hikoichi Yakou",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b168688-NhQaRSQnFOeY.png",
+      "sourceId": "usogui.json",
+      "coverOffsetY": 30
+    },
+    {
+      "id": 244076,
+      "title": "Lechter Arundel",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b244076-Tl2Kn6j3UMue.png",
+      "sourceId": "the-legend-of-heroes-trails-in-the-sky-the-3rd.json",
+      "coverOffsetY": 30
+    },
+    {
+      "id": 182731,
+      "title": "Kadokura Yuudai",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b182731-SVLDO8YE8hVK.png",
+      "sourceId": "usogui.json",
+      "coverOffsetY": 72
     }
   ],
   "monthlyChars": [

@@ -165,7 +165,7 @@ body {
 /* Pantallas muy grandes: columnas un poco más anchas */
 @media (min-width: 1600px) {
     .asearch-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
 
     /* También para el grid de favs */

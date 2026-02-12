@@ -171,6 +171,11 @@ const favoritesOrdered = db.favorites
             window.dislikedCharactersGlobal = db.dislikedCharacters || [];
         </script>
 
+        <!-- Script para restaurar el estado de la página -->
+        <script>
+            const previousActiveTab =
+                localStorage.getItem("activeTab") || "search";
+        </script>
         <script type="module">
             import { calculateRating } from "/src/utils/rating.js";
             window.calculateRating = calculateRating;
@@ -1102,6 +1107,7 @@ const favoritesOrdered = db.favorites
                 if (btn) btn.classList.add("active");
 
                 if (mode === "library") renderLocalLibrary();
+                localStorage.setItem("activeTab", mode); //Guardamos la página
                 if (mode === "favorites") renderFavWorksSortable();
                 if (mode === "characters") {
                     document.getElementById("charResults").innerHTML = "";
@@ -1129,11 +1135,29 @@ const favoritesOrdered = db.favorites
                 );
 
                 if (filter) {
-                    list = list.filter((c) =>
-                        getDisplayTitle(c)
-                            .toLowerCase()
-                            .includes(filter.toLowerCase()),
-                    );
+                    const lowerFilter = filter.toLowerCase();
+                    list = list.filter((c) => {
+                        // Check character name
+                        if (
+                            getDisplayTitle(c)
+                                .toLowerCase()
+                                .includes(lowerFilter)
+                        ) {
+                            return true;
+                        }
+                        // Check source work title
+                        let sourceTitle = "";
+                        if (c.sourceId) {
+                            const sourceWork = window.localLibrary.find(
+                                (w) => w.id === c.sourceId,
+                            );
+                            if (sourceWork) sourceTitle = sourceWork.title;
+                        } else if (c.source) {
+                            // Backwards compatibility
+                            sourceTitle = c.source;
+                        }
+                        return sourceTitle.toLowerCase().includes(lowerFilter);
+                    });
                 }
                 if (list.length > 0) {
                     grid.innerHTML = list
@@ -2124,7 +2148,7 @@ const favoritesOrdered = db.favorites
                     }
                 });
 
-            switchMode("search");
+            switchMode(previousActiveTab);
 
             // --- Custom Slider Logic ---
             function setSliderPosition(thumbId, value) {
