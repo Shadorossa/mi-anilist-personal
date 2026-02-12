@@ -10,6 +10,7 @@ import CharacterPanel from "../components/admin/CharacterPanel.astro";
 import MyCharactersPanel from "../components/admin/MyCharactersPanel.astro";
 import FavoritesPanel from "../components/admin/FavoritesPanel.astro";
 import SagasPanel from "../components/admin/SagasPanel.astro";
+import ImageManagerPanel from "../components/admin/ImageManagerPanel.astro";
 import EditorModal from "../components/admin/EditorModal.astro";
 import CharacterModal from "../components/admin/CharacterModal.astro";
 import SagaCoverPickerModal from "../components/admin/SagaCoverPickerModal.astro";
@@ -96,6 +97,47 @@ db.interestedCharacters = (db.interestedCharacters || []).map((char) => ({
     cover: resolveImagePath(char.cover),
 }));
 
+// Lógica del Gestor de Imágenes
+const coverImagesDir = path.resolve("./public/img/covers");
+const charaImagesDir = path.resolve("./public/img/chara");
+
+const coverImages = fs.existsSync(coverImagesDir)
+    ? fs.readdirSync(coverImagesDir).map((f) => `/img/covers/${f}`)
+    : [];
+const charaImages = fs.existsSync(charaImagesDir)
+    ? fs.readdirSync(charaImagesDir).map((f) => `/img/chara/${f}`)
+    : [];
+const allImages = [...coverImages, ...charaImages];
+
+const usedImages = new Set();
+// From localLibrary
+localLibrary.forEach((item) => {
+    if (item.cover && !item.cover.startsWith("http"))
+        usedImages.add(item.cover);
+});
+// From DB
+(db.favorites || []).forEach((fav) => {
+    if (fav && fav.isSaga && fav.cover && !fav.cover.startsWith("http"))
+        usedImages.add(fav.cover);
+});
+(db.monthlyPicks || []).forEach((pick) => {
+    if (pick.cover && !pick.cover.startsWith("http"))
+        usedImages.add(pick.cover);
+});
+const allDbChars = [
+    ...(db.characters || []),
+    ...(db.likedCharacters || []),
+    ...(db.interestedCharacters || []),
+    ...(db.dislikedCharacters || []),
+    ...(db.monthlyChars || []),
+];
+allDbChars.forEach((char) => {
+    if (char.cover && !char.cover.startsWith("http"))
+        usedImages.add(char.cover);
+});
+
+const unusedImages = allImages.filter((img) => !usedImages.has(img));
+
 const favoritesOrdered = db.favorites
     .map((title) => localLibrary.find((item) => item.title === title))
     .filter((item) => item !== undefined);
@@ -124,6 +166,7 @@ const favoritesOrdered = db.favorites
             <MyCharactersPanel />
             <FavoritesPanel />
             <SagasPanel />
+            <ImageManagerPanel />
         </main>
 
         <EditorModal />
@@ -158,7 +201,15 @@ const favoritesOrdered = db.favorites
             </div>
         </div>
 
-        <script define:vars={{ localLibrary, favoritesOrdered, db }}>
+        <script
+            define:vars={{
+                localLibrary,
+                favoritesOrdered,
+                db,
+                allImages,
+                unusedImages,
+            }}
+        >
             window.localLibrary = localLibrary;
             window.favoritesList = favoritesOrdered;
             window.favoritesTitles = db.favorites || [];
@@ -169,6 +220,8 @@ const favoritesOrdered = db.favorites
             window.sagas = db.sagas || {};
             window.interestedCharactersGlobal = db.interestedCharacters || [];
             window.dislikedCharactersGlobal = db.dislikedCharacters || [];
+            window.allImages = allImages;
+            window.unusedImages = unusedImages;
         </script>
 
         <!-- Script para restaurar el estado de la página -->
@@ -183,6 +236,8 @@ const favoritesOrdered = db.favorites
 
         <script is:inline>
             // CSS para el panel de sagas
+            // NOTA: Recuerda añadir un botón en Sidebar.astro para activar el panel 'images'
+            // ej: <button onclick="switchMode('images')" ...><i class="fa-solid fa-images"></i></button>
 
             const sagaStyles = `
                 .saga-list {
@@ -746,6 +801,21 @@ const favoritesOrdered = db.favorites
                 updateFavBtn();
                 renderMonthTags();
                 checkScoreLock();
+
+                initCustomSlider(
+                    "custom-slider-container",
+                    "custom-slider-thumb",
+                    (pos) => {
+                        const position = Math.round(pos);
+                        document.getElementById(
+                            "editorPreviewCover",
+                        ).style.objectPosition = `center ${position}%`;
+                        document.getElementById("coverOffsetText").innerText =
+                            `${position}%`;
+                        document.getElementById("coverOffsetYRange").value =
+                            position;
+                    },
+                );
             }
 
             window.closeEditor = () =>
@@ -953,11 +1023,16 @@ const favoritesOrdered = db.favorites
                     ) {
                         window.favoritesTitles.push(fileData.title);
                     } else if (!isFavorite) {
+                        // When un-favoriting, remove both potential manga title formats
                         window.favoritesTitles = window.favoritesTitles.filter(
-                            (t) =>
-                                t !== currentSelection.title &&
-                                t !== fileData.title,
-                        ); // Elimina ambas versiones por si acaso
+                            (t) => {
+                                if (typeof t !== "string") return true; // Keep saga objects
+                                return (
+                                    t !== currentSelection.title &&
+                                    t !== `${currentSelection.title} -M`
+                                );
+                            },
+                        );
                     }
 
                     const combinedPayload = {
@@ -1156,6 +1231,7 @@ const favoritesOrdered = db.favorites
                 }
                 if (mode === "my-characters") renderMyCharacters();
                 if (mode === "sagas") renderSagasPanel();
+                if (mode === "images") renderImageManager();
 
                 // 7. Restaurar posición de scroll y añadir nuevos listeners
                 setTimeout(() => {
@@ -1175,6 +1251,86 @@ const favoritesOrdered = db.favorites
                             });
                         });
                 }, 50); // Pequeño delay para asegurar que el contenido se ha renderizado
+            };
+
+            function renderImageManager() {
+                const unusedGrid =
+                    document.getElementById("unused-images-grid");
+                const allGrid = document.getElementById("all-images-grid");
+
+                const renderImageCard = (imgPath, isUnused) => {
+                    const fileName = imgPath.split("/").pop();
+                    return `
+                        <div class="relative group aspect-[2/3] bg-zinc-900 rounded-lg overflow-hidden border border-white/5">
+                            <img src="${imgPath}" loading="lazy" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                <p class="text-[9px] text-white/70 truncate font-mono" title="${fileName}">${fileName}</p>
+                            </div>
+                            ${
+                                isUnused
+                                    ? `
+                            <button onclick="deleteImage('${imgPath}', this)" class="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-red-500/30 hover:bg-red-500/40">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                            `
+                                    : ""
+                            }
+                        </div>
+                    `;
+                };
+
+                unusedGrid.innerHTML = window.unusedImages
+                    .map((p) => renderImageCard(p, true))
+                    .join("");
+                allGrid.innerHTML = window.allImages
+                    .map((p) => renderImageCard(p, false))
+                    .join("");
+
+                document.getElementById("unused-count").textContent =
+                    window.unusedImages.length;
+                document.getElementById("all-images-count").textContent =
+                    window.allImages.length;
+            }
+
+            window.deleteImage = async (imgPath, btn) => {
+                if (
+                    !confirm(
+                        `¿Seguro que quieres eliminar la imagen ${imgPath.split("/").pop()}? Esta acción no se puede deshacer.`,
+                    )
+                )
+                    return;
+                btn.innerHTML =
+                    '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+                btn.disabled = true;
+                try {
+                    const res = await fetch("/api/delete-image.json", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ path: imgPath }),
+                    });
+                    if (res.ok) {
+                        btn.closest(".relative").remove();
+                        window.unusedImages = window.unusedImages.filter(
+                            (p) => p !== imgPath,
+                        );
+                        window.allImages = window.allImages.filter(
+                            (p) => p !== imgPath,
+                        );
+                        document.getElementById("unused-count").textContent =
+                            window.unusedImages.length;
+                        document.getElementById(
+                            "all-images-count",
+                        ).textContent = window.allImages.length;
+                    } else {
+                        throw new Error("Server failed to delete image");
+                    }
+                } catch (e) {
+                    console.error("Error deleting image:", e);
+                    alert("Error al eliminar la imagen.");
+                    btn.innerHTML =
+                        '<i class="fa-solid fa-trash-can text-xs"></i>';
+                    btn.disabled = false;
+                }
             };
 
             function renderMyCharacters(filter = "") {
@@ -1229,6 +1385,12 @@ const favoritesOrdered = db.favorites
                 .getElementById("myCharsFilter")
                 .addEventListener("input", (e) =>
                     renderMyCharacters(e.target.value),
+                );
+
+            document
+                .getElementById("sagasFilter")
+                .addEventListener("input", (e) =>
+                    renderSagasPanel(e.target.value),
                 );
 
             function renderSagaFavoriteCard(sagaItem) {
@@ -1657,7 +1819,7 @@ const favoritesOrdered = db.favorites
                 return { value: 1, base: trimmedTitle };
             }
 
-            function renderSagasPanel() {
+            function renderSagasPanel(filter = "") {
                 const findItem = (title) =>
                     window.localLibrary.find((item) => item.title === title);
 
@@ -1749,7 +1911,15 @@ const favoritesOrdered = db.favorites
                     .map(renderSagaItem)
                     .join("");
 
-                sagasContainer.innerHTML = Object.entries(window.sagas)
+                let sagaEntries = Object.entries(window.sagas);
+                if (filter) {
+                    const lowerFilter = filter.toLowerCase();
+                    sagaEntries = sagaEntries.filter(([sagaName, _]) =>
+                        sagaName.toLowerCase().includes(lowerFilter),
+                    );
+                }
+
+                sagasContainer.innerHTML = sagaEntries
                     .sort((a, b) => a[0].localeCompare(b[0]))
                     .map(([sagaName, games]) => {
                         const isFav = window.favoritesTitles.some(
@@ -2173,8 +2343,14 @@ const favoritesOrdered = db.favorites
 
                         window.favoritesTitles = window.favoritesTitles.filter(
                             (t) => {
-                                if (typeof t === "string")
-                                    return t !== currentSelection.title;
+                                // For manga, we need to check for both "Title" and "Title -M"
+                                if (typeof t === "string") {
+                                    return (
+                                        t !== currentSelection.title &&
+                                        t !== `${currentSelection.title} -M`
+                                    );
+                                }
+                                // Keep saga objects
                                 return true;
                             },
                         );

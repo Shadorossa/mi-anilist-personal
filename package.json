@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.17.1",
     "inquirer": "^13.2.2",
+    "node-vibrant": "^4.0.4",
     "tailwindcss": "^3.4.17"
   }
 }

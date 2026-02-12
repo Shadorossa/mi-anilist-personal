@@ -1,17 +1,33 @@
 <div id="sagas-panel" class="panel hidden">
-    <div class="flex justify-between items-center mb-4 shrink-0">
-        <h2 class="panel-header">Organizador de Sagas</h2>
-        <div class="flex gap-2">
-            <button
-                id="addSagaBtn"
-                class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-500 transition text-[10px] uppercase tracking-wide shadow-lg"
-                >Crear Saga</button
-            >
-            <button
-                id="saveSagasBtn"
-                class="bg-white text-black font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200 transition text-[10px] uppercase tracking-wide shadow-lg"
-                >Guardar Sagas</button
-            >
+    <div class="flex justify-between items-start mb-4 shrink-0">
+        <div class="flex-1"></div>
+        <div class="flex flex-col items-center pt-1">
+            <h2 class="text-lg font-bold text-white tracking-tight">
+                Organizador de Sagas
+            </h2>
+            <div class="w-32 h-px bg-white/10 mt-2"></div>
+        </div>
+        <div class="flex-1 flex justify-end">
+            <div class="flex items-center gap-4">
+                <input
+                    type="text"
+                    id="sagasFilter"
+                    placeholder="Buscar saga..."
+                    class="form-input !w-48 !text-xs"
+                />
+                <div class="flex items-center gap-2">
+                    <button
+                        id="addSagaBtn"
+                        class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-500 transition text-[10px] uppercase tracking-wide shadow-lg"
+                        >Crear Saga</button
+                    >
+                    <button
+                        id="saveSagasBtn"
+                        class="bg-white text-black font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200 transition text-[10px] uppercase tracking-wide shadow-lg"
+                        >Guardar Sagas</button
+                    >
+                </div>
+            </div>
         </div>
     </div>
     <div class="flex-1 flex gap-6 min-h-0">

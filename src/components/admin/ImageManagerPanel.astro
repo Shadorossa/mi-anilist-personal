@@ -1,0 +1,33 @@
+<div id="images-panel" class="panel hidden">
+    <div class="flex justify-between items-start mb-4 shrink-0">
+        <div class="flex-1"></div>
+        <div class="flex flex-col items-center pt-1">
+            <h2 class="text-lg font-bold text-white tracking-tight">
+                Gestor de Imágenes
+            </h2>
+            <div class="w-32 h-px bg-white/10 mt-2"></div>
+        </div>
+        <div class="flex-1 flex justify-end">
+            <!-- Filtros futuros aquí -->
+        </div>
+    </div>
+    <div class="custom-scrollbar flex-1">
+        <h3 class="panel-subheader mb-2">
+            Imágenes sin usar (<span id="unused-count">0</span>)
+        </h3>
+        <div id="unused-images-grid" class="asearch-grid mb-8">
+            <p class="col-span-full text-center text-white/20 py-10">
+                Calculando...
+            </p>
+        </div>
+
+        <h3 class="panel-subheader mb-2">
+            Todas las imágenes (<span id="all-images-count">0</span>)
+        </h3>
+        <div id="all-images-grid" class="asearch-grid">
+            <p class="col-span-full text-center text-white/20 py-10">
+                Cargando...
+            </p>
+        </div>
+    </div>
+</div>

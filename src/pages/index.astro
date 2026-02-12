@@ -1,11 +1,13 @@
 ---
 import fs from "node:fs";
 import path from "node:path";
+import * as Vibrant from "node-vibrant/node";
 
 // Componentes
 import ProfileHeader from "../components/ProfileHeader.astro";
 import HallOfFame from "../components/HallOfFame.astro";
 import MonthlyHistory from "../components/MonthlyHistory.astro"; // <-- IMPORTAR EL NUEVO
+import TimeTravel from "../components/TimeTravel.astro";
 import SectionWrapper from "../components/SectionWrapper.astro";
 import LibraryGrid from "../components/LibraryGrid.astro";
 
@@ -34,6 +36,28 @@ try {
 
 const bannerPath = "/img/profile/banner.png";
 const avatarPath = "/img/profile/pic.png";
+
+let accentColor = "#a78bfa"; // Default (violet-400)
+let accentColorRgb = "167, 139, 250";
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+        ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(
+              result[3],
+          )}`
+        : null;
+}
+
+try {
+    const palette = await Vibrant.from(`./public${bannerPath}`).getPalette();
+    const vibrantColor =
+        palette.Vibrant?.hex || palette.Muted?.hex || palette.LightVibrant?.hex;
+    if (vibrantColor) {
+        accentColor = vibrantColor;
+        accentColorRgb = hexToRgb(vibrantColor) || accentColorRgb;
+    }
+} catch (e) {}
 
 function resolveImagePath(basePath) {
     if (
@@ -99,11 +123,35 @@ const stats = {
     favs: db.favorites.length,
 };
 
+const timeTravelData = Object.entries(
+    allContent
+        .filter((item) => item.status === "Completado" && item.finishDate)
+        .reduce((acc, item) => {
+            const year = item.finishDate.substring(0, 4);
+            if (year) {
+                acc[year] = (acc[year] || 0) + 1;
+            }
+            return acc;
+        }, {}),
+)
+    .map(([year, count]) => ({ year: parseInt(year), count }))
+    .sort((a, b) => a.year - b.year);
+
 // 4. FAVORITOS
 const favorites = (db.favorites || [])
     .map((fav) => {
         if (typeof fav === "string") {
-            return allContent.find((item) => item.title === fav);
+            const item = allContent.find((contentItem) => {
+                // For manga, check against both "Title" and "Title -M"
+                if (contentItem.type === "manga") {
+                    return (
+                        contentItem.title === fav ||
+                        `${contentItem.title} -M` === fav
+                    );
+                }
+                return contentItem.title === fav;
+            });
+            return item;
         }
         if (typeof fav === "object" && fav.isSaga) {
             const sagaTitles = db.sagas?.[fav.title] || [];
@@ -280,13 +328,15 @@ const layoutOptions = [];
 const decoGroups = db.decoGroups || [];
 const decoPairs = db.decoPairs || [];
 
-const validGroups = decoGroups.filter(
-    (
-        group, // A group must have at least 2 members, and all must exist
-    ) =>
-        group.length >= 2 &&
-        group.every((imgName) => allDecoImagesMap.has(imgName)),
-);
+const validGroups = decoGroups.filter((group) => {
+    if (group.length < 2) return false;
+    const imagePaths = group.map((name) => allDecoImagesMap.get(name));
+    if (imagePaths.some((p) => !p)) return false; // Check if all images were found
+
+    const hasLeft = imagePaths.some((p) => p.includes("/left-deco/"));
+    const hasRight = imagePaths.some((p) => p.includes("/right-deco/"));
+    return hasLeft && hasRight;
+});
 if (validGroups.length > 0) {
     layoutOptions.push("group");
 }
@@ -321,11 +371,21 @@ if (layoutOptions.length > 0) {
     if (chosenLayout === "group") {
         const group =
             validGroups[Math.floor(Math.random() * validGroups.length)];
-        // Get full paths, shuffle, and pick 2 for the sides
         const groupImagePaths = group.map((name) => allDecoImagesMap.get(name));
-        const shuffled = [...groupImagePaths].sort(() => 0.5 - Math.random());
-        randomLeftDeco = shuffled[0];
-        randomRightDeco = shuffled[1];
+        const leftImagesInGroup = groupImagePaths.filter((p) =>
+            p.includes("/left-deco/"),
+        );
+        const rightImagesInGroup = groupImagePaths.filter((p) =>
+            p.includes("/right-deco/"),
+        );
+        randomLeftDeco =
+            leftImagesInGroup[
+                Math.floor(Math.random() * leftImagesInGroup.length)
+            ];
+        randomRightDeco =
+            rightImagesInGroup[
+                Math.floor(Math.random() * rightImagesInGroup.length)
+            ];
     } else if (chosenLayout === "pair") {
         const pair = validPairs[Math.floor(Math.random() * validPairs.length)];
         const img1Path = allDecoImagesMap.get(pair[0]);
@@ -369,7 +429,11 @@ if (layoutOptions.length > 0) {
 }
 ---
 
-<html lang="es" class="dark">
+<html
+    lang="es"
+    class="dark"
+    style={`--accent-color: ${accentColor}; --accent-color-rgb: ${accentColorRgb};`}
+>
     <head>
         <meta charset="UTF-8" />
         <title>{profile.username} | Colección</title>
@@ -377,6 +441,12 @@ if (layoutOptions.length > 0) {
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap"
+            rel="stylesheet"
         />
         <style>
             body {
@@ -391,6 +461,22 @@ if (layoutOptions.length > 0) {
             .hide-scroll::-webkit-scrollbar {
                 display: none;
             }
+            .mask-fade-sides {
+                -webkit-mask-image: linear-gradient(
+                    to right,
+                    transparent,
+                    black 25%,
+                    black 75%,
+                    transparent
+                );
+                mask-image: linear-gradient(
+                    to right,
+                    transparent,
+                    black 25%,
+                    black 75%,
+                    transparent
+                );
+            }
         </style>
     </head>
     <body
@@ -401,7 +487,7 @@ if (layoutOptions.length > 0) {
                 <img
                     src={randomCenterDeco}
                     alt=""
-                    class="fixed bottom-[-200px] left-1/2 -translate-x-1/2 w-auto h-[1000px] opacity-10 grayscale pointer-events-none z-[-1]"
+                    class="mask-fade-sides fixed bottom-[-200px] left-1/2 -translate-x-1/2 w-auto h-[1000px] opacity-10 grayscale pointer-events-none z-[-1]"
                 />
             )
         }
@@ -410,7 +496,7 @@ if (layoutOptions.length > 0) {
                 <img
                     src={randomLeftDeco}
                     alt=""
-                    class="fixed bottom-[-100px] left-[-180px] w-auto h-[750px] opacity-10 grayscale pointer-events-none z-[-1]"
+                    class="fixed bottom-[-100px] left-0 -translate-x-[33%] w-auto h-[750px] opacity-10 grayscale pointer-events-none z-[-1]"
                 />
             )
         }
@@ -419,7 +505,7 @@ if (layoutOptions.length > 0) {
                 <img
                     src={randomRightDeco}
                     alt=""
-                    class="fixed bottom-[-100px] right-[-180px] w-auto h-[750px] opacity-10 grayscale pointer-events-none z-[-1]"
+                    class="fixed bottom-[-100px] right-0 translate-x-[33%] w-auto h-[750px] opacity-10 grayscale pointer-events-none z-[-1]"
                 />
             )
         }
@@ -450,8 +536,14 @@ if (layoutOptions.length > 0) {
 
             <div class="h-px w-full bg-white/10"></div>
 
+            <SectionWrapper title="Viaje en el Tiempo">
+                <TimeTravel data={timeTravelData} />
+            </SectionWrapper>
+
+            <div class="h-px w-full bg-white/10"></div>
+
             <SectionWrapper title="Biblioteca">
-                <LibraryGrid items={allContent} sagas={db.sagas} />
+                <LibraryGrid sagas={db.sagas} allContent={allContent} />
             </SectionWrapper>
         </main>
     </body>

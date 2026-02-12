@@ -69,11 +69,8 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                     ? "hover:flex-[3] cursor-pointer bg-black"
                                     : "bg-[#121215] flex-1",
                                 {
-                                    "hover:border-l": item?.isSaga,
-                                    "hover:border-l-cyan-500/30":
-                                        item?.isAnimeCollection,
-                                    "hover:border-l-yellow-500/30":
-                                        item?.isSaga && !item.isAnimeCollection,
+                                    "hover:border-l-4 hover:border-l-[var(--accent-color)]/50":
+                                        item,
                                 },
                             ]}
                         >
@@ -95,7 +92,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                         ]}
                                     >
                                         {item.isAnimeCollection
-                                            ? "Obra Completa"
+                                            ? "Colección"
                                             : "Saga"}
                                     </div>
                                     <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
@@ -115,7 +112,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                         <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
                                             {item.title}
                                         </h3>
-                                        <div class="h-0.5 w-6 bg-yellow-500 mt-2 opacity-70" />
+                                        <div class="h-0.5 w-6 bg-[var(--accent-color)] mt-2 opacity-70" />
                                     </div>
                                 </>
                             ) : item ? (
@@ -130,7 +127,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                     <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
 
                                     <div class="absolute top-4 left-1/2 -translate-x-1/2 group-hover:left-4 group-hover:translate-x-0 z-20 transition-all duration-500 pointer-events-none">
-                                        <span class="text-[10px] font-bold text-white/40 group-hover:text-yellow-500">
+                                        <span class="text-[10px] font-bold text-white/40 group-hover:text-[var(--accent-color)]">
                                             #{index + 1}
                                         </span>
                                     </div>
@@ -148,7 +145,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                         <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
                                             {item.title}
                                         </h3>
-                                        <div class="h-0.5 w-6 bg-yellow-500 mt-2 opacity-70" />
+                                        <div class="h-0.5 w-6 bg-[var(--accent-color)] mt-2 opacity-70" />
                                     </div>
                                 </>
                             ) : (

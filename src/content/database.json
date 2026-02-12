@@ -200,7 +200,8 @@
   "sagas": {
     "Ace Attorney": [
       "The Great Ace Attorney 2: Resolve",
-      "The Great Ace Attorney: Adventures"
+      "The Great Ace Attorney: Adventures",
+      "Phoenix Wright: Ace Attorney"
     ],
     "Bayonetta": [
       "Bayonetta Origins: Cereza and the Lost Demon",
@@ -213,8 +214,7 @@
       "Bleach: Sennen Kessen-hen - Soukoku-tan",
       "Bleach: Sennen Kessen-hen - Ketsubetsu-tan",
       "Bleach: Sennen Kessen-hen",
-      "Bleach",
-      "Bleach -M"
+      "Bleach"
     ],
     "Bungo Stray Dogs": [
       "Bungou Stray Dogs 5th Season",
@@ -251,8 +251,7 @@
       "Gintama. Porori-hen",
       "Gintama°",
       "Gintama': Enchousen",
-      "Gintama",
-      "Gintama -M"
+      "Gintama"
     ],
     "Hades": [
       "Hades II",
@@ -350,6 +349,9 @@
       "Umineko no Naku Koro ni: Episode 3 - Banquet of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 2 - Turn of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 1 - Legend of the Golden Witch"
+    ],
+    "Muv-luv": [
+      "Muv-Luv"
     ]
   },
   "characters": [
@@ -371,7 +373,7 @@
       "id": 672,
       "title": "Gintoki Sakata",
       "cover": "/img/chara/gintoki-sakata.jpg",
-      "coverOffsetY": 25,
+      "coverOffsetY": 35,
       "sourceId": "gintama.json"
     },
     {
@@ -525,8 +527,8 @@
       "id": 8673,
       "title": "Miles Edgeworth",
       "cover": "/img/chara/miles-edgeworth.png",
-      "source": "Phoenix Wright: Ace Attorney",
-      "coverOffsetY": 35
+      "coverOffsetY": 35,
+      "sourceId": "phoenix-wright-ace-attorney.json"
     },
     {
       "id": 309955,
@@ -548,6 +550,13 @@
       "cover": "/img/chara/agns-claudel.png",
       "coverOffsetY": 34,
       "sourceId": "the-legend-of-heroes-trails-through-daybreak.json"
+    },
+    {
+      "id": 309954,
+      "title": "Kazuma Asogi",
+      "cover": "/img/chara/kazuma-asogi.png",
+      "sourceId": "the-great-ace-attorney-adventures.json",
+      "coverOffsetY": 44
     }
   ],
   "likedCharacters": [
@@ -725,6 +734,48 @@
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b308161-HvElhlKFKU3C.jpg",
       "sourceId": "metal-gear-solid-3-snake-eater.json",
       "coverOffsetY": 44
+    },
+    {
+      "id": 309957,
+      "title": "Sherlock Holmes",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b309957-mu5QkOSwpWCe.jpg",
+      "sourceId": "the-great-ace-attorney-adventures.json",
+      "coverOffsetY": 37
+    },
+    {
+      "id": 319315,
+      "title": "Susato Mikotoba",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b319315-ZWsU4JGQ72aN.jpg",
+      "sourceId": "the-great-ace-attorney-adventures.json",
+      "coverOffsetY": 40
+    },
+    {
+      "id": 309956,
+      "title": "Gina Lestrade",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b309956-7FvfEcvlXTjF.jpg",
+      "sourceId": "the-great-ace-attorney-adventures.json",
+      "coverOffsetY": 30
+    },
+    {
+      "id": 9879,
+      "title": "Phoenix Wright",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b9879-u5LeRqqo84lt.png",
+      "coverOffsetY": 35,
+      "sourceId": "phoenix-wright-ace-attorney.json"
+    },
+    {
+      "id": 299531,
+      "title": "Sara Valestein",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b299531-WYK00pOk7NQh.png",
+      "sourceId": "the-legend-of-heroes-trails-of-cold-steel.json",
+      "coverOffsetY": 28
+    },
+    {
+      "id": 302811,
+      "title": "Quatre Salision",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b302811-ZIEVNKYv9p0r.jpg",
+      "sourceId": "the-legend-of-heroes-trails-through-daybreak.json",
+      "coverOffsetY": 40
     }
   ],
   "monthlyChars": [
@@ -789,6 +840,11 @@
       "cover": "/img/chara/estelle-bright.png"
     },
     {
+      "month": "2024-08",
+      "name": "Kazuma Asogi",
+      "cover": "/img/chara/kazuma-asogi.png"
+    },
+    {
       "month": "2023-08",
       "name": "Souichi Kiruma",
       "cover": "/img/chara/souichi-kiruma.png"
@@ -818,6 +874,13 @@
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b497-Yg5pNmC8kxzs.png",
       "sourceId": "fatestay-night-remastered.json",
       "coverOffsetY": 50
+    },
+    {
+      "id": 31933,
+      "title": "Meiya Mitsurugi",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b31933-lGhcO8YJOedr.jpg",
+      "coverOffsetY": 39,
+      "sourceId": "muv-luv.json"
     }
   ],
   "dislikedCharacters": [
@@ -840,7 +903,8 @@
       "alisa_sen3_sen4_hajimari_S",
       "efc112_1",
       "efc120_1",
-      "efc113_0"
+      "efc113_0",
+      "dhlo9zm-f48e3d50-2fb8-4e6a-bc7e-15bde994e4c4"
     ]
   ]
 }
