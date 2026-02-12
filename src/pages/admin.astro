@@ -58,7 +58,6 @@ let db = {
     characters: [],
     monthlyChars: [],
     likedCharacters: [],
-    dislikedCharacters: [],
     interestedCharacters: [],
 };
 try {
@@ -72,11 +71,6 @@ db.characters = (db.characters || []).map((char) => ({
 }));
 
 db.likedCharacters = (db.likedCharacters || []).map((char) => ({
-    ...char,
-    cover: resolveImagePath(char.cover),
-}));
-
-db.dislikedCharacters = (db.dislikedCharacters || []).map((char) => ({
     ...char,
     cover: resolveImagePath(char.cover),
 }));
@@ -982,7 +976,6 @@ const favoritesOrdered = db.favorites
             window.monthlyCharsGlobal = db.monthlyChars || [];
             window.likedCharactersGlobal = db.likedCharacters || [];
             window.sagas = db.sagas || {};
-            window.dislikedCharactersGlobal = db.dislikedCharacters || [];
             window.interestedCharactersGlobal = db.interestedCharacters || [];
         </script>
 
@@ -995,13 +988,13 @@ const favoritesOrdered = db.favorites
             // CSS para el panel de sagas
 
             const sagaStyles = `
-                .saga-list { background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 6px; min-height: 80px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; align-content: start; max-height: 115px; overflow-y: auto; scroll-snap-type: y mandatory; scroll-padding-top: 6px; }
-                .saga-item { position: relative; aspect-ratio: 2 / 3; border-radius: 4px; cursor: grab; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); scroll-snap-align: start; }
+                .saga-list { background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 6px; min-height: 80px; display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; align-content: start; }
+                .saga-item { position: relative; aspect-ratio: 2 / 3; border-radius: 4px; cursor: grab; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
                 .saga-item-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
                 .saga-item.sortable-ghost { background: #6366f1; opacity: 0.5; }
                 .saga-container { background-color: #0c0c0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; }
                 .saga-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-                .saga-title-input { background: transparent; color: white; font-weight: bold; border: none; outline: none; flex: 1; min-width: 0; font-size: 13px; }
+                .saga-title-input { background: transparent; color: white; font-weight: bold; border: none; outline: none; width: 100%; font-size: 13px; }
                 .delete-saga-btn { color: #71717a; cursor: pointer; }
                 .delete-saga-btn:hover { color: #f87171; }
 
@@ -1109,7 +1102,6 @@ const favoritesOrdered = db.favorites
             let currentCharPickYear = new Date().getFullYear();
             let favCharsSortable = null;
             let likedCharsSortable = null;
-            let dislikedCharsSortable = null;
             let interestedCharsSortable = null;
 
             // --- Lógica para ordenación de la biblioteca local ---
@@ -1743,7 +1735,6 @@ const favoritesOrdered = db.favorites
                     ...(window.charactersGlobal || []),
                     ...(window.likedCharactersGlobal || []),
                     ...(window.interestedCharactersGlobal || []),
-                    ...(window.dislikedCharactersGlobal || []),
                 ].sort((a, b) => a.title.localeCompare(b.title));
                 if (filter) {
                     list = list.filter((c) =>
@@ -1818,7 +1809,6 @@ const favoritesOrdered = db.favorites
             function renderFavCharsSortable() {
                 if (favCharsSortable) favCharsSortable.destroy();
                 if (likedCharsSortable) likedCharsSortable.destroy();
-                if (dislikedCharsSortable) dislikedCharsSortable.destroy();
                 if (interestedCharsSortable) interestedCharsSortable.destroy();
 
                 const favContainer = document.getElementById("favCharsList");
@@ -1826,10 +1816,6 @@ const favoritesOrdered = db.favorites
                     document.getElementById("likedCharsList");
                 const favList = window.charactersGlobal || [];
                 const likedList = window.likedCharactersGlobal || [];
-
-                const dislikedContainer =
-                    document.getElementById("dislikedCharsList");
-                const dislikedList = window.dislikedCharactersGlobal || [];
 
                 const interestedContainer = document.getElementById(
                     "interestedCharsList",
@@ -1854,15 +1840,6 @@ const favoritesOrdered = db.favorites
                               .join("")
                         : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí desde "Hall of Fame".</p>';
 
-                dislikedContainer.innerHTML =
-                    dislikedList.length > 0
-                        ? dislikedList
-                              .map((item) =>
-                                  renderCard(item, "openCharEditor", true),
-                              )
-                              .join("")
-                        : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí.</p>';
-
                 interestedContainer.innerHTML =
                     interestedList.length > 0
                         ? interestedList
@@ -1873,18 +1850,6 @@ const favoritesOrdered = db.favorites
                         : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí.</p>';
 
                 favCharsSortable = new Sortable(favContainer, {
-                    group: "characters",
-                    animation: 150,
-                    ghostClass: "opacity-50",
-                });
-
-                likedCharsSortable = new Sortable(likedContainer, {
-                    group: "characters",
-                    animation: 150,
-                    ghostClass: "opacity-50",
-                });
-
-                dislikedCharsSortable = new Sortable(dislikedContainer, {
                     group: "characters",
                     animation: 150,
                     ghostClass: "opacity-50",
@@ -2215,22 +2180,10 @@ const favoritesOrdered = db.favorites
                                 fav && fav.isSaga && fav.title === sagaName,
                         );
                         const gameObjects = games.map(findItem).filter(Boolean);
-                        const isAnimeCollection =
-                            gameObjects.length > 0 &&
-                            gameObjects.every((g) => g.type === "anime");
-                        const collectionLabel = isAnimeCollection
-                            ? "Obra Completa"
-                            : "Saga";
-                        const labelColor = isAnimeCollection
-                            ? "text-cyan-400"
-                            : "text-indigo-400";
                         return `
                         <div class="saga-container" data-saga-name="${sagaName}">
                             <div class="saga-header">
-                                <div class="flex-1 flex items-baseline gap-2 min-w-0">
-                                    <span class="text-[9px] font-bold uppercase ${labelColor} shrink-0">${collectionLabel}</span>
-                                    <input type="text" class="saga-title-input truncate" value="${sagaName}">
-                                </div>
+                                <input type="text" class="saga-title-input" value="${sagaName}">
                                 <div class="flex items-center gap-3">
                                     <i class="fa-solid fa-star cursor-pointer ${
                                         isFav
@@ -2240,7 +2193,7 @@ const favoritesOrdered = db.favorites
                                     <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
                                 </div>
                             </div>
-                            <div class="saga-list custom-scrollbar">
+                            <div class="saga-list">
                                 ${gameObjects.map(renderSagaItem).join("")}
                             </div>
                         </div>
@@ -2421,17 +2374,8 @@ const favoritesOrdered = db.favorites
                             window.interestedCharactersGlobal[interestedIndex] =
                                 updatedChar;
                         } else {
-                            const dislikedIndex =
-                                window.dislikedCharactersGlobal.findIndex(
-                                    (c) => c.id === updatedChar.id,
-                                );
-                            if (dislikedIndex > -1) {
-                                window.dislikedCharactersGlobal[dislikedIndex] =
-                                    updatedChar;
-                            } else {
-                                // Por defecto, un personaje nuevo se añade a "Me Gustan"
-                                window.likedCharactersGlobal.push(updatedChar);
-                            }
+                            // Por defecto, un personaje nuevo se añade a "Me Gustan"
+                            window.likedCharactersGlobal.push(updatedChar);
                         }
                     }
 

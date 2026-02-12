@@ -22,10 +22,9 @@ const { profile, bannerPath, avatarPath, stats } = Astro.props;
             <span>Admin</span>
         </a>
     </div>
-
     <!-- Avatar, Username, Bio container -->
     <div
-        class="absolute -bottom-10 left-0 w-full px-4 md:px-12 z-10 max-w-7xl mx-auto"
+        class="absolute bottom-0 left-0 right-0 w-full px-4 md:px-12 z-10 max-w-7xl mx-auto"
     >
         <div class="flex items-end gap-6">
             <!-- Avatar -->
@@ -51,10 +50,9 @@ const { profile, bannerPath, avatarPath, stats } = Astro.props;
         <!-- The line the character rests on -->
         <div class="h-px w-full bg-white/10"></div>
     </div>
-
     <!-- Stats block - positioned separately for better control -->
     <div
-        class="absolute bottom-4 right-0 px-4 md:px-12 w-full max-w-7xl mx-auto flex justify-end"
+        class="absolute bottom-4 right-0 px-4 md:px-12 w-full max-w-7xl mx-auto flex justify-end z-20"
     >
         <div
             class="hidden md:flex gap-4 bg-[#0a0a0c] px-6 py-3 rounded-xl border border-white/5"

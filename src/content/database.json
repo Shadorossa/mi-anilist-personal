@@ -3,18 +3,19 @@
     {
       "isSaga": true,
       "title": "Gintama",
-      "cover": "/img/covers/gintama-the-final.png"
+      "cover": "/img/covers/saga-gintama.png"
     },
     {
       "isSaga": true,
       "title": "The Legend of Heroes: Trails",
-      "cover": "/img/covers/trails-saga.png"
+      "cover": "/img/covers/saga-trails.png"
     },
     "Silent Hill 2",
+    "Usogui",
     {
       "isSaga": true,
       "title": "Like a Dragon",
-      "cover": "/img/covers/yakuza-kiwami-2.png"
+      "cover": "/img/covers/saga-LaD.png"
     },
     {
       "isSaga": true,
@@ -24,18 +25,28 @@
     "The House in Fata Morgana",
     {
       "isSaga": true,
+      "title": "Umineko no naku koro ni",
+      "cover": "/img/covers/umineko-no-naku-koro-ni-episode-4-alliance-of-the-golden-witch.png"
+    },
+    {
+      "isSaga": true,
+      "title": "Monogatari series",
+      "cover": "/img/covers/monogatari-series-first-season.png"
+    },
+    {
+      "isSaga": true,
+      "title": "Metal Gear",
+      "cover": "/img/covers/saga-MGS.png"
+    },
+    {
+      "isSaga": true,
       "title": "Mushishi",
       "cover": "/img/covers/mushishi-zoku-shou-2nd-season.png"
     },
     {
       "isSaga": true,
-      "title": "Metal Gear",
-      "cover": "/img/covers/metal-gear-solid.png"
-    },
-    {
-      "isSaga": true,
       "title": "Final Fantasy",
-      "cover": "/img/covers/final-fantasy-xvi.png"
+      "cover": "/img/covers/saga-FF.png"
     }
   ],
   "monthlyPicks": [
@@ -248,6 +259,9 @@
       "Metal Gear 2: Solid Snake",
       "Metal Gear"
     ],
+    "Monogatari series": [
+      "Monogatari Series: First Season"
+    ],
     "Mushishi": [
       "Mushishi Zoku Shou 2nd Season",
       "Mushishi Zoku Shou: Odoro no Michi",
@@ -293,17 +307,17 @@
       "The Legend of Heroes: Trails in the Sky SC",
       "The Legend of Heroes: Trails in the Sky"
     ],
-    "Umineko no naku koro ni": [
-      "Umineko no Naku Koro ni: Episode 4 - Alliance of the Golden Witch",
-      "Umineko no Naku Koro ni: Episode 3 - Banquet of the Golden Witch",
-      "Umineko no Naku Koro ni: Episode 2 - Turn of the Golden Witch",
-      "Umineko no Naku Koro ni: Episode 1 - Legend of the Golden Witch"
-    ],
     "The Legend of the Galactic Heroes": [
       "Ginga Eiyuu Densetsu Gaiden",
       "Ginga Eiyuu Densetsu",
       "Ginga Eiyuu Densetsu: Arata naru Tatakai no Overture",
       "Ginga Eiyuu Densetsu: Waga Yuku wa Hoshi no Taikai"
+    ],
+    "Umineko no naku koro ni": [
+      "Umineko no Naku Koro ni: Episode 4 - Alliance of the Golden Witch",
+      "Umineko no Naku Koro ni: Episode 3 - Banquet of the Golden Witch",
+      "Umineko no Naku Koro ni: Episode 2 - Turn of the Golden Witch",
+      "Umineko no Naku Koro ni: Episode 1 - Legend of the Golden Witch"
     ]
   },
   "characters": [
@@ -571,6 +585,13 @@
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b219275-fGijIVw2jnag.png",
       "source": "Bayonetta",
       "coverOffsetY": 23
+    },
+    {
+      "id": 89028,
+      "title": "Izuku Midoriya",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b89028-8w1I9o1ISHMg.png",
+      "source": "Boku no Hero Academia",
+      "coverOffsetY": 26
     }
   ],
   "monthlyChars": [

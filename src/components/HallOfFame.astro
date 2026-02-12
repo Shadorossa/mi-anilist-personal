@@ -58,10 +58,10 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                     ? "hover:flex-[3] cursor-pointer bg-black"
                                     : "bg-[#121215] flex-1",
                                 {
-                                    "border-l": item?.isSaga,
-                                    "border-l-cyan-500/30":
+                                    "hover:border-l": item?.isSaga,
+                                    "hover:border-l-cyan-500/30":
                                         item?.isAnimeCollection,
-                                    "border-l-yellow-500/30":
+                                    "hover:border-l-yellow-500/30":
                                         item?.isSaga && !item.isAnimeCollection,
                                 },
                             ]}
@@ -71,7 +71,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                     <img
                                         src={item.cover}
                                         alt={item.title}
-                                        class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+                                        class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-60 transition-opacity duration-500 grayscale group-hover:grayscale-0"
                                         loading="lazy"
                                     />
                                     <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
