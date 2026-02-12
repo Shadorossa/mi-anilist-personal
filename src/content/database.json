@@ -219,11 +219,14 @@
     ],
     "Final Fantasy": [
       "Final Fantasy XVI",
-      "Final Fantasy VII Rebirth",
-      "Final Fantasy VII Remake Intergrade",
+      "Final Fantasy IX",
+      "Final Fantasy VIII",
       "Final Fantasy VII",
+      "Final Fantasy VI",
       "Final Fantasy II",
-      "Final Fantasy"
+      "Final Fantasy",
+      "Final Fantasy VII Rebirth",
+      "Final Fantasy VII Remake Intergrade"
     ],
     "Gintama": [
       "Gintama: The Final",
@@ -283,7 +286,8 @@
       "Kichikuou Rance"
     ],
     "Shin Megami Tensei": [
-      "Shin Megami Tensei V: Vengeance"
+      "Shin Megami Tensei V: Vengeance",
+      "Shin Megami Tensei IV: Apocalypse"
     ],
     "Silent Hill": [
       "Silent Hill f",
@@ -361,6 +365,13 @@
       "title": "Michel Bollinger",
       "cover": "/img/chara/michel-bollinger.png",
       "source": "The House in Fata Morgana"
+    },
+    {
+      "id": 89626,
+      "title": "Ayana Otonashi",
+      "cover": "/img/chara/ayana-otonashi.png",
+      "source": "Tsui no Sora",
+      "coverOffsetY": 50
     },
     {
       "id": 190373,
@@ -484,7 +495,7 @@
       "title": "Miles Edgeworth",
       "cover": "/img/chara/miles-edgeworth.png",
       "source": "Phoenix Wright: Ace Attorney",
-      "coverOffsetY": 26
+      "coverOffsetY": 35
     },
     {
       "id": 309955,
@@ -492,13 +503,6 @@
       "cover": "/img/chara/barok-van-zieks.png",
       "source": "The Great Ace Attorney",
       "coverOffsetY": 28
-    },
-    {
-      "id": 89626,
-      "title": "Ayana Otonashi",
-      "cover": "/img/chara/ayana-otonashi.png",
-      "source": "Tsui no Sora",
-      "coverOffsetY": 50
     },
     {
       "id": 298406,
@@ -513,13 +517,6 @@
       "cover": "/img/chara/agns-claudel.png",
       "source": "Trails through Daybreak",
       "coverOffsetY": 34
-    },
-    {
-      "id": 242074,
-      "title": "Ries Argent",
-      "cover": "/img/chara/ries-argent.png",
-      "source": "Trails in the sky 3rd",
-      "coverOffsetY": 45
     }
   ],
   "likedCharacters": [
@@ -587,11 +584,11 @@
       "coverOffsetY": 23
     },
     {
-      "id": 89028,
-      "title": "Izuku Midoriya",
-      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b89028-8w1I9o1ISHMg.png",
-      "source": "Boku no Hero Academia",
-      "coverOffsetY": 26
+      "id": 242074,
+      "title": "Ries Argent",
+      "cover": "/img/chara/ries-argent.png",
+      "source": "Trails in the sky 3rd",
+      "coverOffsetY": 45
     }
   ],
   "monthlyChars": [
@@ -669,6 +666,24 @@
       "month": "2021-03",
       "name": "Gintoki Sakata",
       "cover": "/img/chara/gintoki-sakata.jpg"
+    }
+  ],
+  "interestedCharacters": [
+    {
+      "id": 498,
+      "title": "Rin Tohsaka",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b498-lwawtSpLyATL.png",
+      "source": "Fate/stay night",
+      "coverOffsetY": 44
+    }
+  ],
+  "dislikedCharacters": [
+    {
+      "id": 89028,
+      "title": "Izuku Midoriya",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b89028-8w1I9o1ISHMg.png",
+      "source": "Boku no Hero Academia",
+      "coverOffsetY": 50
     }
   ]
 }

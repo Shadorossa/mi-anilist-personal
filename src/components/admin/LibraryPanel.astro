@@ -1,7 +1,54 @@
-<div id="library-panel" class="panel hidden flex-1 flex flex-col p-6 min-h-0">
-    <div class="flex justify-between items-center mb-6 shrink-0 border-b border-white/5 pb-4">
-        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Biblioteca</h2>
-        <input type="text" id="localFilter" placeholder="Filtrar..." class="bg-[#0a0a0c] border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-white/10 w-48 transition-colors">
+<div id="library-panel" class="panel hidden">
+    <div class="flex justify-between items-center mb-4 shrink-0">
+        <h2 class="panel-header">Mi Colección</h2>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1">
+                <span
+                    class="text-[9px] uppercase font-bold text-gray-600 mr-2 hidden sm:inline tracking-wider"
+                    >Ordenar:</span
+                >
+                <button
+                    onclick="setLocalSort('saga', this)"
+                    class="sort-btn-local active w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white transition-all"
+                    title="Por Saga"
+                    ><i class="fa-solid fa-list-ol text-xs"></i></button
+                >
+                <button
+                    onclick="setLocalSort('score', this)"
+                    class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-yellow-400 hover:bg-white/5 transition-all"
+                    title="Por Nota"
+                    ><i class="fa-solid fa-star text-xs"></i></button
+                >
+                <button
+                    onclick="setLocalSort('year', this)"
+                    class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-all"
+                    title="Por Fecha de Completado"
+                    ><i class="fa-regular fa-calendar text-xs"></i></button
+                >
+                <button
+                    onclick="setLocalSort('title', this)"
+                    class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                    title="Alfabéticamente"
+                    ><i class="fa-solid fa-font text-xs"></i></button
+                >
+                <button
+                    id="localOrderBtn"
+                    onclick="toggleLocalOrder()"
+                    class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-all border border-white/5"
+                    style="display: none;"
+                    ><i class="fa-solid fa-arrow-down-wide-short text-xs"
+                    ></i></button
+                >
+            </div>
+            <input
+                type="text"
+                id="localFilter"
+                placeholder="Filtrar..."
+                class="form-input !w-48 !text-xs"
+            />
+        </div>
     </div>
-    <div id="localGrid" class="mini-grid overflow-y-auto pb-20 custom-scrollbar px-2"></div>
+    <div class="custom-scrollbar flex-1">
+        <div id="localGrid" class="asearch-grid"></div>
+    </div>
 </div>

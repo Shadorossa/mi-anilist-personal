@@ -1,33 +1,202 @@
-<div id="charEditor" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-    <div class="bg-[#0c0c0e] border border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
-        
-        <div class="h-64 bg-black relative shrink-0 w-full group">
-            <img id="charCover" src="" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500 object-top">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent"></div>
-            
-            <div class="absolute bottom-4 left-6 right-6">
-                <h2 id="charName" class="text-3xl font-black text-white leading-none drop-shadow-lg shadow-black"></h2>
+<div
+    id="charEditor"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+>
+    <!-- Contenedor principal, ahora con flex-row y más ancho/alto para parecerse al editor principal -->
+    <div
+        class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-row relative h-[620px]"
+    >
+        <!-- Columna Izquierda: Portada del Personaje -->
+        <div class="w-[240px] bg-black relative shrink-0 overflow-hidden">
+            <img
+                id="charCover"
+                src=""
+                class="absolute inset-0 w-full h-full object-cover object-top opacity-80 mask-fade-right"
+            />
+            <div
+                class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"
+            >
             </div>
         </div>
-        
-        <button onclick="closeCharEditor()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20 backdrop-blur-md"><i class="fa-solid fa-xmark"></i></button>
 
-        <div class="p-6 flex flex-col gap-4 bg-[#0c0c0e]">
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Nombre</label>
-                <input type="text" id="charNameInput" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-3 text-white font-bold outline-none focus:border-pink-500/50 transition">
-            </div>
-            
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Origen (Juego/Anime)</label>
-                <input type="text" id="charSourceInput" placeholder="Ej: Elden Ring" class="w-full bg-[#18181b] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-pink-500/50 transition">
+        <!-- Columna Derecha: Formulario -->
+        <div class="flex-1 p-8 flex flex-col relative min-w-0 bg-[#0c0c0e]">
+            <button
+                onclick="closeCharEditor()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-white transition"
+                ><i class="fa-solid fa-xmark text-lg"></i></button
+            >
+
+            <div class="flex-1 flex flex-col justify-start">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Nombre</label>
+                        <input
+                            type="text"
+                            id="charNameInput"
+                            class="form-input"
+                        />
+                    </div>
+                    <div>
+                        <label class="form-label">Obra de Origen</label>
+                        <input
+                            type="text"
+                            id="charSourceInput"
+                            class="form-input"
+                        />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div
+                        class="bg-[#121215] border border-white/5 rounded-lg p-3"
+                    >
+                        <div class="flex justify-between items-center mb-3">
+                            <span
+                                class="text-[9px] font-bold text-gray-500 uppercase"
+                                >Ajuste Cover</span
+                            >
+                            <span
+                                id="charCoverOffsetText"
+                                class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-10 text-center"
+                                >50%</span
+                            >
+                        </div>
+                        <div class="flex items-center justify-center gap-3">
+                            <div
+                                class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
+                            >
+                                <div class="flex gap-2 h-10 mb-2 shrink-0">
+                                    <div
+                                        class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0"
+                                    >
+                                        <span
+                                            class="text-[8px] text-gray-500 font-bold leading-none mb-0.5"
+                                            >AÑO</span
+                                        >
+                                        <span
+                                            class="text-[9px] text-pink-400 font-black leading-none tracking-wide"
+                                            >MES</span
+                                        >
+                                    </div>
+                                    <div
+                                        class="flex-1 relative rounded overflow-hidden shadow-sm"
+                                    >
+                                        <img
+                                            id="charEditorPreviewCover"
+                                            src=""
+                                            class="absolute inset-0 w-full h-full object-cover"
+                                            style="object-position: center 50%;"
+                                        />
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]"
+                                >
+                                    <h4
+                                        id="charEditorPreviewTitle"
+                                        class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2"
+                                    >
+                                        Personaje
+                                    </h4>
+                                </div>
+                            </div>
+                            <div
+                                id="char-custom-slider-container"
+                                class="relative h-[100px] w-4 flex justify-center cursor-pointer"
+                            >
+                                <div
+                                    class="w-1 h-full bg-white/10 rounded-full"
+                                >
+                                </div>
+                                <div
+                                    id="char-custom-slider-thumb"
+                                    class="absolute w-4 h-4 bg-indigo-500 rounded-full cursor-grab"
+                                    style="top: calc(50% - 8px);"
+                                >
+                                </div>
+                            </div>
+                            <input
+                                type="hidden"
+                                id="charCoverOffsetYRange"
+                                value="50"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="timeline-picker">
+                        <div class="year-stepper-mini">
+                            <span
+                                class="text-[9px] font-black text-white/30 uppercase italic tracking-widest"
+                                >Cronología</span
+                            >
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="year-nav-icon"
+                                    onclick="changeCharPickYear(-1)"
+                                >
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </div>
+                                <span
+                                    class="year-value"
+                                    id="charPickYearDisplay">2024</span
+                                >
+                                <div
+                                    class="year-nav-icon"
+                                    onclick="changeCharPickYear(1)"
+                                >
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="month-grid-compact">
+                            {
+                                [
+                                    "ENE",
+                                    "FEB",
+                                    "MAR",
+                                    "ABR",
+                                    "MAY",
+                                    "JUN",
+                                    "JUL",
+                                    "AGO",
+                                    "SEP",
+                                    "OCT",
+                                    "NOV",
+                                    "DIC",
+                                ].map((m, i) => (
+                                    <button
+                                        class="month-btn-item"
+                                        onclick={`toggleCharMonthPick('${(i + 1).toString().padStart(2, "0")}')`}
+                                        id={`char-month-btn-${(i + 1).toString().padStart(2, "0")}`}
+                                    >
+                                        {m}
+                                    </button>
+                                ))
+                            }
+                        </div>
+                        <div
+                            id="charMonthlyTagsContainer"
+                            class="flex flex-wrap gap-1 mt-2"
+                        >
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="flex gap-2 mt-2">
-                <button id="deleteCharBtn" class="bg-red-500/10 text-red-500 h-12 w-12 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
-                <button onclick="saveCharacter()" class="flex-1 bg-white text-black h-12 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg active:scale-95">
-                    Guardar en Hall of Fame
-                </button>
+            <div class="pt-4 mt-auto">
+                <div class="flex gap-2">
+                    <button
+                        id="deleteCharBtn"
+                        class="bg-red-500/10 text-red-500 h-9 w-12 rounded-lg flex items-center justify-center hover:bg-red-500/20 transition"
+                        ><i class="fa-solid fa-trash"></i></button
+                    >
+                    <button
+                        id="saveCharBtn"
+                        class="flex-1 bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                        >Guardar Personaje</button
+                    >
+                </div>
             </div>
         </div>
     </div>

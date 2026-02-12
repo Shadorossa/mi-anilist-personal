@@ -3,6 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 import "../styles/Asearch.css";
 
+import Sidebar from "../components/admin/Sidebar.astro";
+import SearchPanel from "../components/admin/SearchPanel.astro";
+import LibraryPanel from "../components/admin/LibraryPanel.astro";
+import CharacterPanel from "../components/admin/CharacterPanel.astro";
+import MyCharactersPanel from "../components/admin/MyCharactersPanel.astro";
+import FavoritesPanel from "../components/admin/FavoritesPanel.astro";
+import SagasPanel from "../components/admin/SagasPanel.astro";
+import EditorModal from "../components/admin/EditorModal.astro";
+import CharacterModal from "../components/admin/CharacterModal.astro";
+import SagaCoverPickerModal from "../components/admin/SagaCoverPickerModal.astro";
+
 function readCollection(collectionName) {
     const dirPath = path.resolve(`./src/content/${collectionName}`);
     if (!fs.existsSync(dirPath)) return [];
@@ -59,6 +70,7 @@ let db = {
     monthlyChars: [],
     likedCharacters: [],
     interestedCharacters: [],
+    dislikedCharacters: [],
 };
 try {
     const d = await import("../content/database.json");
@@ -71,6 +83,11 @@ db.characters = (db.characters || []).map((char) => ({
 }));
 
 db.likedCharacters = (db.likedCharacters || []).map((char) => ({
+    ...char,
+    cover: resolveImagePath(char.cover),
+}));
+
+db.dislikedCharacters = (db.dislikedCharacters || []).map((char) => ({
     ...char,
     cover: resolveImagePath(char.cover),
 }));
@@ -99,873 +116,20 @@ const favoritesOrdered = db.favorites
         ></script>
     </head>
     <body>
-        <aside class="admin-sidebar">
-            <div class="mb-8 text-indigo-500 opacity-80">
-                <i class="fa-solid fa-cube text-xl"></i>
-            </div>
-            <nav class="flex flex-col gap-4 w-full px-3">
-                <button
-                    onclick="switchMode('search')"
-                    class="nav-btn active"
-                    title="Añadir"><i class="fa-solid fa-plus"></i></button
-                >
-                <button
-                    onclick="switchMode('library')"
-                    class="nav-btn"
-                    title="Biblioteca"
-                    ><i class="fa-solid fa-layer-group"></i></button
-                >
-                <div class="h-px bg-white/5 w-full"></div>
-                <button
-                    onclick="switchMode('characters')"
-                    class="nav-btn"
-                    title="Buscar Personajes"
-                    ><i class="fa-solid fa-mask"></i></button
-                >
-                <button
-                    onclick="switchMode('my-characters')"
-                    class="nav-btn"
-                    title="Mis Personajes"
-                    ><i class="fa-solid fa-users"></i></button
-                >
-                <div class="h-px bg-white/5 w-full"></div>
-                <button
-                    onclick="switchMode('favorites')"
-                    class="nav-btn"
-                    title="Favoritos"><i class="fa-solid fa-heart"></i></button
-                >
-                <button
-                    onclick="switchMode('sagas')"
-                    class="nav-btn"
-                    title="Sagas"><i class="fa-solid fa-list-ol"></i></button
-                >
-            </nav>
-            <div class="mt-auto w-full px-3 pt-4">
-                <div class="h-px bg-white/5 w-full mb-4"></div>
-                <a href="/" class="nav-btn" title="Ver Perfil">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </a>
-            </div>
-        </aside>
+        <Sidebar />
 
         <main class="admin-main">
-            <div
-                id="search-panel"
-                class="panel flex-1 flex flex-col p-8 min-h-0 h-full"
-            >
-                <div class="search-bar-container">
-                    <select
-                        id="mediaType"
-                        class="form-input !w-auto !text-xs !font-bold"
-                    >
-                        <option value="game">Juegos</option>
-                        <option value="anime">Anime</option>
-                        <option value="manga">Manga</option>
-                    </select>
-                    <form
-                        id="searchForm"
-                        class="search-form"
-                        onsubmit="event.preventDefault();"
-                    >
-                        <input
-                            type="text"
-                            id="searchInput"
-                            placeholder="Buscar obra..."
-                            autocomplete="off"
-                            class="search-input"
-                        />
-                        <button type="submit" class="search-btn"
-                            ><i class="fa-solid fa-search"></i></button
-                        >
-                    </form>
-                </div>
-                <div class="custom-scrollbar flex-1">
-                    <div id="searchResults" class="asearch-grid"></div>
-                </div>
-            </div>
-
-            <div id="library-panel" class="panel hidden">
-                <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="panel-header">Mi Colección</h2>
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-1">
-                            <span
-                                class="text-[9px] uppercase font-bold text-gray-600 mr-2 hidden sm:inline tracking-wider"
-                                >Ordenar:</span
-                            >
-                            <button
-                                onclick="setLocalSort('saga', this)"
-                                class="sort-btn-local active w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white transition-all"
-                                title="Por Saga"
-                                ><i class="fa-solid fa-list-ol text-xs"
-                                ></i></button
-                            >
-                            <button
-                                onclick="setLocalSort('score', this)"
-                                class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-yellow-400 hover:bg-white/5 transition-all"
-                                title="Por Nota"
-                                ><i class="fa-solid fa-star text-xs"
-                                ></i></button
-                            >
-                            <button
-                                onclick="setLocalSort('year', this)"
-                                class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-all"
-                                title="Por Fecha de Completado"
-                                ><i class="fa-regular fa-calendar text-xs"
-                                ></i></button
-                            >
-                            <button
-                                onclick="setLocalSort('title', this)"
-                                class="sort-btn-local w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
-                                title="Alfabéticamente"
-                                ><i class="fa-solid fa-font text-xs"
-                                ></i></button
-                            >
-                            <button
-                                id="localOrderBtn"
-                                onclick="toggleLocalOrder()"
-                                class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-all border border-white/5"
-                                style="display: none;"
-                                ><i
-                                    class="fa-solid fa-arrow-down-wide-short text-xs"
-                                ></i></button
-                            >
-                        </div>
-                        <input
-                            type="text"
-                            id="localFilter"
-                            placeholder="Filtrar..."
-                            class="form-input !w-48 !text-xs"
-                        />
-                    </div>
-                </div>
-                <div class="custom-scrollbar flex-1">
-                    <div id="localGrid" class="asearch-grid"></div>
-                </div>
-            </div>
-
-            <div id="characters-panel" class="panel hidden">
-                <div class="flex flex-col h-full min-h-0">
-                    <div class="search-bar-container shrink-0">
-                        <select
-                            disabled
-                            class="form-input !w-auto !text-xs !font-bold"
-                        >
-                            <option>Personajes</option>
-                        </select>
-                        <form id="charSearchForm" class="search-form">
-                            <input
-                                type="text"
-                                id="charInput"
-                                placeholder="Buscar personaje en Anilist..."
-                                autocomplete="off"
-                                class="search-input"
-                            />
-                            <button type="submit" class="search-btn"
-                                ><i class="fa-solid fa-search"></i></button
-                            >
-                        </form>
-                    </div>
-                    <div class="custom-scrollbar flex-1 space-y-10">
-                        <div>
-                            <h3 class="panel-subheader">
-                                Resultados de Búsqueda
-                            </h3>
-                            <div id="charResults" class="asearch-grid mt-4">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="my-characters-panel" class="panel hidden">
-                <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="panel-header">Mis Personajes</h2>
-                    <input
-                        type="text"
-                        id="myCharsFilter"
-                        placeholder="Filtrar..."
-                        class="form-input !w-48 !text-xs"
-                    />
-                </div>
-                <div class="custom-scrollbar flex-1">
-                    <div id="myCharsGrid" class="asearch-grid"></div>
-                </div>
-            </div>
-
-            <div id="favorites-panel" class="panel hidden">
-                <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="panel-header">Ordenar Favoritos</h2>
-                    <div
-                        class="bg-[#0a0a0c] p-1 rounded-full border border-white/10 flex relative w-24 h-10 shadow-inner"
-                    >
-                        <div
-                            id="fav-tab-bg"
-                            class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-transform duration-300 ease-out border border-white/5"
-                        >
-                        </div>
-                        <button
-                            onclick="switchFavView('works')"
-                            id="btn-fav-works"
-                            class="relative z-10 w-1/2 h-full flex items-center justify-center transition-opacity"
-                            title="Obras Favoritas"
-                            ><i class="fa-solid fa-crown text-yellow-400"
-                            ></i></button
-                        >
-                        <button
-                            onclick="switchFavView('chars')"
-                            id="btn-fav-chars"
-                            class="relative z-10 w-1/2 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
-                            title="Personajes Favoritos"
-                            ><i class="fa-solid fa-mask text-pink-400"
-                            ></i></button
-                        >
-                    </div>
-                </div>
-
-                <div id="fav-works-view" class="flex flex-col flex-1 min-h-0">
-                    <div class="custom-scrollbar flex-1">
-                        <div id="favList" class="asearch-grid"></div>
-                    </div>
-                    <div class="mt-auto pt-4 border-t border-white/5">
-                        <button
-                            id="saveOrderBtn"
-                            class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white h-9 rounded-lg font-bold hover:bg-indigo-500 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
-                            ><i class="fa-solid fa-save"></i> Guardar Orden</button
-                        >
-                    </div>
-                </div>
-
-                <div
-                    id="fav-chars-view"
-                    class="hidden flex flex-col flex-1 min-h-0"
-                >
-                    <div
-                        class="custom-scrollbar flex-1"
-                        id="fav-chars-container"
-                    >
-                        <h3 class="panel-subheader mb-2 mt-4">
-                            Hall of Fame (Arrastrables)
-                        </h3>
-                        <div
-                            id="favCharsList"
-                            class="asearch-grid min-h-[120px]"
-                        >
-                        </div>
-
-                        <h3 class="panel-subheader mb-2 mt-8">
-                            Me Gustan (Arrastrables)
-                        </h3>
-                        <div
-                            id="likedCharsList"
-                            class="asearch-grid min-h-[120px]"
-                        >
-                        </div>
-                    </div>
-                    <div class="mt-auto pt-4 border-t border-white/5">
-                        <button
-                            id="saveCharOrderBtn"
-                            class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white h-9 rounded-lg font-bold hover:bg-indigo-500 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
-                            ><i class="fa-solid fa-save"></i> Guardar Órdenes de Personajes</button
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <div id="sagas-panel" class="panel hidden">
-                <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="panel-header">Organizador de Sagas</h2>
-                    <div class="flex gap-2">
-                        <button
-                            id="addSagaBtn"
-                            class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-500 transition text-[10px] uppercase tracking-wide shadow-lg"
-                            >Crear Saga</button
-                        >
-                        <button
-                            id="saveSagasBtn"
-                            class="bg-white text-black font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200 transition text-[10px] uppercase tracking-wide shadow-lg"
-                            >Guardar Sagas</button
-                        >
-                    </div>
-                </div>
-                <div class="flex-1 flex gap-6 min-h-0">
-                    <div class="w-1/4 flex flex-col min-h-0">
-                        <div class="custom-scrollbar flex-1 pr-2">
-                            <h3 class="panel-subheader mb-2">
-                                Obras sin asignar
-                            </h3>
-                            <div id="unassigned-games" class="saga-list mb-6">
-                            </div>
-                            <h3 class="panel-subheader mb-2">Sugerencias</h3>
-                            <div id="suggested-games" class="saga-list"></div>
-                        </div>
-                    </div>
-                    <div class="w-3/4 flex flex-col">
-                        <h3 class="panel-subheader mb-2">Sagas</h3>
-                        <div
-                            id="sagas-container"
-                            class="custom-scrollbar flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 content-start"
-                        >
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <SearchPanel />
+            <LibraryPanel />
+            <CharacterPanel />
+            <MyCharactersPanel />
+            <FavoritesPanel />
+            <SagasPanel />
         </main>
 
-        <div
-            id="editor"
-            class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-        >
-            <div
-                class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-row relative h-[720px]"
-            >
-                <div
-                    class="w-[280px] bg-black relative shrink-0 overflow-hidden"
-                >
-                    <img
-                        id="editorCover"
-                        src=""
-                        class="absolute inset-0 w-full h-full object-cover opacity-80 mask-fade-right"
-                    />
-                    <div
-                        class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"
-                    >
-                    </div>
-                </div>
-
-                <div
-                    class="flex-1 p-6 flex flex-col relative min-w-0 bg-[#0c0c0e]"
-                >
-                    <button
-                        onclick="closeEditor()"
-                        class="absolute top-4 right-4 text-gray-500 hover:text-white transition"
-                        ><i class="fa-solid fa-xmark text-lg"></i></button
-                    >
-
-                    <div class="mb-5 pr-8">
-                        <h2
-                            id="editorTitle"
-                            class="text-xl font-black text-white leading-tight line-clamp-1"
-                        >
-                        </h2>
-                        <div class="flex items-center gap-2 mt-1">
-                            <p
-                                id="editorYear"
-                                class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded"
-                            >
-                            </p>
-                            <button
-                                id="favBtn"
-                                onclick="toggleFav()"
-                                class="text-gray-600 transition-all hover:scale-110 hover:text-red-400 text-sm"
-                                ><i class="fa-solid fa-heart"></i></button
-                            >
-                        </div>
-                    </div>
-
-                    <div class="flex-1 flex flex-col justify-start">
-                        <div
-                            class="flex justify-between items-center mb-4 px-2"
-                        >
-                            {
-                                [
-                                    { v: "Jugando", i: "play", l: "Jugando" },
-                                    { v: "Pausado", i: "pause", l: "Pausa" },
-                                    {
-                                        v: "Pendiente",
-                                        i: "clock",
-                                        l: "Pendiente",
-                                    },
-                                    { v: "Abandonado", i: "ban", l: "Drop" },
-                                    {
-                                        v: "Completado",
-                                        i: "check",
-                                        l: "Terminado",
-                                    },
-                                ].map((s) => (
-                                    <label class="cursor-pointer group flex flex-col items-center gap-1.5 w-12">
-                                        <input
-                                            type="radio"
-                                            name="status"
-                                            value={s.v}
-                                            class="status-radio hidden"
-                                            onchange="checkScoreLock()"
-                                        />
-                                        <div class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b]">
-                                            <i
-                                                class={`fa-solid fa-${s.i} text-xs text-gray-500 status-icon transition-colors`}
-                                            />
-                                        </div>
-                                        <span class="text-[8px] font-bold text-gray-600 uppercase status-text transition-colors opacity-60 group-hover:opacity-100">
-                                            {s.l}
-                                        </span>
-                                    </label>
-                                ))
-                            }
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div class="date-input-wrapper">
-                                <label class="date-input-label"
-                                    >Fecha Inicio</label
-                                >
-                                <input
-                                    type="date"
-                                    id="startDate"
-                                    class="date-input"
-                                />
-                            </div>
-                            <div class="date-input-wrapper">
-                                <label class="date-input-label">Fecha Fin</label
-                                >
-                                <input
-                                    type="date"
-                                    id="finishDate"
-                                    class="date-input"
-                                />
-                            </div>
-                        </div>
-
-                        <div
-                            id="scoreContainer"
-                            class="flex items-center justify-between bg-[#121215] border border-white/5 rounded-lg p-2 px-3 mb-4 transition-opacity"
-                        >
-                            <span
-                                class="text-[9px] font-bold text-gray-500 uppercase"
-                                >Valoración</span
-                            >
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="stars-container flex gap-0.5 text-sm cursor-pointer"
-                                    id="starsVisual"
-                                >
-                                </div>
-                                <span
-                                    id="scoreText"
-                                    class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded"
-                                    >0</span
-                                >
-                            </div>
-                            <input
-                                type="range"
-                                id="scoreRange"
-                                min="0"
-                                max="10"
-                                step="1"
-                                value="0"
-                                class="sr-only"
-                            />
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                            <div
-                                class="bg-[#121215] border border-white/5 rounded-lg p-3 mb-4"
-                            >
-                                <div
-                                    class="flex justify-between items-center mb-3"
-                                >
-                                    <span
-                                        class="text-[9px] font-bold text-gray-500 uppercase"
-                                        >Ajuste Cover (Historial)</span
-                                    >
-                                    <span
-                                        id="coverOffsetText"
-                                        class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-10 text-center"
-                                        >50%</span
-                                    >
-                                </div>
-                                <div
-                                    class="flex items-center justify-center gap-3"
-                                >
-                                    <!-- Preview Card -->
-                                    <div
-                                        class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
-                                    >
-                                        <div
-                                            class="flex gap-2 h-10 mb-2 shrink-0"
-                                        >
-                                            <div
-                                                class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0"
-                                            >
-                                                <span
-                                                    class="text-[8px] text-gray-500 font-bold leading-none mb-0.5"
-                                                    >2024</span
-                                                >
-                                                <span
-                                                    class="text-[9px] text-indigo-400 font-black leading-none tracking-wide"
-                                                    >MES</span
-                                                >
-                                            </div>
-                                            <div
-                                                class="flex-1 relative rounded overflow-hidden shadow-sm"
-                                            >
-                                                <img
-                                                    id="editorPreviewCover"
-                                                    src=""
-                                                    class="absolute inset-0 w-full h-full object-cover"
-                                                    style="object-position: center 50%;"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]"
-                                        >
-                                            <h4
-                                                id="editorPreviewTitle"
-                                                class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2"
-                                            >
-                                                Título de la obra
-                                            </h4>
-                                        </div>
-                                    </div>
-                                    <!-- Vertical Slider -->
-                                    <div
-                                        id="custom-slider-container"
-                                        class="relative h-[100px] w-4 flex justify-center cursor-pointer"
-                                    >
-                                        <div
-                                            class="w-1 h-full bg-white/10 rounded-full"
-                                        >
-                                        </div>
-                                        <div
-                                            id="custom-slider-thumb"
-                                            class="absolute w-4 h-4 bg-indigo-500 rounded-full cursor-grab"
-                                            style="top: calc(50% - 8px);"
-                                        >
-                                        </div>
-                                    </div>
-                                    <!-- Hidden input to store the value -->
-                                    <input
-                                        type="hidden"
-                                        id="coverOffsetYRange"
-                                        value="50"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="timeline-picker">
-                                <div class="year-stepper-mini">
-                                    <span
-                                        class="text-[9px] font-black text-white/30 uppercase italic tracking-widest"
-                                        >Cronología</span
-                                    >
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="year-nav-icon"
-                                            onclick="changePickYear(-1)"
-                                        >
-                                            <i class="fa-solid fa-chevron-left"
-                                            ></i>
-                                        </div>
-                                        <span
-                                            class="year-value"
-                                            id="pickYearDisplay">2024</span
-                                        >
-                                        <div
-                                            class="year-nav-icon"
-                                            onclick="changePickYear(1)"
-                                        >
-                                            <i class="fa-solid fa-chevron-right"
-                                            ></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="month-grid-compact">
-                                    {
-                                        [
-                                            "ENE",
-                                            "FEB",
-                                            "MAR",
-                                            "ABR",
-                                            "MAY",
-                                            "JUN",
-                                            "JUL",
-                                            "AGO",
-                                            "SEP",
-                                            "OCT",
-                                            "NOV",
-                                            "DIC",
-                                        ].map((m, i) => (
-                                            <button
-                                                class="month-btn-item"
-                                                onclick={`toggleMonthPick('${(i + 1).toString().padStart(2, "0")}')`}
-                                                id={`month-btn-${(i + 1).toString().padStart(2, "0")}`}
-                                            >
-                                                {m}
-                                            </button>
-                                        ))
-                                    }
-                                </div>
-                                <div
-                                    id="monthlyTagsContainer"
-                                    class="flex flex-wrap gap-1 mt-2"
-                                >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 mt-auto">
-                        <div class="flex items-center gap-4">
-                            <button
-                                id="deleteMediaBtn"
-                                type="button"
-                                class="bg-red-500/10 text-red-400 h-9 rounded-lg font-bold hover:bg-red-500/20 transition text-[10px] uppercase tracking-widest px-6"
-                            >
-                                Eliminar Logs
-                            </button>
-                            <button
-                                id="saveMediaBtn"
-                                type="button"
-                                class="flex-1 bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
-                            >
-                                Guardar Cambios
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div
-            id="charEditor"
-            class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-        >
-            <!-- Contenedor principal, ahora con flex-row y más ancho/alto para parecerse al editor principal -->
-            <div
-                class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-row relative h-[620px]"
-            >
-                <!-- Columna Izquierda: Portada del Personaje -->
-                <div
-                    class="w-[240px] bg-black relative shrink-0 overflow-hidden"
-                >
-                    <img
-                        id="charCover"
-                        src=""
-                        class="absolute inset-0 w-full h-full object-cover object-top opacity-80 mask-fade-right"
-                    />
-                    <div
-                        class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"
-                    >
-                    </div>
-                </div>
-
-                <!-- Columna Derecha: Formulario -->
-                <div
-                    class="flex-1 p-8 flex flex-col relative min-w-0 bg-[#0c0c0e]"
-                >
-                    <button
-                        onclick="closeCharEditor()"
-                        class="absolute top-4 right-4 text-gray-500 hover:text-white transition"
-                        ><i class="fa-solid fa-xmark text-lg"></i></button
-                    >
-
-                    <div class="mb-6 pr-8">
-                        <h2
-                            id="charNameDisplay"
-                            class="text-2xl font-black text-white leading-tight line-clamp-2"
-                        >
-                        </h2>
-                    </div>
-
-                    <div class="flex-1 flex flex-col justify-start">
-                        <div>
-                            <label class="form-label">Nombre</label>
-                            <input
-                                type="text"
-                                id="charNameInput"
-                                class="form-input"
-                            />
-                        </div>
-                        <div>
-                            <label class="form-label">Obra de Origen</label>
-                            <input
-                                type="text"
-                                id="charSourceInput"
-                                class="form-input"
-                            />
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                            <div
-                                class="bg-[#121215] border border-white/5 rounded-lg p-3"
-                            >
-                                <div
-                                    class="flex justify-between items-center mb-3"
-                                >
-                                    <span
-                                        class="text-[9px] font-bold text-gray-500 uppercase"
-                                        >Ajuste Cover</span
-                                    >
-                                    <span
-                                        id="charCoverOffsetText"
-                                        class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-10 text-center"
-                                        >50%</span
-                                    >
-                                </div>
-                                <div
-                                    class="flex items-center justify-center gap-3"
-                                >
-                                    <div
-                                        class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group cursor-default h-[100px] w-[160px] flex flex-col select-none"
-                                    >
-                                        <div
-                                            class="flex gap-2 h-10 mb-2 shrink-0"
-                                        >
-                                            <div
-                                                class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0"
-                                            >
-                                                <span
-                                                    class="text-[8px] text-gray-500 font-bold leading-none mb-0.5"
-                                                    >AÑO</span
-                                                >
-                                                <span
-                                                    class="text-[9px] text-pink-400 font-black leading-none tracking-wide"
-                                                    >MES</span
-                                                >
-                                            </div>
-                                            <div
-                                                class="flex-1 relative rounded overflow-hidden shadow-sm"
-                                            >
-                                                <img
-                                                    id="charEditorPreviewCover"
-                                                    src=""
-                                                    class="absolute inset-0 w-full h-full object-cover"
-                                                    style="object-position: center 50%;"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]"
-                                        >
-                                            <h4
-                                                id="charEditorPreviewTitle"
-                                                class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2"
-                                            >
-                                                Personaje
-                                            </h4>
-                                        </div>
-                                    </div>
-                                    <div
-                                        id="char-custom-slider-container"
-                                        class="relative h-[100px] w-4 flex justify-center cursor-pointer"
-                                    >
-                                        <div
-                                            class="w-1 h-full bg-white/10 rounded-full"
-                                        >
-                                        </div>
-                                        <div
-                                            id="char-custom-slider-thumb"
-                                            class="absolute w-4 h-4 bg-indigo-500 rounded-full cursor-grab"
-                                            style="top: calc(50% - 8px);"
-                                        >
-                                        </div>
-                                    </div>
-                                    <input
-                                        type="hidden"
-                                        id="charCoverOffsetYRange"
-                                        value="50"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="timeline-picker">
-                                <div class="year-stepper-mini">
-                                    <span
-                                        class="text-[9px] font-black text-white/30 uppercase italic tracking-widest"
-                                        >Cronología</span
-                                    >
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="year-nav-icon"
-                                            onclick="changeCharPickYear(-1)"
-                                        >
-                                            <i class="fa-solid fa-chevron-left"
-                                            ></i>
-                                        </div>
-                                        <span
-                                            class="year-value"
-                                            id="charPickYearDisplay">2024</span
-                                        >
-                                        <div
-                                            class="year-nav-icon"
-                                            onclick="changeCharPickYear(1)"
-                                        >
-                                            <i class="fa-solid fa-chevron-right"
-                                            ></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="month-grid-compact">
-                                    {
-                                        [
-                                            "ENE",
-                                            "FEB",
-                                            "MAR",
-                                            "ABR",
-                                            "MAY",
-                                            "JUN",
-                                            "JUL",
-                                            "AGO",
-                                            "SEP",
-                                            "OCT",
-                                            "NOV",
-                                            "DIC",
-                                        ].map((m, i) => (
-                                            <button
-                                                class="month-btn-item"
-                                                onclick={`toggleCharMonthPick('${(i + 1).toString().padStart(2, "0")}')`}
-                                                id={`char-month-btn-${(i + 1).toString().padStart(2, "0")}`}
-                                            >
-                                                {m}
-                                            </button>
-                                        ))
-                                    }
-                                </div>
-                                <div
-                                    id="charMonthlyTagsContainer"
-                                    class="flex flex-wrap gap-1 mt-2"
-                                >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-4 mt-auto">
-                        <button
-                            id="saveCharBtn"
-                            class="w-full bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
-                            >Guardar Personaje</button
-                        >
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Saga Cover Picker Modal -->
-        <div
-            id="saga-cover-picker-modal"
-            class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-        >
-            <div
-                class="bg-[#0c0c0e] border border-white/10 w-full max-w-4xl rounded-3xl shadow-2xl p-6 relative flex flex-col max-h-[80vh]"
-            >
-                <button
-                    onclick="document.getElementById('saga-cover-picker-modal').classList.add('hidden')"
-                    class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20"
-                    ><i class="fa-solid fa-xmark"></i></button
-                >
-                <h3
-                    id="saga-picker-title"
-                    class="text-lg font-bold text-white mb-4 shrink-0"
-                >
-                </h3>
-                <div class="custom-scrollbar flex-1">
-                    <div id="saga-picker-grid" class="asearch-grid"></div>
-                </div>
-            </div>
-        </div>
+        <EditorModal />
+        <CharacterModal />
+        <SagaCoverPickerModal />
 
         <script define:vars={{ localLibrary, favoritesOrdered, db }}>
             window.localLibrary = localLibrary;
@@ -977,6 +141,7 @@ const favoritesOrdered = db.favorites
             window.likedCharactersGlobal = db.likedCharacters || [];
             window.sagas = db.sagas || {};
             window.interestedCharactersGlobal = db.interestedCharacters || [];
+            window.dislikedCharactersGlobal = db.dislikedCharacters || [];
         </script>
 
         <script type="module">
@@ -1017,13 +182,13 @@ const favoritesOrdered = db.favorites
             styleSheet.innerText = sagaStyles;
             document.head.appendChild(styleSheet);
 
+            // La función de acordeón ya no es necesaria con el nuevo layout
+            window.toggleAccordion = () => {};
             window.toggleSagaFavorite = (sagaName, starIcon) => {
                 const favIndex = window.favoritesTitles.findIndex(
                     (fav) => fav && fav.isSaga && fav.title === sagaName,
                 );
-
                 if (favIndex > -1) {
-                    // Si ya es favorito, lo quitamos
                     window.favoritesTitles.splice(favIndex, 1);
                     starIcon.classList.remove("text-yellow-400");
                     starIcon.classList.add(
@@ -1034,7 +199,6 @@ const favoritesOrdered = db.favorites
                     openSagaCoverPicker(sagaName);
                 }
             };
-
             window.openSagaCoverPicker = (sagaName) => {
                 const modal = document.getElementById(
                     "saga-cover-picker-modal",
@@ -1100,10 +264,8 @@ const favoritesOrdered = db.favorites
             let isFavorite = false;
             let currentPickYear = new Date().getFullYear();
             let currentCharPickYear = new Date().getFullYear();
-            let favCharsSortable = null;
-            let likedCharsSortable = null;
-            let interestedCharsSortable = null;
-
+            let activeCharCategory = "fav";
+            let activeCharListSortable = null;
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
             let localIsAscending = false;
@@ -1126,6 +288,7 @@ const favoritesOrdered = db.favorites
 
             // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
+                if (!actionName) return; // No hacer nada si no hay acción
                 try {
                     const item = JSON.parse(decodeURIComponent(encodedItem));
 
@@ -1135,7 +298,7 @@ const favoritesOrdered = db.favorites
                     if (actionName === "openEditorLocal") openEditorLocal(item);
 
                     // --- ESTA ES LA LÍNEA QUE TE FALTA ---
-                    if (actionName === "openCharEditor") openCharEditor(item); // Esta línea es correcta, el problema estaba en otro lado.
+                    if (actionName === "openCharEditor") openCharEditor(item);
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
                 }
@@ -1149,13 +312,11 @@ const favoritesOrdered = db.favorites
                 // Obtenemos los elementos del modal (asegúrate de que los IDs coincidan con tu HTML)
                 const modal = document.getElementById("charEditor");
                 const img = document.getElementById("charCover");
-                const nameDisplay = document.getElementById("charNameDisplay");
                 const nameInput = document.getElementById("charNameInput");
                 const sourceInput = document.getElementById("charSourceInput");
 
                 if (modal && img) {
                     img.src = item.cover;
-                    nameDisplay.innerText = item.title;
                     nameInput.value = item.title;
                     sourceInput.value = item.source || ""; // Aquí aparece la obra original
                     document.getElementById(
@@ -1207,8 +368,8 @@ const favoritesOrdered = db.favorites
                         : 0;
 
                 return `
-    <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card">
-        <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy">
+    <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card" draggable="false">
+        <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false">
         ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
         <div class="asearch-info">
@@ -1735,6 +896,7 @@ const favoritesOrdered = db.favorites
                     ...(window.charactersGlobal || []),
                     ...(window.likedCharactersGlobal || []),
                     ...(window.interestedCharactersGlobal || []),
+                    ...(window.dislikedCharactersGlobal || []),
                 ].sort((a, b) => a.title.localeCompare(b.title));
                 if (filter) {
                     list = list.filter((c) =>
@@ -1758,8 +920,8 @@ const favoritesOrdered = db.favorites
 
             function renderSagaFavoriteCard(sagaItem) {
                 return `
-                <div class="asearch-card" data-issaga="true" data-title="${sagaItem.title}" data-cover="${sagaItem.cover}">
-                    <img src="${sagaItem.cover}" class="obj-center" loading="lazy">
+                <div class="asearch-card" data-issaga="true" data-title="${sagaItem.title}" data-cover="${sagaItem.cover}" draggable="false">
+                    <img src="${sagaItem.cover}" class="obj-center" loading="lazy" draggable="false">
                     <div class="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">Saga</div>
                     <div class="asearch-info">
                         <h4 class="asearch-title">${sagaItem.title}</h4>
@@ -1802,64 +964,172 @@ const favoritesOrdered = db.favorites
                 // Activamos la capacidad de arrastrar (Sortable)
                 new Sortable(container, {
                     animation: 150,
-                    ghostClass: "opacity-50",
+                    ghostClass: "sortable-ghost-card",
                 });
             }
 
-            function renderFavCharsSortable() {
-                if (favCharsSortable) favCharsSortable.destroy();
-                if (likedCharsSortable) likedCharsSortable.destroy();
-                if (interestedCharsSortable) interestedCharsSortable.destroy();
+            window.switchCharacterCategoryView = (category) => {
+                activeCharCategory = category;
+                document
+                    .querySelectorAll(".category-tab-btn")
+                    .forEach((btn) => btn.classList.remove("active"));
+                document
+                    .getElementById(`cat-btn-${category}`)
+                    .classList.add("active");
+                renderActiveCharList();
+            };
 
-                const favContainer = document.getElementById("favCharsList");
-                const likedContainer =
-                    document.getElementById("likedCharsList");
-                const favList = window.charactersGlobal || [];
-                const likedList = window.likedCharactersGlobal || [];
+            function renderActiveCharList() {
+                if (activeCharListSortable) {
+                    activeCharListSortable.destroy();
+                }
 
-                const interestedContainer = document.getElementById(
-                    "interestedCharsList",
+                const container = document.getElementById("activeCharList");
+                let list = [];
+                switch (activeCharCategory) {
+                    case "fav":
+                        list = window.charactersGlobal;
+                        break;
+                    case "liked":
+                        list = window.likedCharactersGlobal;
+                        break;
+                    case "interested":
+                        list = window.interestedCharactersGlobal;
+                        break;
+                    case "disliked":
+                        list = window.dislikedCharactersGlobal;
+                        break;
+                }
+
+                container.innerHTML =
+                    list.length > 0
+                        ? list
+                              .map(
+                                  (item) => renderCard(item, "", true), // Deshabilitar click
+                              )
+                              .join("")
+                        : '<p class="col-span-full text-center text-white/20 py-20 text-sm">Esta categoría está vacía.</p>';
+
+                activeCharListSortable = new Sortable(container, {
+                    group: "characters",
+                    animation: 150,
+                    ghostClass: "sortable-ghost-card",
+                    onStart: function () {
+                        document.body.classList.add("is-dragging-active");
+                    },
+                    onEnd: (evt) => {
+                        document.body.classList.remove("is-dragging-active");
+                        const reorderedTitles = Array.from(
+                            evt.to.querySelectorAll(".asearch-title"),
+                        ).map((el) => el.innerText);
+                        const allChars = [
+                            ...window.charactersGlobal,
+                            ...window.likedCharactersGlobal,
+                            ...window.interestedCharactersGlobal,
+                            ...window.dislikedCharactersGlobal,
+                        ];
+                        const reorderedChars = reorderedTitles
+                            .map((title) =>
+                                allChars.find((c) => c.title === title),
+                            )
+                            .filter(Boolean);
+
+                        switch (activeCharCategory) {
+                            case "fav":
+                                window.charactersGlobal = reorderedChars;
+                                break;
+                            case "liked":
+                                window.likedCharactersGlobal = reorderedChars;
+                                break;
+                            case "interested":
+                                window.interestedCharactersGlobal =
+                                    reorderedChars;
+                                break;
+                            case "disliked":
+                                window.dislikedCharactersGlobal =
+                                    reorderedChars;
+                                break;
+                        }
+                    },
+                });
+            }
+
+            function setupCharacterFavoritesView() {
+                // Update counters
+                document.getElementById("fav-char-count").textContent =
+                    window.charactersGlobal.length;
+                document.getElementById("liked-char-count").textContent =
+                    window.likedCharactersGlobal.length;
+                document.getElementById("interested-char-count").textContent =
+                    window.interestedCharactersGlobal.length;
+                document.getElementById("disliked-char-count").textContent =
+                    window.dislikedCharactersGlobal.length;
+
+                switchCharacterCategoryView("fav");
+
+                const moveCharacter = (title, targetCategory) => {
+                    const allLists = {
+                        fav: window.charactersGlobal,
+                        liked: window.likedCharactersGlobal,
+                        interested: window.interestedCharactersGlobal,
+                        disliked: window.dislikedCharactersGlobal,
+                    };
+                    let character = null;
+                    let sourceCategory = null;
+
+                    for (const cat in allLists) {
+                        const index = allLists[cat].findIndex(
+                            (c) => c.title === title,
+                        );
+                        if (index > -1) {
+                            character = allLists[cat].splice(index, 1)[0];
+                            sourceCategory = cat;
+                            break;
+                        }
+                    }
+
+                    if (character) {
+                        allLists[targetCategory].push(character);
+                        if (sourceCategory === activeCharCategory) {
+                            renderActiveCharList();
+                        }
+                        document.getElementById("fav-char-count").textContent =
+                            allLists.fav.length;
+                        document.getElementById(
+                            "liked-char-count",
+                        ).textContent = allLists.liked.length;
+                        document.getElementById(
+                            "interested-char-count",
+                        ).textContent = allLists.interested.length;
+                        document.getElementById(
+                            "disliked-char-count",
+                        ).textContent = allLists.disliked.length;
+                    }
+                };
+
+                ["fav", "liked", "interested", "disliked"].forEach(
+                    (category) => {
+                        const dropZone = document.getElementById(
+                            `cat-btn-${category}`,
+                        );
+                        new Sortable(dropZone, {
+                            group: {
+                                name: "characters",
+                                pull: false,
+                                put: true,
+                            },
+                            ghostClass: "sortable-ghost-hidden", // Also hide the ghost in the drop zone
+                            onAdd: (evt) => {
+                                const characterTitle =
+                                    evt.item.querySelector(
+                                        ".asearch-title",
+                                    ).innerText;
+                                moveCharacter(characterTitle, category);
+                                evt.item.remove();
+                            },
+                        });
+                    },
                 );
-                const interestedList = window.interestedCharactersGlobal || [];
-
-                favContainer.innerHTML =
-                    favList.length > 0
-                        ? favList
-                              .map((item) =>
-                                  renderCard(item, "openCharEditor", true),
-                              )
-                              .join("")
-                        : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí desde "Me Gustan".</p>';
-
-                likedContainer.innerHTML =
-                    likedList.length > 0
-                        ? likedList
-                              .map((item) =>
-                                  renderCard(item, "openCharEditor", true),
-                              )
-                              .join("")
-                        : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí desde "Hall of Fame".</p>';
-
-                interestedContainer.innerHTML =
-                    interestedList.length > 0
-                        ? interestedList
-                              .map((item) =>
-                                  renderCard(item, "openCharEditor", true),
-                              )
-                              .join("")
-                        : '<p class="col-span-full text-center text-white/20 py-10 text-xs">Arrastra personajes aquí.</p>';
-
-                favCharsSortable = new Sortable(favContainer, {
-                    group: "characters",
-                    animation: 150,
-                    ghostClass: "opacity-50",
-                });
-
-                interestedCharsSortable = new Sortable(interestedContainer, {
-                    group: "characters",
-                    animation: 150,
-                    ghostClass: "opacity-50",
-                });
             }
 
             window.switchFavView = (type) => {
@@ -1873,15 +1143,17 @@ const favoritesOrdered = db.favorites
                     worksView.classList.remove("hidden");
                     charsView.classList.add("hidden");
                     bg.style.transform = "translateX(0)";
+                    worksView.classList.add("flex");
                     btnWorks.classList.remove("opacity-50");
                     btnChars.classList.add("opacity-50");
                 } else {
                     worksView.classList.add("hidden");
+                    worksView.classList.remove("flex");
                     charsView.classList.remove("hidden");
                     bg.style.transform = "translateX(100%)";
                     btnChars.classList.remove("opacity-50");
                     btnWorks.classList.add("opacity-50");
-                    renderFavCharsSortable();
+                    setupCharacterFavoritesView();
                 }
             };
 
@@ -1893,67 +1165,19 @@ const favoritesOrdered = db.favorites
                     btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
                     btn.disabled = true;
 
-                    const newFavOrderTitles = Array.from(
-                        document.querySelectorAll(
-                            "#favCharsList .asearch-title",
-                        ),
-                    ).map((el) => el.innerText);
-
-                    const newLikedOrderTitles = Array.from(
-                        document.querySelectorAll(
-                            "#likedCharsList .asearch-title",
-                        ),
-                    ).map((el) => el.innerText);
-
-                    const newInterestedOrderTitles = Array.from(
-                        document.querySelectorAll(
-                            "#interestedCharsList .asearch-title",
-                        ),
-                    ).map((el) => el.innerText);
-
-                    const newDislikedOrderTitles = Array.from(
-                        document.querySelectorAll(
-                            "#dislikedCharsList .asearch-title",
-                        ),
-                    ).map((el) => el.innerText);
-
-                    const allChars = [
-                        ...window.charactersGlobal,
-                        ...window.likedCharactersGlobal,
-                        ...window.interestedCharactersGlobal,
-                        ...window.dislikedCharactersGlobal,
-                    ];
-
-                    const newOrderedFavs = newFavOrderTitles
-                        .map((title) => allChars.find((c) => c.title === title))
-                        .filter(Boolean);
-
-                    const newOrderedLiked = newLikedOrderTitles
-                        .map((title) => allChars.find((c) => c.title === title))
-                        .filter(Boolean);
-
-                    const newOrderedInterested = newInterestedOrderTitles
-                        .map((title) => allChars.find((c) => c.title === title))
-                        .filter(Boolean);
-
-                    const newOrderedDisliked = newDislikedOrderTitles
-                        .map((title) => allChars.find((c) => c.title === title))
-                        .filter(Boolean);
-
-                    window.charactersGlobal = newOrderedFavs;
-                    window.likedCharactersGlobal = newOrderedLiked;
-                    window.dislikedCharactersGlobal = newOrderedDisliked;
-                    window.interestedCharactersGlobal = newOrderedInterested;
-
                     try {
                         await fetch("/api/save.json", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 dbData: {
-                                    characters: newOrderedFavs,
-                                    likedCharacters: newOrderedLiked,
-                                    interestedCharacters: newOrderedInterested,
+                                    characters: window.charactersGlobal,
+                                    likedCharacters:
+                                        window.likedCharactersGlobal,
+                                    interestedCharacters:
+                                        window.interestedCharactersGlobal,
+                                    dislikedCharacters:
+                                        window.dislikedCharactersGlobal,
                                 },
                             }),
                         });
@@ -2334,6 +1558,43 @@ const favoritesOrdered = db.favorites
                 });
             }
 
+            document
+                .getElementById("deleteCharBtn")
+                .addEventListener("click", async () => {
+                    if (!currentSelection || !currentSelection.id) return;
+                    if (
+                        !confirm(
+                            `¿Seguro que quieres eliminar a "${currentSelection.title}" de todas las listas?`,
+                        )
+                    )
+                        return;
+
+                    // Remove from all lists
+                    window.charactersGlobal = window.charactersGlobal.filter(
+                        (c) => c.id !== currentSelection.id,
+                    );
+                    window.likedCharactersGlobal =
+                        window.likedCharactersGlobal.filter(
+                            (c) => c.id !== currentSelection.id,
+                        );
+                    window.interestedCharactersGlobal =
+                        window.interestedCharactersGlobal.filter(
+                            (c) => c.id !== currentSelection.id,
+                        );
+                    window.dislikedCharactersGlobal =
+                        window.dislikedCharactersGlobal.filter(
+                            (c) => c.id !== currentSelection.id,
+                        );
+                    window.monthlyCharsGlobal =
+                        window.monthlyCharsGlobal.filter(
+                            (p) => p.name !== currentSelection.title,
+                        );
+
+                    await saveAllCharacterLists();
+                    closeCharEditor();
+                    renderMyCharacters();
+                    setupCharacterFavoritesView();
+                });
             // --- GUARDAR PERSONAJE ---
             document
                 .getElementById("saveCharBtn")
@@ -2360,43 +1621,32 @@ const favoritesOrdered = db.favorites
                     const likedIndex = window.likedCharactersGlobal.findIndex(
                         (c) => c.id === updatedChar.id,
                     );
+                    const interestedIndex =
+                        window.interestedCharactersGlobal.findIndex(
+                            (c) => c.id === updatedChar.id,
+                        );
+                    const dislikedIndex =
+                        window.dislikedCharactersGlobal.findIndex(
+                            (c) => c.id === updatedChar.id,
+                        );
 
                     if (favIndex > -1) {
                         window.charactersGlobal[favIndex] = updatedChar;
                     } else if (likedIndex > -1) {
                         window.likedCharactersGlobal[likedIndex] = updatedChar;
+                    } else if (interestedIndex > -1) {
+                        window.interestedCharactersGlobal[interestedIndex] =
+                            updatedChar;
+                    } else if (dislikedIndex > -1) {
+                        window.dislikedCharactersGlobal[dislikedIndex] =
+                            updatedChar;
                     } else {
-                        const interestedIndex =
-                            window.interestedCharactersGlobal.findIndex(
-                                (c) => c.id === updatedChar.id,
-                            );
-                        if (interestedIndex > -1) {
-                            window.interestedCharactersGlobal[interestedIndex] =
-                                updatedChar;
-                        } else {
-                            // Por defecto, un personaje nuevo se añade a "Me Gustan"
-                            window.likedCharactersGlobal.push(updatedChar);
-                        }
+                        // Por defecto, un personaje nuevo se añade a "Me Gustan"
+                        window.likedCharactersGlobal.push(updatedChar);
                     }
 
-                    const payload = {
-                        dbData: {
-                            characters: window.charactersGlobal,
-                            likedCharacters: window.likedCharactersGlobal,
-                            dislikedCharacters: window.dislikedCharactersGlobal,
-                            interestedCharacters:
-                                window.interestedCharactersGlobal,
-                            monthlyChars: window.monthlyCharsGlobal,
-                        },
-                    };
-
                     try {
-                        const res = await fetch("/api/save.json", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload),
-                        });
-                        if (!res.ok) throw new Error("Server error");
+                        await saveAllCharacterLists();
                         closeCharEditor();
                         if (
                             !document
@@ -2412,6 +1662,28 @@ const favoritesOrdered = db.favorites
                         alert("Error al guardar el personaje.");
                     }
                 });
+
+            async function saveAllCharacterLists() {
+                const payload = {
+                    dbData: {
+                        characters: window.charactersGlobal,
+                        likedCharacters: window.likedCharactersGlobal,
+                        dislikedCharacters: window.dislikedCharactersGlobal,
+                        interestedCharacters: window.interestedCharactersGlobal,
+                        monthlyChars: window.monthlyCharsGlobal,
+                    },
+                };
+                const res = await fetch("/api/save.json", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                if (!res.ok) {
+                    throw new Error(
+                        "Server error while saving character lists",
+                    );
+                }
+            }
 
             document
                 .getElementById("deleteMediaBtn")

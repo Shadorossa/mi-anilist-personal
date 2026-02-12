@@ -1,16 +1,27 @@
-<div id="characters-panel" class="panel hidden flex-1 flex flex-col p-8 min-h-0">
-    <div class="flex gap-3 mb-8 shrink-0 max-w-2xl mx-auto w-full bg-[#0a0a0c] p-1.5 rounded-2xl border border-white/5 shadow-2xl">
-        <div class="flex items-center px-4 bg-[#18181b] rounded-xl border border-white/5">
-            <i class="fa-solid fa-mask text-gray-400 text-xs"></i>
+<div id="characters-panel" class="panel hidden">
+    <div class="flex flex-col h-full min-h-0">
+        <div class="search-bar-container shrink-0">
+            <select disabled class="form-input !w-auto !text-xs !font-bold">
+                <option>Personajes</option>
+            </select>
+            <form id="charSearchForm" class="search-form">
+                <input
+                    type="text"
+                    id="charInput"
+                    placeholder="Buscar personaje en Anilist..."
+                    autocomplete="off"
+                    class="search-input"
+                />
+                <button type="submit" class="search-btn"
+                    ><i class="fa-solid fa-search"></i></button
+                >
+            </form>
         </div>
-        <form id="charSearchForm" class="flex-1 flex relative group">
-            <input type="text" id="charInput" placeholder="Buscar personaje en Anilist..." autocomplete="off" class="w-full bg-transparent text-white text-sm pl-4 pr-12 outline-none">
-            <button type="submit" class="absolute right-0 top-0 bottom-0 px-4 text-gray-500 hover:text-pink-400"><i class="fa-solid fa-search"></i></button>
-        </form>
+        <div class="custom-scrollbar flex-1 space-y-10">
+            <div>
+                <h3 class="panel-subheader">Resultados de Búsqueda</h3>
+                <div id="charResults" class="asearch-grid mt-4"></div>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-4 text-xs font-bold text-gray-500 uppercase tracking-widest px-2">Mis Personajes (Hall of Fame)</div>
-    <div id="savedCharsGrid" class="mini-grid overflow-y-auto pb-10 custom-scrollbar px-4 mb-8"></div>
-
-    <div id="charResults" class="mini-grid overflow-y-auto pb-20 custom-scrollbar px-4 border-t border-white/5 pt-4"></div>
 </div>

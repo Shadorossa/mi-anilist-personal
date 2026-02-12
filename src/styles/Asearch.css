@@ -156,10 +156,21 @@ body {
     align-content: start;
 }
 
+/* Grid para personajes favoritos, más pequeño */
+.asearch-grid.fav-char-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+}
+
 /* Pantallas muy grandes: columnas un poco más anchas */
 @media (min-width: 1600px) {
     .asearch-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    /* También para el grid de favs */
+    .asearch-grid.fav-char-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
 }
 
@@ -713,4 +724,95 @@ body {
 #editor .w-\[260px\] {
     width: 320px !important;
     /* Aumentamos de 260px a 320px */
+}
+
+/* --- Estilos de Botón para Pestañas de Categorías (Mejorados) --- */
+.category-tab-btn {
+    padding: 0.75rem 1rem;
+    /* py-3 px-4 */
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    /* semibold */
+    color: #a1a1aa;
+    /* zinc-400 */
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.02);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.category-tab-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.category-tab-btn.active {
+    background-color: #6366f1;
+    color: white;
+    border-color: #6366f1;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+}
+
+.category-tab-btn.active .category-counter {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.category-tab-btn.sortable-dragover {
+    background-color: rgba(74, 222, 128, 0.2);
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+    border-color: rgba(74, 222, 128, 0.5);
+    color: #a7f3d0;
+}
+
+.category-counter {
+    font-size: 10px;
+    font-family: monospace;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 2px 8px;
+    border-radius: 99px;
+    color: #71717a;
+    transition: all 0.2s ease-in-out;
+}
+
+.sortable-ghost-hidden {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Desactiva la selección de texto mientras se arrastra */
+body.is-dragging-active * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+/*
+ * Arreglo para el "hover pegajoso" al arrastrar.
+ * Cuando el cuerpo tiene la clase 'is-dragging-active', forzamos a que
+ * cualquier tarjeta que no sea la que se está arrastrando (.sortable-chosen)
+ * vuelva a su estado normal, incluso si el cursor pasa por encima.
+ * Esto evita que el panel de información se quede visible en tarjetas adyacentes.
+*/
+body.is-dragging-active .asearch-card:not(.sortable-chosen):hover {
+    transform: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.05);
+    z-index: auto;
+}
+
+body.is-dragging-active .asearch-card:not(.sortable-chosen):hover .asearch-info {
+    opacity: 0;
 }

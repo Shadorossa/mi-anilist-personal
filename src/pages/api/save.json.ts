@@ -90,6 +90,8 @@ export const POST = async ({ request }: { request: Request }) => {
         monthlyPicks: monthlyPicks !== undefined ? monthlyPicks : currentDB.monthlyPicks,
         characters: characters !== undefined ? processedCharacters : currentDB.characters,
         likedCharacters: body.dbData.likedCharacters !== undefined ? body.dbData.likedCharacters : currentDB.likedCharacters,
+        interestedCharacters: body.dbData.interestedCharacters !== undefined ? body.dbData.interestedCharacters : currentDB.interestedCharacters,
+        dislikedCharacters: body.dbData.dislikedCharacters !== undefined ? body.dbData.dislikedCharacters : currentDB.dislikedCharacters,
         monthlyChars: monthlyChars !== undefined ? monthlyChars : currentDB.monthlyChars,
         sagas: sagas !== undefined ? sagas : currentDB.sagas
       };

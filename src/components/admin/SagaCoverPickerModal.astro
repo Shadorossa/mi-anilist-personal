@@ -1,0 +1,22 @@
+<div
+    id="saga-cover-picker-modal"
+    class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+>
+    <div
+        class="bg-[#0c0c0e] border border-white/10 w-full max-w-4xl rounded-3xl shadow-2xl p-6 relative flex flex-col max-h-[80vh]"
+    >
+        <button
+            onclick="document.getElementById('saga-cover-picker-modal').classList.add('hidden')"
+            class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20"
+            ><i class="fa-solid fa-xmark"></i></button
+        >
+        <h3
+            id="saga-picker-title"
+            class="text-lg font-bold text-white mb-4 shrink-0"
+        >
+        </h3>
+        <div class="custom-scrollbar flex-1">
+            <div id="saga-picker-grid" class="asearch-grid"></div>
+        </div>
+    </div>
+</div>

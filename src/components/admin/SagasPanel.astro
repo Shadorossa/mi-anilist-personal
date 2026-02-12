@@ -1,0 +1,34 @@
+<div id="sagas-panel" class="panel hidden">
+    <div class="flex justify-between items-center mb-4 shrink-0">
+        <h2 class="panel-header">Organizador de Sagas</h2>
+        <div class="flex gap-2">
+            <button
+                id="addSagaBtn"
+                class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-500 transition text-[10px] uppercase tracking-wide shadow-lg"
+                >Crear Saga</button
+            >
+            <button
+                id="saveSagasBtn"
+                class="bg-white text-black font-bold px-3 py-1.5 rounded-lg hover:bg-gray-200 transition text-[10px] uppercase tracking-wide shadow-lg"
+                >Guardar Sagas</button
+            >
+        </div>
+    </div>
+    <div class="flex-1 flex gap-6 min-h-0">
+        <div class="w-1/4 flex flex-col min-h-0">
+            <div class="custom-scrollbar flex-1 pr-2">
+                <h3 class="panel-subheader mb-2">Obras sin asignar</h3>
+                <div id="unassigned-games" class="saga-list mb-6"></div>
+                <h3 class="panel-subheader mb-2">Sugerencias</h3>
+                <div id="suggested-games" class="saga-list"></div>
+            </div>
+        </div>
+        <div class="w-3/4 flex flex-col">
+            <h3 class="panel-subheader mb-2">Sagas</h3>
+            <div
+                id="sagas-container"
+                class="custom-scrollbar flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 content-start"
+            ></div>
+        </div>
+    </div>
+</div>
