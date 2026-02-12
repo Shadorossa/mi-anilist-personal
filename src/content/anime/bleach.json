@@ -1,10 +1,10 @@
 {
-  "title": "Gintama",
-  "cover": "/img/covers/gintama.jpg",
-  "year": 2006,
+  "title": "Bleach",
+  "cover": "/img/covers/bleach.png",
+  "year": 2004,
   "type": "anime",
   "status": "Completado",
-  "score": 10,
+  "score": 8,
   "startDate": "",
   "finishDate": "",
   "coverOffsetY": 50

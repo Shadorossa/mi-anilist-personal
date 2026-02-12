@@ -25,8 +25,7 @@ function readCollection(collectionName) {
                 const filePath = path.join(dirPath, file);
                 const content = fs.readFileSync(filePath, "utf-8");
                 const data = JSON.parse(content);
-                const type =
-                    collectionName === "games" ? "game" : collectionName;
+                const type = collectionName;
                 return { ...data, id: file, type: type };
             } catch (e) {
                 return null;
@@ -131,6 +130,34 @@ const favoritesOrdered = db.favorites
         <CharacterModal />
         <SagaCoverPickerModal />
 
+        <!-- NUEVO: Modal para seleccionar obra de origen del personaje -->
+        <div
+            id="work-picker-modal"
+            class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-4xl rounded-3xl shadow-2xl p-6 relative flex flex-col max-h-[80vh]"
+            >
+                <button
+                    onclick="closeWorkPicker()"
+                    class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition z-20"
+                    ><i class="fa-solid fa-xmark"></i></button
+                >
+                <h3 class="text-lg font-bold text-white mb-4 shrink-0">
+                    Selecciona la obra de origen
+                </h3>
+                <input
+                    type="text"
+                    id="workPickerFilter"
+                    placeholder="Buscar obra..."
+                    class="form-input !w-full !mb-4"
+                />
+                <div class="custom-scrollbar flex-1">
+                    <div id="work-picker-grid" class="asearch-grid"></div>
+                </div>
+            </div>
+        </div>
+
         <script define:vars={{ localLibrary, favoritesOrdered, db }}>
             window.localLibrary = localLibrary;
             window.favoritesList = favoritesOrdered;
@@ -153,17 +180,88 @@ const favoritesOrdered = db.favorites
             // CSS para el panel de sagas
 
             const sagaStyles = `
-                .saga-list { background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 6px; min-height: 80px; display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; align-content: start; }
-                .saga-item { position: relative; aspect-ratio: 2 / 3; border-radius: 4px; cursor: grab; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+                .saga-list {
+                    background-color: rgba(255,255,255,0.02);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 8px;
+                    padding: 6px;
+                    min-height: 108px; /* Acomoda la altura de las portadas (64 * 1.5 + padding) */
+                    display: flex;
+                    gap: 6px;
+                    overflow-x: auto;
+                    flex-wrap: nowrap;
+                    scroll-snap-type: x mandatory;
+                    scrollbar-width: none; /* Firefox */
+                }
+                .saga-list::-webkit-scrollbar { display: none; } /* Chrome, Safari */
+                .saga-item {
+                    position: relative;
+                    aspect-ratio: 2 / 3;
+                    width: 64px;
+                    flex-shrink: 0;
+                    border-radius: 4px;
+                    cursor: grab;
+                    overflow: hidden;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    scroll-snap-align: start;
+                }
                 .saga-item-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
                 .saga-item.sortable-ghost { background: #6366f1; opacity: 0.5; }
-                .saga-container { background-color: #0c0c0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; }
+                .saga-container {
+                    position: relative;
+                    overflow: visible; /* Asegura que el marcador se vea fuera */
+                    background-color: #0c0c0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px;
+                }
                 .saga-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
                 .saga-title-input { background: transparent; color: white; font-weight: bold; border: none; outline: none; width: 100%; font-size: 13px; }
                 .delete-saga-btn { color: #71717a; cursor: pointer; }
                 .delete-saga-btn:hover { color: #f87171; }
 
                 /* Estilos para el picker de meses deshabilitado */
+                .saga-tag-strip {
+                    position: relative;
+                    width: 8px;
+                    height: 16px;
+                    border-radius: 3px;
+                    cursor: help;
+                    transition: all 0.2s ease-in-out;
+                    flex-shrink: 0;
+                }
+                .saga-tag-strip:hover {
+                    transform: scale(1.15);
+                }
+                .saga-tag-strip::after {
+                    content: attr(data-tag-text); 
+                    position: absolute;
+                    bottom: 140%;
+                    left: 50%;
+                    transform: translateX(-50%) scale(0.9);
+                    background: #1e1e21;
+                    color: #e4e4e7;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 10px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    white-space: nowrap;
+                    opacity: 0;
+                    visibility: hidden;
+                    pointer-events: none;
+                    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+                    z-index: 10;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                }
+                .saga-tag-strip:hover::after {
+                    opacity: 1;
+                    visibility: visible;
+                    pointer-events: auto;
+                    transform: translateX(-50%) scale(1);
+                }
+                .saga-tag-strip.saga-tag--franchise { background-color: #6d28d9; }
+                .saga-tag-strip.saga-tag--adaptation { background-color: #0369a1; }
+                .saga-tag-strip.saga-tag--complete { background-color: #166534; }
+                .saga-tag-strip.saga-tag--saga { background-color: #991b1b; }
                 .month-btn-item.disabled {
                     background: rgba(255, 255, 255, 0.02);
                     color: #404040;
@@ -313,12 +411,31 @@ const favoritesOrdered = db.favorites
                 const modal = document.getElementById("charEditor");
                 const img = document.getElementById("charCover");
                 const nameInput = document.getElementById("charNameInput");
-                const sourceInput = document.getElementById("charSourceInput");
+                const sourceDisplayContainer =
+                    document.getElementById("charSourceDisplay");
+                const sourceDisplayText = document.getElementById(
+                    "charSourceDisplayText",
+                );
 
                 if (modal && img) {
                     img.src = item.cover;
                     nameInput.value = item.title;
-                    sourceInput.value = item.source || ""; // Aquí aparece la obra original
+
+                    // Handle source link
+                    if (item.sourceId) {
+                        const sourceWork = window.localLibrary.find(
+                            (w) => w.id === item.sourceId,
+                        );
+                        sourceDisplayText.innerHTML = `<span class="text-white">${sourceWork ? sourceWork.title : "Obra no encontrada"}</span>`;
+                        sourceDisplayContainer.title = sourceWork
+                            ? sourceWork.title
+                            : "Obra no encontrada";
+                    } else {
+                        sourceDisplayText.innerHTML = `<span class="text-gray-500 italic">Ninguna seleccionada</span>`;
+                        sourceDisplayContainer.title =
+                            "Seleccionar obra de origen";
+                    }
+
                     document.getElementById(
                         "charEditorPreviewTitle",
                     ).innerText = item.title;
@@ -353,13 +470,91 @@ const favoritesOrdered = db.favorites
                 document.getElementById("charEditor").classList.add("hidden");
             };
 
+            function getDisplayTitle(item) {
+                if (!item || !item.title) return "";
+                // Para mangas, elimina el sufijo '-M' solo para mostrarlo en la UI
+                if (item.type === "manga" && item.title.endsWith(" -M")) {
+                    return item.title.slice(0, -3);
+                }
+                return item.title;
+            }
+
+            // --- Lógica para el selector de obras ---
+            window.openWorkPicker = () => {
+                renderWorkPickerGrid();
+                document
+                    .getElementById("work-picker-modal")
+                    .classList.remove("hidden");
+                document.getElementById("workPickerFilter").value = "";
+                document.getElementById("workPickerFilter").focus();
+            };
+
+            window.closeWorkPicker = () => {
+                document
+                    .getElementById("work-picker-modal")
+                    .classList.add("hidden");
+            };
+
+            function renderWorkPickerGrid(filter = "") {
+                const grid = document.getElementById("work-picker-grid");
+                const filteredLibrary = window.localLibrary
+                    .filter((item) =>
+                        item.title.toLowerCase().includes(filter.toLowerCase()),
+                    )
+                    .sort((a, b) => a.title.localeCompare(b.title));
+
+                grid.innerHTML = filteredLibrary
+                    .map((item) => {
+                        return `
+                        <div onclick="selectWorkForChar('${item.id}')" class="asearch-card" draggable="false">
+                            <img src="${item.cover}" class="obj-center" loading="lazy" draggable="false">
+                            ${item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
+                            <div class="asearch-info">
+                                <h4 class="asearch-title">${item.title}</h4>
+                            </div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+            }
+
+            window.selectWorkForChar = (workId) => {
+                const work = window.localLibrary.find(
+                    (item) => item.id === workId,
+                );
+                if (work && currentSelection) {
+                    currentSelection.sourceId = work.id;
+
+                    const displayContainer =
+                        document.getElementById("charSourceDisplay");
+                    const displayText = document.getElementById(
+                        "charSourceDisplayText",
+                    );
+                    displayText.innerHTML = `<span class="text-white">${work.title}</span>`;
+                    displayContainer.title = work.title;
+
+                    closeWorkPicker();
+                }
+            };
+
             function renderCard(item, actionName, isChar = false) {
-                const isFav = window.favoritesTitles.includes(item.title);
+                let isFav;
+                // Para mangas, la comprobación de favorito debe considerar el posible sufijo '-M'
+                if (item.type === "manga") {
+                    isFav =
+                        window.favoritesTitles.includes(item.title) ||
+                        window.favoritesTitles.includes(`${item.title} -M`);
+                } else {
+                    isFav = window.favoritesTitles.includes(item.title);
+                }
+
                 // encodeURIComponent doesn't escape single quotes, which breaks the onclick attribute.
                 // We need to manually encode it for it to be a valid JS string inside the attribute.
                 const safeItem = encodeURIComponent(
                     JSON.stringify(item),
                 ).replace(/'/g, "%27");
+
+                const displayTitle = getDisplayTitle(item);
 
                 // Si es personaje, no mostramos estrellas
                 const starRating =
@@ -367,15 +562,28 @@ const favoritesOrdered = db.favorites
                         ? window.calculateRating(item.score || 0)
                         : 0;
 
+                let sourceTitle = "";
+                if (isChar) {
+                    if (item.sourceId) {
+                        const sourceWork = window.localLibrary.find(
+                            (w) => w.id === item.sourceId,
+                        );
+                        if (sourceWork) sourceTitle = sourceWork.title;
+                    } else if (item.source) {
+                        // Backwards compatibility
+                        sourceTitle = item.source;
+                    }
+                }
+
                 return `
     <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card" draggable="false">
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false">
         ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
         <div class="asearch-info">
-            <h4 class="asearch-title">${item.title}</h4>
+            <h4 class="asearch-title">${displayTitle}</h4>
             ${!isChar && starRating > 0 ? `<div class="asearch-rating"><span>${starRating}</span><i class="fa-solid fa-star"></i></div>` : ""}
-            ${isChar && item.source ? `<p class="text-[9px] text-pink-400 font-bold uppercase mt-2">${item.source}</p>` : ""}
+            ${isChar && sourceTitle ? `<p class="text-[9px] text-pink-400 font-bold uppercase mt-2">${sourceTitle}</p>` : ""}
         </div>
     </div>`;
             }
@@ -456,9 +664,18 @@ const favoritesOrdered = db.favorites
 
             window.openEditorSearch = (item) => {
                 const type = document.getElementById("mediaType").value;
-                const existing = window.localLibrary.find(
-                    (l) => l.title === item.title,
-                );
+                const typeToFind = type === "game" ? "games" : type;
+                const existing = window.localLibrary.find((l) => {
+                    if (l.type !== typeToFind) return false;
+                    // Para mangas, buscar con y sin el sufijo -M
+                    if (typeToFind === "manga") {
+                        return (
+                            l.title === item.title ||
+                            l.title === `${item.title} -M`
+                        );
+                    }
+                    return l.title === item.title;
+                });
                 const dataToFill = existing
                     ? existing
                     : {
@@ -476,8 +693,9 @@ const favoritesOrdered = db.favorites
 
             function fillEditor(data) {
                 currentSelection = data;
+                const displayTitle = getDisplayTitle(data);
                 document.getElementById("editor").classList.remove("hidden");
-                document.getElementById("editorTitle").innerText = data.title;
+                document.getElementById("editorTitle").innerText = displayTitle;
                 document.getElementById("editorYear").innerText =
                     data.year || "----";
                 document.getElementById("editorCover").src = data.cover;
@@ -497,7 +715,7 @@ const favoritesOrdered = db.favorites
                 // --- Lógica para el nuevo PREVIEW de la cover ---
                 document.getElementById("editorPreviewCover").src = data.cover;
                 document.getElementById("editorPreviewTitle").innerText =
-                    data.title;
+                    displayTitle;
                 const offsetY =
                     data.coverOffsetY !== undefined ? data.coverOffsetY : 50;
                 document.getElementById("coverOffsetYRange").value = offsetY;
@@ -714,15 +932,22 @@ const favoritesOrdered = db.favorites
                         coverOffsetY: Number(coverOffsetY),
                     };
 
+                    const isNewItem = typeof currentSelection.id === "number";
+                    if (isNewItem && fileData.type === "manga") {
+                        fileData.title = `${fileData.title} -M`;
+                    }
+
                     if (
                         isFavorite &&
-                        !window.favoritesTitles.includes(currentSelection.title)
+                        !window.favoritesTitles.includes(fileData.title)
                     ) {
-                        window.favoritesTitles.push(currentSelection.title);
+                        window.favoritesTitles.push(fileData.title);
                     } else if (!isFavorite) {
                         window.favoritesTitles = window.favoritesTitles.filter(
-                            (t) => t !== currentSelection.title,
-                        );
+                            (t) =>
+                                t !== currentSelection.title &&
+                                t !== fileData.title,
+                        ); // Elimina ambas versiones por si acaso
                     }
 
                     const combinedPayload = {
@@ -892,15 +1117,22 @@ const favoritesOrdered = db.favorites
             function renderMyCharacters(filter = "") {
                 const grid = document.getElementById("myCharsGrid");
                 if (!grid) return;
-                let list = [
+                const fullList = [
                     ...(window.charactersGlobal || []),
                     ...(window.likedCharactersGlobal || []),
                     ...(window.interestedCharactersGlobal || []),
                     ...(window.dislikedCharactersGlobal || []),
-                ].sort((a, b) => a.title.localeCompare(b.title));
+                ];
+
+                let list = fullList.sort((a, b) =>
+                    getDisplayTitle(a).localeCompare(getDisplayTitle(b)),
+                );
+
                 if (filter) {
                     list = list.filter((c) =>
-                        c.title.toLowerCase().includes(filter.toLowerCase()),
+                        getDisplayTitle(c)
+                            .toLowerCase()
+                            .includes(filter.toLowerCase()),
                     );
                 }
                 if (list.length > 0) {
@@ -979,77 +1211,117 @@ const favoritesOrdered = db.favorites
                 renderActiveCharList();
             };
 
+            // --- Lógica de ordenación de personajes por saga ---
+            const workToSagaMap = new Map();
+            const sortedSagaNames = Object.keys(window.sagas).sort((a, b) =>
+                a.localeCompare(b),
+            );
+
+            sortedSagaNames.forEach((sagaName) => {
+                const worksInSaga = window.sagas[sagaName];
+                worksInSaga.forEach((workTitle, index) => {
+                    workToSagaMap.set(workTitle, {
+                        sagaName,
+                        workIndex: index,
+                    });
+                });
+            });
+
+            function getCharSagaInfo(character) {
+                if (!character.sourceId) return null;
+                const sourceWork = window.localLibrary.find(
+                    (w) => w.id === character.sourceId,
+                );
+                if (!sourceWork) return null;
+                return workToSagaMap.get(sourceWork.title) || null;
+            }
+
+            function sortCharactersBySaga(charList) {
+                const listCopy = [...charList];
+                listCopy.sort((a, b) => {
+                    const sagaA = getCharSagaInfo(a);
+                    const sagaB = getCharSagaInfo(b);
+
+                    if (sagaA && sagaB) {
+                        if (sagaA.sagaName !== sagaB.sagaName) {
+                            return sagaA.sagaName.localeCompare(sagaB.sagaName);
+                        }
+                        return sagaA.workIndex - sagaB.workIndex;
+                    }
+                    if (sagaA && !sagaB) return -1;
+                    if (!sagaA && sagaB) return 1;
+                    return a.title.localeCompare(b.title);
+                });
+                return listCopy;
+            }
+
             function renderActiveCharList() {
                 if (activeCharListSortable) {
                     activeCharListSortable.destroy();
+                    activeCharListSortable = null;
                 }
 
                 const container = document.getElementById("activeCharList");
                 let list = [];
+                let isManuallySortable = false;
+
                 switch (activeCharCategory) {
                     case "fav":
                         list = window.charactersGlobal;
+                        isManuallySortable = true;
                         break;
                     case "liked":
-                        list = window.likedCharactersGlobal;
+                        list = sortCharactersBySaga(
+                            window.likedCharactersGlobal,
+                        );
                         break;
                     case "interested":
-                        list = window.interestedCharactersGlobal;
+                        list = sortCharactersBySaga(
+                            window.interestedCharactersGlobal,
+                        );
                         break;
                     case "disliked":
-                        list = window.dislikedCharactersGlobal;
+                        list = sortCharactersBySaga(
+                            window.dislikedCharactersGlobal,
+                        );
                         break;
                 }
 
                 container.innerHTML =
                     list.length > 0
                         ? list
-                              .map(
-                                  (item) => renderCard(item, "", true), // Deshabilitar click
-                              )
-                              .join("")
+                              .map((item) => renderCard(item, "", true))
+                              .join("") // Deshabilitar click
                         : '<p class="col-span-full text-center text-white/20 py-20 text-sm">Esta categoría está vacía.</p>';
 
                 activeCharListSortable = new Sortable(container, {
                     group: "characters",
                     animation: 150,
                     ghostClass: "sortable-ghost-card",
+                    sort: isManuallySortable, // Permite reordenar solo si es la lista manual
                     onStart: function () {
                         document.body.classList.add("is-dragging-active");
                     },
                     onEnd: (evt) => {
                         document.body.classList.remove("is-dragging-active");
-                        const reorderedTitles = Array.from(
-                            evt.to.querySelectorAll(".asearch-title"),
-                        ).map((el) => el.innerText);
-                        const allChars = [
-                            ...window.charactersGlobal,
-                            ...window.likedCharactersGlobal,
-                            ...window.interestedCharactersGlobal,
-                            ...window.dislikedCharactersGlobal,
-                        ];
-                        const reorderedChars = reorderedTitles
-                            .map((title) =>
-                                allChars.find((c) => c.title === title),
-                            )
-                            .filter(Boolean);
 
-                        switch (activeCharCategory) {
-                            case "fav":
-                                window.charactersGlobal = reorderedChars;
-                                break;
-                            case "liked":
-                                window.likedCharactersGlobal = reorderedChars;
-                                break;
-                            case "interested":
-                                window.interestedCharactersGlobal =
-                                    reorderedChars;
-                                break;
-                            case "disliked":
-                                window.dislikedCharactersGlobal =
-                                    reorderedChars;
-                                break;
+                        // Si se reordena dentro de la misma lista manual ('fav')
+                        if (isManuallySortable && evt.from === evt.to) {
+                            const reorderedTitles = Array.from(
+                                evt.to.querySelectorAll(".asearch-title"),
+                            ).map((el) => el.innerText);
+
+                            const reorderedChars = reorderedTitles
+                                .map((title) =>
+                                    window.charactersGlobal.find(
+                                        (c) => c.title === title,
+                                    ),
+                                )
+                                .filter(Boolean);
+
+                            window.charactersGlobal = reorderedChars;
                         }
+                        // El movimiento entre listas lo gestiona el 'onAdd' de los botones de categoría
                     },
                 });
             }
@@ -1404,11 +1676,64 @@ const favoritesOrdered = db.favorites
                                 fav && fav.isSaga && fav.title === sagaName,
                         );
                         const gameObjects = games.map(findItem).filter(Boolean);
+
+                        let hasAnime = false;
+                        let hasManga = false;
+                        let hasGames = false;
+                        let hasEpisodicGame = false;
+
+                        gameObjects.forEach((item) => {
+                            if (item.type === "anime") hasAnime = true;
+                            if (item.type === "manga") hasManga = true;
+                            if (item.type === "games") {
+                                hasGames = true;
+                                const lowerTitle = item.title.toLowerCase();
+                                if (
+                                    lowerTitle.includes("episode") ||
+                                    lowerTitle.includes("chapter")
+                                ) {
+                                    hasEpisodicGame = true;
+                                }
+                            }
+                        });
+
+                        let sagaTag = "";
+                        let tagClass = "";
+
+                        if (hasAnime && hasManga && hasGames) {
+                            sagaTag = "Franquicia";
+                            tagClass = "saga-tag--franchise";
+                        } else if (hasAnime && hasManga) {
+                            sagaTag = "Obra y adaptación";
+                            tagClass = "saga-tag--adaptation";
+                        } else if (hasGames && !hasAnime && !hasManga) {
+                            if (hasEpisodicGame) {
+                                sagaTag = "Obra completa";
+                                tagClass = "saga-tag--complete";
+                            } else {
+                                sagaTag = "Saga";
+                                tagClass = "saga-tag--saga";
+                            }
+                        } else if (
+                            (hasAnime && !hasManga && !hasGames) ||
+                            (!hasAnime && hasManga && !hasGames)
+                        ) {
+                            sagaTag = "Obra completa";
+                            tagClass = "saga-tag--complete";
+                        }
+
                         return `
                         <div class="saga-container" data-saga-name="${sagaName}">
                             <div class="saga-header">
-                                <input type="text" class="saga-title-input" value="${sagaName}">
+                                <div class="flex items-center gap-2 flex-1 min-w-0">
+                                    <input type="text" class="saga-title-input" value="${sagaName}">
+                                </div>
                                 <div class="flex items-center gap-3">
+                                    ${
+                                        sagaTag
+                                            ? `<div class="saga-tag-strip ${tagClass}" data-tag-text="${sagaTag}" title="${sagaTag}"></div>`
+                                            : ""
+                                    }
                                     <i class="fa-solid fa-star cursor-pointer ${
                                         isFav
                                             ? "text-yellow-400"
@@ -1430,11 +1755,17 @@ const favoritesOrdered = db.favorites
                     group: "sagas",
                     animation: 150,
                     ghostClass: "sortable-ghost",
+                    scroll: true, // Habilita el auto-scroll
+                    scrollSensitivity: 60, // Distancia en px desde el borde para iniciar el scroll
+                    scrollSpeed: 15, // Velocidad del scroll
                 });
                 new Sortable(suggestedContainer, {
                     group: "sagas",
                     animation: 150,
                     ghostClass: "sortable-ghost",
+                    scroll: true,
+                    scrollSensitivity: 60,
+                    scrollSpeed: 15,
                 });
                 document
                     .querySelectorAll("#sagas-container .saga-list")
@@ -1443,10 +1774,47 @@ const favoritesOrdered = db.favorites
                             group: "sagas",
                             animation: 150,
                             ghostClass: "sortable-ghost",
+                            scroll: true,
+                            scrollSensitivity: 60,
+                            scrollSpeed: 15,
                         });
                     });
+
+                setupSagaScroll();
             }
 
+            function setupSagaScroll() {
+                document
+                    .querySelectorAll(".saga-container .saga-list")
+                    .forEach((list) => {
+                        // Solo aplicar a listas que realmente desbordan
+                        if (list.scrollWidth > list.clientWidth) {
+                            list.addEventListener(
+                                "wheel",
+                                (e) => {
+                                    // Prevenir el scroll de la página si estamos actuando sobre el carrusel
+                                    e.preventDefault();
+
+                                    // Calcular la cantidad de scroll (ancho de 4 items + sus gaps)
+                                    const itemWidth = 64; // Ancho fijo del .saga-item
+                                    const gap = 6; // Gap entre items
+                                    const scrollAmount = (itemWidth + gap) * 4;
+                                    // Determinar la dirección del scroll. Priorizamos deltaX (scroll horizontal nativo)
+                                    // y usamos deltaY como fallback (rueda del ratón).
+                                    const scrollDirection = Math.sign(
+                                        e.deltaX !== 0 ? e.deltaX : e.deltaY,
+                                    );
+                                    // Aplicamos el scroll con animación suave
+                                    list.scrollBy({
+                                        left: scrollAmount * scrollDirection,
+                                        behavior: "smooth",
+                                    });
+                                },
+                                { passive: false },
+                            ); // passive: false es necesario para preventDefault
+                        }
+                    });
+            }
             document
                 .getElementById("addSagaBtn")
                 .addEventListener("click", () => {
@@ -1458,9 +1826,9 @@ const favoritesOrdered = db.favorites
                     newSagaEl.dataset.sagaName = newSagaName;
                     newSagaEl.innerHTML = `
                     <div class="saga-header">
-                        <input type="text" class="saga-title-input" value="${newSagaName}">
+                        <input type="text" class="saga-title-input" value="${newSagaName}"> 
                         <i class="fa-solid fa-trash-can delete-saga-btn" onclick="this.closest('.saga-container').remove()"></i>
-                    </div>
+                    </div> 
                     <div class="saga-list"></div>
                 `;
                     sagasContainer.appendChild(newSagaEl);
@@ -1602,8 +1970,6 @@ const favoritesOrdered = db.favorites
                     if (!currentSelection) return;
 
                     const name = document.getElementById("charNameInput").value;
-                    const source =
-                        document.getElementById("charSourceInput").value;
                     const coverOffsetY = document.getElementById(
                         "charCoverOffsetYRange",
                     ).value;
@@ -1611,9 +1977,12 @@ const favoritesOrdered = db.favorites
                     const updatedChar = {
                         ...currentSelection,
                         title: name,
-                        source: source,
                         coverOffsetY: Number(coverOffsetY),
                     };
+
+                    // Asignar el sourceId y eliminar el source antiguo para evitar inconsistencias
+                    updatedChar.sourceId = currentSelection.sourceId || null;
+                    delete updatedChar.source;
 
                     const favIndex = window.charactersGlobal.findIndex(
                         (c) => c.id === updatedChar.id,
@@ -1662,6 +2031,12 @@ const favoritesOrdered = db.favorites
                         alert("Error al guardar el personaje.");
                     }
                 });
+
+            document
+                .getElementById("workPickerFilter")
+                .addEventListener("input", (e) =>
+                    renderWorkPickerGrid(e.target.value),
+                );
 
             async function saveAllCharacterLists() {
                 const payload = {

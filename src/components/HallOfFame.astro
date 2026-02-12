@@ -5,7 +5,18 @@ const {
     likedCharacters = [],
     interestedCharacters = [],
     dislikedCharacters = [],
+    localLibrary = [],
 } = Astro.props;
+
+const worksMap = new Map(localLibrary.map((work) => [work.id, work.title]));
+
+const getSourceTitle = (char) => {
+    if (!char) return null;
+    if (char.sourceId) {
+        return worksMap.get(char.sourceId);
+    }
+    return char.source; // Backwards compatibility
+};
 
 const padArray = (arr, size) => {
     const padded = [...arr];
@@ -26,19 +37,19 @@ const fixedFavorites = padArray(favorites, 10);
 const characterPages = chunkArray(characters, 10);
 const paddedCharacterPages = characterPages.map((page) => padArray(page, 10));
 
-const likedCharacterRows = chunkArray(likedCharacters, 20);
+const likedCharacterRows = chunkArray(likedCharacters, 30);
 const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
-    padArray(row, 20),
+    padArray(row, 30),
 );
 
-const interestedCharacterRows = chunkArray(interestedCharacters, 20);
+const interestedCharacterRows = chunkArray(interestedCharacters, 30);
 const paddedInterestedCharacterRows = interestedCharacterRows.map((row) =>
-    padArray(row, 20),
+    padArray(row, 30),
 );
 
-const dislikedCharacterRows = chunkArray(dislikedCharacters, 20);
+const dislikedCharacterRows = chunkArray(dislikedCharacters, 30);
 const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
-    padArray(row, 20),
+    padArray(row, 30),
 );
 ---
 
@@ -203,9 +214,21 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                                         <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
                                                             {char.name}
                                                         </h3>
-                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                            {char.source}
-                                                        </p>
+                                                        {(() => {
+                                                            const sourceTitle =
+                                                                getSourceTitle(
+                                                                    char,
+                                                                );
+                                                            return (
+                                                                sourceTitle && (
+                                                                    <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                                        {
+                                                                            sourceTitle
+                                                                        }
+                                                                    </p>
+                                                                )
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </>
                                             ) : (
@@ -328,7 +351,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                             {row.map((char) =>
                                 char ? (
                                     <div
-                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[3] cursor-pointer bg-black"
+                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[2] cursor-pointer bg-black"
                                         title={char.name}
                                     >
                                         <img
@@ -350,9 +373,17 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                             <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
                                                 {char.name}
                                             </h3>
-                                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                {char.source}
-                                            </p>
+                                            {(() => {
+                                                const sourceTitle =
+                                                    getSourceTitle(char);
+                                                return (
+                                                    sourceTitle && (
+                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                            {sourceTitle}
+                                                        </p>
+                                                    )
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 ) : (
@@ -412,7 +443,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                             {row.map((char) =>
                                 char ? (
                                     <div
-                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[3] cursor-pointer bg-black"
+                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[2] cursor-pointer bg-black"
                                         title={char.name}
                                     >
                                         <img
@@ -434,9 +465,17 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                             <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
                                                 {char.name}
                                             </h3>
-                                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                {char.source}
-                                            </p>
+                                            {(() => {
+                                                const sourceTitle =
+                                                    getSourceTitle(char);
+                                                return (
+                                                    sourceTitle && (
+                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                            {sourceTitle}
+                                                        </p>
+                                                    )
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 ) : (
@@ -496,7 +535,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                             {row.map((char) =>
                                 char ? (
                                     <div
-                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[3] cursor-pointer bg-black"
+                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[2] cursor-pointer bg-black"
                                         title={char.name}
                                     >
                                         <img
@@ -518,9 +557,17 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                             <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
                                                 {char.name}
                                             </h3>
-                                            <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                {char.source}
-                                            </p>
+                                            {(() => {
+                                                const sourceTitle =
+                                                    getSourceTitle(char);
+                                                return (
+                                                    sourceTitle && (
+                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
+                                                            {sourceTitle}
+                                                        </p>
+                                                    )
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 ) : (

@@ -47,7 +47,8 @@
       "isSaga": true,
       "title": "Final Fantasy",
       "cover": "/img/covers/saga-FF.png"
-    }
+    },
+    "Usogui -M"
   ],
   "monthlyPicks": [
     {
@@ -207,6 +208,14 @@
       "Bayonetta 2",
       "Bayonetta"
     ],
+    "Bleach": [
+      "Bleach: Sennen Kessen-hen - Kashin-tan",
+      "Bleach: Sennen Kessen-hen - Soukoku-tan",
+      "Bleach: Sennen Kessen-hen - Ketsubetsu-tan",
+      "Bleach: Sennen Kessen-hen",
+      "Bleach",
+      "Bleach -M"
+    ],
     "Bungo Stray Dogs": [
       "Bungou Stray Dogs 5th Season",
       "Bungou Stray Dogs 4th Season",
@@ -214,11 +223,20 @@
       "Bungou Stray Dogs 2nd Season",
       "Bungou Stray Dogs"
     ],
+    "Clair Obscure": [
+      "Clair Obscur: Expedition 33"
+    ],
     "Devil May Cry": [
       "Devil May Cry 3: Dante's Awakening"
     ],
+    "Fate": [
+      "Fate/Zero 2nd Season",
+      "Fate/Zero",
+      "Fate/Stay Night Remastered"
+    ],
     "Final Fantasy": [
       "Final Fantasy XVI",
+      "Final Fantasy XV: Windows Edition",
       "Final Fantasy IX",
       "Final Fantasy VIII",
       "Final Fantasy VII",
@@ -233,7 +251,8 @@
       "Gintama. Porori-hen",
       "Gintama°",
       "Gintama': Enchousen",
-      "Gintama."
+      "Gintama",
+      "Gintama -M"
     ],
     "Hades": [
       "Hades II",
@@ -271,7 +290,11 @@
       "Mushishi"
     ],
     "Persona": [
-      "Persona 3 Reload"
+      "Persona 5 Royal",
+      "Persona 4 Golden",
+      "Persona 3 Reload",
+      "Persona 2: Eternal Punishment",
+      "Persona 2: Innocent Sin"
     ],
     "Rance": [
       "Rance X: Showdown",
@@ -295,6 +318,11 @@
       "Silent Hill 3",
       "Silent Hill 2",
       "Silent Hill"
+    ],
+    "The House in Fata Morgana": [
+      "The House in Fata Morgana: Reincarnation",
+      "The House in Fata Morgana: A Requiem for Innocence",
+      "The House in Fata Morgana"
     ],
     "The Legend of Heroes: Trails": [
       "The Legend of Heroes: Trails Beyond the Horizon",
@@ -329,22 +357,22 @@
       "id": 53961,
       "title": "Renne Bright",
       "cover": "/img/chara/renne-bright.png",
-      "source": "Trails in the Sky 2nd",
-      "coverOffsetY": 38
+      "coverOffsetY": 38,
+      "sourceId": "the-legend-of-heroes-trails-in-the-sky-sc.json"
     },
     {
       "id": 168690,
       "title": "Souichi Kiruma",
       "cover": "/img/chara/souichi-kiruma.png",
-      "source": "Usogui",
-      "coverOffsetY": 25
+      "coverOffsetY": 25,
+      "sourceId": "usogui-m.json"
     },
     {
       "id": 672,
       "title": "Gintoki Sakata",
       "cover": "/img/chara/gintoki-sakata.jpg",
-      "source": "Gintama",
-      "coverOffsetY": 25
+      "coverOffsetY": 25,
+      "sourceId": "gintama.json"
     },
     {
       "id": 10285,
@@ -357,41 +385,43 @@
       "id": 30247,
       "title": "Estelle Bright",
       "cover": "/img/chara/estelle-bright.png",
-      "source": "Trails in the Sky 1st",
-      "coverOffsetY": 54
+      "coverOffsetY": 54,
+      "sourceId": "the-legend-of-heroes-trails-in-the-sky.json"
     },
     {
       "id": 126065,
       "title": "Michel Bollinger",
       "cover": "/img/chara/michel-bollinger.png",
-      "source": "The House in Fata Morgana"
+      "sourceId": "the-house-in-fata-morgana.json",
+      "coverOffsetY": 50
     },
     {
       "id": 89626,
       "title": "Ayana Otonashi",
       "cover": "/img/chara/ayana-otonashi.png",
-      "source": "Tsui no Sora",
-      "coverOffsetY": 50
+      "coverOffsetY": 50,
+      "sourceId": "wonderful-everyday-down-the-rabbit-hole.json"
     },
     {
       "id": 190373,
       "title": "Rufus Albarea",
       "cover": "/img/chara/rufus-albarea.png",
-      "source": "Trails of Cold Steel",
-      "coverOffsetY": 33
+      "coverOffsetY": 33,
+      "sourceId": "the-legend-of-heroes-trails-of-cold-steel.json"
     },
     {
       "id": 2948,
       "title": "Shinsuke Takasugi",
       "cover": "/img/chara/shinsuke-takasugi.png",
-      "source": "Gintama"
+      "sourceId": "gintama.json",
+      "coverOffsetY": 50
     },
     {
       "id": 302808,
       "title": "Shizuna Misurugi",
       "cover": "/img/chara/shizuna-misurugi.png",
-      "source": "Trails through Daybreak",
-      "coverOffsetY": 33
+      "coverOffsetY": 33,
+      "sourceId": "the-legend-of-heroes-trails-through-daybreak.json"
     },
     {
       "id": 36045,
@@ -404,56 +434,57 @@
       "id": 127452,
       "title": "Rean Schwarzer",
       "cover": "/img/chara/rean-schwarzer.png",
-      "source": "Trails of Cold Steel",
-      "coverOffsetY": 36
+      "coverOffsetY": 36,
+      "sourceId": "the-legend-of-heroes-trails-of-cold-steel.json"
     },
     {
       "id": 3066,
       "title": "Reinhard von Lohengramm",
       "cover": "/img/chara/reinhard-von-lohengramm.png",
-      "source": "Ginga Eiyuu Densetsu",
-      "coverOffsetY": 32
+      "coverOffsetY": 32,
+      "sourceId": "ginga-eiyuu-densetsu.json"
     },
     {
       "id": 68809,
       "title": "Baku Madarame",
       "cover": "/img/chara/baku-madarame.png",
-      "source": "Usogui"
+      "sourceId": "usogui-m.json",
+      "coverOffsetY": 50
     },
     {
       "id": 72237,
       "title": "Lloyd Bannings",
       "cover": "/img/chara/lloyd-bannings.png",
-      "source": "Trails from Zero",
-      "coverOffsetY": 44
+      "coverOffsetY": 44,
+      "sourceId": "the-legend-of-heroes-trails-from-zero.json"
     },
     {
       "id": 301468,
       "title": "Elaine Auclair",
       "cover": "/img/chara/elaine-auclair.png",
-      "source": "Trails through Daybreak",
-      "coverOffsetY": 39
+      "coverOffsetY": 39,
+      "sourceId": "the-legend-of-heroes-trails-through-daybreak.json"
     },
     {
       "id": 14040,
       "title": "Battler Ushiromiya",
       "cover": "/img/chara/battler-ushiromiya.png",
-      "source": "Umineko no Naku Koro ni",
-      "coverOffsetY": 52
+      "coverOffsetY": 52,
+      "sourceId": "umineko-no-naku-koro-ni-episode-1-legend-of-the-golden-witch.json"
     },
     {
       "id": 81735,
       "title": "Arianrhod",
       "cover": "/img/chara/arianrhod.png",
-      "source": "Trails to Azure",
-      "coverOffsetY": 57
+      "coverOffsetY": 57,
+      "sourceId": "the-legend-of-heroes-trails-to-azure.json"
     },
     {
       "id": 6,
       "title": "Rukia Kuchiki",
       "cover": "/img/chara/rukia-kuchiki.png",
-      "source": "Bleach",
-      "coverOffsetY": 36
+      "coverOffsetY": 36,
+      "sourceId": "bleach.json"
     },
     {
       "id": 87886,
@@ -466,22 +497,22 @@
       "id": 209887,
       "title": "Kevin Graham",
       "cover": "/img/chara/kevin-graham.png",
-      "source": "Trails in the sky SC",
-      "coverOffsetY": 24
+      "coverOffsetY": 24,
+      "sourceId": "the-legend-of-heroes-trails-in-the-sky-sc.json"
     },
     {
       "id": 124135,
       "title": "Utsuro",
       "cover": "/img/chara/utsuro.png",
-      "source": "Gintama",
-      "coverOffsetY": 32
+      "coverOffsetY": 32,
+      "sourceId": "gintama.json"
     },
     {
       "id": 1816,
       "title": "Sephiroth",
       "cover": "/img/chara/sephiroth.png",
-      "source": "Final Fantasy VII",
-      "coverOffsetY": 31
+      "coverOffsetY": 31,
+      "sourceId": "final-fantasy-vii.json"
     },
     {
       "id": 17464,
@@ -501,22 +532,22 @@
       "id": 309955,
       "title": "Barok van Zieks",
       "cover": "/img/chara/barok-van-zieks.png",
-      "source": "The Great Ace Attorney",
-      "coverOffsetY": 28
+      "coverOffsetY": 28,
+      "sourceId": "the-great-ace-attorney-adventures.json"
     },
     {
       "id": 298406,
       "title": "Claire Rieveldt",
       "cover": "/img/chara/claire-rieveldt.png",
-      "source": "Trails of Cold Steel",
-      "coverOffsetY": 35
+      "coverOffsetY": 35,
+      "sourceId": "the-legend-of-heroes-trails-of-cold-steel.json"
     },
     {
       "id": 301467,
       "title": "Agnès Claudel",
       "cover": "/img/chara/agns-claudel.png",
-      "source": "Trails through Daybreak",
-      "coverOffsetY": 34
+      "coverOffsetY": 34,
+      "sourceId": "the-legend-of-heroes-trails-through-daybreak.json"
     }
   ],
   "likedCharacters": [
@@ -524,71 +555,92 @@
       "id": 275204,
       "title": "Van Arkride",
       "cover": "/img/chara/van-arkride.png",
-      "source": "Trails through Daybreak",
-      "coverOffsetY": 34
+      "coverOffsetY": 34,
+      "sourceId": "the-legend-of-heroes-trails-through-daybreak.json"
     },
     {
       "id": 272948,
       "title": "Raiden",
       "cover": "/img/chara/raiden.png",
-      "source": "Metal Gear Solid 2: Sons of Liberty",
-      "coverOffsetY": 30
+      "coverOffsetY": 30,
+      "sourceId": "metal-gear-solid-2-sons-of-liberty.json"
     },
     {
       "id": 249642,
       "title": "Shirley Orlando",
       "cover": "/img/chara/shirley-orlando.png",
-      "source": "Trails to Azure",
-      "coverOffsetY": 50
+      "coverOffsetY": 50,
+      "sourceId": "the-legend-of-heroes-trails-to-azure.json"
     },
     {
       "id": 76170,
       "title": "Wazy Hemisphere",
       "cover": "/img/chara/wazy-hemisphere.png",
-      "source": "Trails to azure",
-      "coverOffsetY": 38
+      "coverOffsetY": 38,
+      "sourceId": "the-legend-of-heroes-trails-from-zero.json"
     },
     {
       "id": 1533,
       "title": "Kotarou Katsura",
       "cover": "/img/chara/kotarou-katsura.png",
-      "source": "Gintama",
-      "coverOffsetY": 28
+      "coverOffsetY": 28,
+      "sourceId": "gintama.json"
     },
     {
       "id": 272535,
       "title": "Solid Snake",
       "cover": "/img/chara/solid-snake.png",
-      "source": "Metal Gear",
-      "coverOffsetY": 28
+      "coverOffsetY": 28,
+      "sourceId": "metal-gear.json"
     },
     {
       "id": 87496,
       "title": "Bayonetta",
       "cover": "/img/chara/bayonetta.png",
-      "source": "Bayonetta",
-      "coverOffsetY": 35
+      "coverOffsetY": 35,
+      "sourceId": "bayonetta.json"
     },
     {
       "id": 136284,
       "title": "Shizuka Masou",
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b136284-HV4FwSGchPsq.png",
-      "source": "Rance 02",
-      "coverOffsetY": 40
+      "coverOffsetY": 40,
+      "sourceId": "rance-02-the-rebellious-maidens.json"
     },
     {
       "id": 219275,
       "title": "Jeanne",
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b219275-fGijIVw2jnag.png",
-      "source": "Bayonetta",
-      "coverOffsetY": 23
+      "coverOffsetY": 23,
+      "sourceId": "bayonetta.json"
     },
     {
       "id": 242074,
       "title": "Ries Argent",
       "cover": "/img/chara/ries-argent.png",
-      "source": "Trails in the sky 3rd",
-      "coverOffsetY": 45
+      "coverOffsetY": 45,
+      "sourceId": "the-legend-of-heroes-trails-in-the-sky-the-3rd.json"
+    },
+    {
+      "id": 72233,
+      "title": "Elie MacDowell",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b72233-71W5gmghapId.png",
+      "sourceId": "the-legend-of-heroes-trails-from-zero.json",
+      "coverOffsetY": 30
+    },
+    {
+      "id": 72239,
+      "title": "Tio Plato",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b72239-PYzSXuMxRM8o.png",
+      "sourceId": "the-legend-of-heroes-trails-from-zero.json",
+      "coverOffsetY": 42
+    },
+    {
+      "id": 243128,
+      "title": "Arios MacLaine",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b243128-clWgppM3BdSF.png",
+      "sourceId": "the-legend-of-heroes-trails-from-zero.json",
+      "coverOffsetY": 30
     }
   ],
   "monthlyChars": [
@@ -673,8 +725,8 @@
       "id": 498,
       "title": "Rin Tohsaka",
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b498-lwawtSpLyATL.png",
-      "source": "Fate/stay night",
-      "coverOffsetY": 44
+      "coverOffsetY": 44,
+      "sourceId": "fatestay-night-remastered.json"
     }
   ],
   "dislikedCharacters": [

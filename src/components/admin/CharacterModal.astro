@@ -39,11 +39,21 @@
                     </div>
                     <div>
                         <label class="form-label">Obra de Origen</label>
-                        <input
-                            type="text"
-                            id="charSourceInput"
-                            class="form-input"
-                        />
+                        <div
+                            id="charSourceDisplay"
+                            onclick="openWorkPicker()"
+                            class="form-input !bg-[#121215] cursor-pointer hover:border-indigo-500/50 transition-all flex items-center justify-between group"
+                            title="Seleccionar obra de origen"
+                        >
+                            <span id="charSourceDisplayText" class="truncate">
+                                <span class="text-gray-500 italic"
+                                    >Ninguna seleccionada</span
+                                >
+                            </span>
+                            <i
+                                class="fa-solid fa-magnifying-glass text-xs text-gray-600 group-hover:text-indigo-400 transition-colors ml-2 shrink-0"
+                            ></i>
+                        </div>
                     </div>
                 </div>
 

@@ -171,12 +171,21 @@ const monthlyChars = (db.monthlyChars || [])
     .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
 // 7. HALL OF FAME PERSONAJES
+const worksMap = new Map(allContent.map((work) => [work.id, work.title]));
+
+const getSourceTitle = (char) => {
+    if (char.sourceId) {
+        return worksMap.get(char.sourceId);
+    }
+    return char.source; // Backwards compatibility
+};
+
 let customCharacters = [];
 if (db.characters && db.characters.length > 0) {
     customCharacters = db.characters.map((c) => ({
+        ...c,
         name: c.title,
         img: resolveImagePath(c.cover),
-        source: c.source,
     }));
 } else {
     customCharacters = [
@@ -192,12 +201,14 @@ let likedCharacters = [];
 if (db.likedCharacters && db.likedCharacters.length > 0) {
     likedCharacters = db.likedCharacters
         .map((c) => ({
+            ...c,
             name: c.title,
             img: resolveImagePath(c.cover),
-            source: c.source || "Sin Origen",
         }))
         .sort((a, b) => {
-            const sourceCompare = a.source.localeCompare(b.source);
+            const sourceA = getSourceTitle(a) || "";
+            const sourceB = getSourceTitle(b) || "";
+            const sourceCompare = sourceA.localeCompare(sourceB);
             if (sourceCompare !== 0) return sourceCompare;
             return a.name.localeCompare(b.name);
         });
@@ -207,12 +218,14 @@ let interestedCharacters = [];
 if (db.interestedCharacters && db.interestedCharacters.length > 0) {
     interestedCharacters = db.interestedCharacters
         .map((c) => ({
+            ...c,
             name: c.title,
             img: resolveImagePath(c.cover),
-            source: c.source || "Sin Origen",
         }))
         .sort((a, b) => {
-            const sourceCompare = a.source.localeCompare(b.source);
+            const sourceA = getSourceTitle(a) || "";
+            const sourceB = getSourceTitle(b) || "";
+            const sourceCompare = sourceA.localeCompare(sourceB);
             if (sourceCompare !== 0) return sourceCompare;
             return a.name.localeCompare(b.name);
         });
@@ -222,12 +235,14 @@ let dislikedCharacters = [];
 if (db.dislikedCharacters && db.dislikedCharacters.length > 0) {
     dislikedCharacters = db.dislikedCharacters
         .map((c) => ({
+            ...c,
             name: c.title,
             img: resolveImagePath(c.cover),
-            source: c.source || "Sin Origen",
         }))
         .sort((a, b) => {
-            const sourceCompare = a.source.localeCompare(b.source);
+            const sourceA = getSourceTitle(a) || "";
+            const sourceB = getSourceTitle(b) || "";
+            const sourceCompare = sourceA.localeCompare(sourceB);
             if (sourceCompare !== 0) return sourceCompare;
             return a.name.localeCompare(b.name);
         });
@@ -276,6 +291,7 @@ if (db.dislikedCharacters && db.dislikedCharacters.length > 0) {
                     likedCharacters={likedCharacters}
                     dislikedCharacters={dislikedCharacters}
                     interestedCharacters={interestedCharacters}
+                    localLibrary={allContent}
                 />
             </SectionWrapper>
 
