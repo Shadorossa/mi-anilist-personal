@@ -24,6 +24,8 @@ let db = {
     monthlyChars: [],
     interestedCharacters: [],
     dislikedCharacters: [],
+    decoPairs: [],
+    decoGroups: [],
 };
 try {
     const d = await import("../content/database.json");
@@ -247,6 +249,124 @@ if (db.dislikedCharacters && db.dislikedCharacters.length > 0) {
             return a.name.localeCompare(b.name);
         });
 }
+
+// 8. IMÁGENES DECORATIVAS
+const getDecoImages = (side) => {
+    const dirPath = path.resolve(`./public/img/profile/${side}-deco`);
+    if (!fs.existsSync(dirPath)) return [];
+    return fs
+        .readdirSync(dirPath)
+        .map((file) => `/img/profile/${side}-deco/${file}`);
+};
+
+const leftDecoImages = getDecoImages("left");
+const rightDecoImages = getDecoImages("right");
+const centerDecoImages = getDecoImages("center");
+
+let randomLeftDeco = null;
+let randomRightDeco = null;
+let randomCenterDeco = null;
+
+const getBasename = (fullPath) =>
+    fullPath ? path.basename(fullPath, path.extname(fullPath)) : null;
+
+const allDecoImagesMap = new Map();
+[...leftDecoImages, ...rightDecoImages, ...centerDecoImages].forEach((p) => {
+    if (p) allDecoImagesMap.set(getBasename(p), p);
+});
+
+// 1. Define available layout types and check for valid entries
+const layoutOptions = [];
+const decoGroups = db.decoGroups || [];
+const decoPairs = db.decoPairs || [];
+
+const validGroups = decoGroups.filter(
+    (
+        group, // A group must have at least 2 members, and all must exist
+    ) =>
+        group.length >= 2 &&
+        group.every((imgName) => allDecoImagesMap.has(imgName)),
+);
+if (validGroups.length > 0) {
+    layoutOptions.push("group");
+}
+
+const validPairs = decoPairs.filter((pair) => {
+    if (pair.length !== 2) return false;
+    const img1Path = allDecoImagesMap.get(pair[0]);
+    const img2Path = allDecoImagesMap.get(pair[1]);
+    if (!img1Path || !img2Path) return false;
+    const isImg1Left = img1Path.includes("/left-deco/");
+    const isImg2Left = img2Path.includes("/left-deco/");
+    const isImg1Right = img1Path.includes("/right-deco/");
+    const isImg2Right = img2Path.includes("/right-deco/");
+    return (isImg1Left && isImg2Right) || (isImg2Left && isImg1Right);
+});
+if (validPairs.length > 0) {
+    layoutOptions.push("pair");
+}
+
+if (
+    centerDecoImages.length > 0 ||
+    (leftDecoImages.length > 0 && rightDecoImages.length > 0)
+) {
+    layoutOptions.push("normal");
+}
+
+// 2. Choose a layout if options are available
+if (layoutOptions.length > 0) {
+    const chosenLayout =
+        layoutOptions[Math.floor(Math.random() * layoutOptions.length)];
+
+    if (chosenLayout === "group") {
+        const group =
+            validGroups[Math.floor(Math.random() * validGroups.length)];
+        // Get full paths, shuffle, and pick 2 for the sides
+        const groupImagePaths = group.map((name) => allDecoImagesMap.get(name));
+        const shuffled = [...groupImagePaths].sort(() => 0.5 - Math.random());
+        randomLeftDeco = shuffled[0];
+        randomRightDeco = shuffled[1];
+    } else if (chosenLayout === "pair") {
+        const pair = validPairs[Math.floor(Math.random() * validPairs.length)];
+        const img1Path = allDecoImagesMap.get(pair[0]);
+        const img2Path = allDecoImagesMap.get(pair[1]);
+        if (img1Path.includes("/left-deco/")) {
+            randomLeftDeco = img1Path;
+            randomRightDeco = img2Path;
+        } else {
+            randomLeftDeco = img2Path;
+            randomRightDeco = img1Path;
+        }
+    } else {
+        // 'normal' layout
+        const showCenter = Math.random() < 0.4 && centerDecoImages.length > 0;
+        if (showCenter) {
+            randomCenterDeco =
+                centerDecoImages[
+                    Math.floor(Math.random() * centerDecoImages.length)
+                ];
+        } else if (leftDecoImages.length > 0 && rightDecoImages.length > 0) {
+            const pairedOrGroupedImages = new Set([
+                ...decoPairs.flat(),
+                ...decoGroups.flat(),
+            ]);
+            const availableLeft = leftDecoImages.filter(
+                (p) => !pairedOrGroupedImages.has(getBasename(p)),
+            );
+            const availableRight = rightDecoImages.filter(
+                (p) => !pairedOrGroupedImages.has(getBasename(p)),
+            );
+            const leftList =
+                availableLeft.length > 0 ? availableLeft : leftDecoImages;
+            const rightList =
+                availableRight.length > 0 ? availableRight : rightDecoImages;
+            randomLeftDeco =
+                leftList[Math.floor(Math.random() * leftList.length)];
+            randomRightDeco =
+                rightList[Math.floor(Math.random() * rightList.length)];
+        }
+    }
+}
 ---
 
 <html lang="es" class="dark">
@@ -276,6 +396,33 @@ if (db.dislikedCharacters && db.dislikedCharacters.length > 0) {
     <body
         class="font-sans min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-white"
     >
+        {
+            randomCenterDeco && (
+                <img
+                    src={randomCenterDeco}
+                    alt=""
+                    class="fixed bottom-[-200px] left-1/2 -translate-x-1/2 w-auto h-[1000px] opacity-10 grayscale pointer-events-none z-[-1]"
+                />
+            )
+        }
+        {
+            randomLeftDeco && (
+                <img
+                    src={randomLeftDeco}
+                    alt=""
+                    class="fixed bottom-[-100px] left-[-180px] w-auto h-[750px] opacity-10 grayscale pointer-events-none z-[-1]"
+                />
+            )
+        }
+        {
+            randomRightDeco && (
+                <img
+                    src={randomRightDeco}
+                    alt=""
+                    class="fixed bottom-[-100px] right-[-180px] w-auto h-[750px] opacity-10 grayscale pointer-events-none z-[-1]"
+                />
+            )
+        }
         <ProfileHeader
             profile={profile}
             bannerPath={bannerPath}

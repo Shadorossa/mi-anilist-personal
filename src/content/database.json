@@ -669,6 +669,62 @@
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b182731-SVLDO8YE8hVK.png",
       "sourceId": "usogui.json",
       "coverOffsetY": 72
+    },
+    {
+      "id": 126990,
+      "title": "Alisa Reinford",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b126990-39RTQlBQnMw1.png",
+      "sourceId": "the-legend-of-heroes-trails-of-cold-steel.json",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 134608,
+      "title": "Laura S. Arseid",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b134608-k8M4mhowooUp.png",
+      "sourceId": "the-legend-of-heroes-trails-of-cold-steel.json",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 2650,
+      "title": "Toushirou Hijikata",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b2650-zgkj5l8mIOnn.png",
+      "sourceId": "gintama.json",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 2282,
+      "title": "Sougo Okita",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b2282-X0uYqwmwxiPo.png",
+      "sourceId": "gintama.json",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 28144,
+      "title": "Shouyou Yoshida",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b28144-QsZ8pBkqo4rj.jpg",
+      "sourceId": "gintama.json",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 2945,
+      "title": "Tatsuma Sakamoto",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b2945-HS6t9u16Tdce.jpg",
+      "sourceId": "gintama.json",
+      "coverOffsetY": 50
+    },
+    {
+      "id": 3760,
+      "title": "Taizou Hasegawa",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b3760-bxdyoPARX4Sx.png",
+      "sourceId": "gintama.json",
+      "coverOffsetY": 28
+    },
+    {
+      "id": 308161,
+      "title": "Naked Snake",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b308161-HvElhlKFKU3C.jpg",
+      "sourceId": "metal-gear-solid-3-snake-eater.json",
+      "coverOffsetY": 44
     }
   ],
   "monthlyChars": [
@@ -755,6 +811,13 @@
       "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b498-lwawtSpLyATL.png",
       "coverOffsetY": 44,
       "sourceId": "fatestay-night-remastered.json"
+    },
+    {
+      "id": 497,
+      "title": "Artoria Pendragon",
+      "cover": "https://s4.anilist.co/file/anilistcdn/character/large/b497-Yg5pNmC8kxzs.png",
+      "sourceId": "fatestay-night-remastered.json",
+      "coverOffsetY": 50
     }
   ],
   "dislikedCharacters": [
@@ -765,5 +828,19 @@
       "source": "Boku no Hero Academia",
       "coverOffsetY": 50
     }
+  ],
+  "decoPairs": [
+    [
+      "ixs_kuro2",
+      "jolda_kuro2"
+    ]
+  ],
+  "decoGroups": [
+    [
+      "alisa_sen3_sen4_hajimari_S",
+      "efc112_1",
+      "efc120_1",
+      "efc113_0"
+    ]
   ]
 }

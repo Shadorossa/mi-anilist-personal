@@ -468,6 +468,11 @@ const favoritesOrdered = db.favorites
                     // Mostramos el modal
                     modal.classList.remove("hidden");
                 }
+                initCustomSlider(
+                    "char-custom-slider-container",
+                    "char-custom-slider-thumb",
+                    updateCharCoverOffset,
+                );
             };
 
             // Función para cerrar el editor de personajes
@@ -1090,34 +1095,86 @@ const favoritesOrdered = db.favorites
                     }
                 });
 
+            // --- Lógica para guardar la posición de scroll ---
+            let activeScrollListeners = [];
+
+            function saveScrollPosition(event) {
+                const el = event.target;
+                // Usamos un timeout para no sobrecargar localStorage en cada pixel de scroll
+                if (el.scrollTimeout) clearTimeout(el.scrollTimeout);
+                el.scrollTimeout = setTimeout(() => {
+                    if (el.id) {
+                        localStorage.setItem(
+                            `scrollPos-${el.id}`,
+                            el.scrollTop,
+                        );
+                    }
+                }, 100);
+            }
+
             window.switchMode = (mode) => {
+                // 1. Limpiar listeners de scroll del panel anterior
+                activeScrollListeners.forEach(({ el, handler }) =>
+                    el.removeEventListener("scroll", handler),
+                );
+                activeScrollListeners = [];
+
+                // 2. Ocultar todos los paneles y desactivar botones de navegación
                 document
                     .querySelectorAll(".panel")
                     .forEach((p) => p.classList.add("hidden"));
                 document
                     .querySelectorAll(".nav-btn")
                     .forEach((b) => b.classList.remove("active"));
-                document
-                    .getElementById(`${mode}-panel`)
-                    .classList.remove("hidden");
 
+                // 3. Mostrar el panel activo
+                const panel = document.getElementById(`${mode}-panel`);
+                if (!panel) return; // Parar si el panel no existe
+                panel.classList.remove("hidden");
+
+                // 4. Activar el botón de navegación correspondiente
                 const btn = document.querySelector(
                     `button[onclick="switchMode('${mode}')"]`,
                 );
                 if (btn) btn.classList.add("active");
 
+                // 5. Guardar la pestaña activa en localStorage para la próxima recarga
+                localStorage.setItem("activeTab", mode);
+
+                // 6. Renderizar el contenido específico del panel
                 if (mode === "library") renderLocalLibrary();
-                localStorage.setItem("activeTab", mode); //Guardamos la página
-                if (mode === "favorites") renderFavWorksSortable();
+                if (mode === "favorites") {
+                    const worksView = document.getElementById("fav-works-view");
+                    if (!worksView.classList.contains("hidden")) {
+                        renderFavWorksSortable();
+                    } else {
+                        setupCharacterFavoritesView();
+                    }
+                }
                 if (mode === "characters") {
                     document.getElementById("charResults").innerHTML = "";
                 }
-                if (mode === "my-characters") {
-                    renderMyCharacters();
-                }
-                if (mode === "sagas") {
-                    renderSagasPanel();
-                }
+                if (mode === "my-characters") renderMyCharacters();
+                if (mode === "sagas") renderSagasPanel();
+
+                // 7. Restaurar posición de scroll y añadir nuevos listeners
+                setTimeout(() => {
+                    panel
+                        .querySelectorAll(".custom-scrollbar")
+                        .forEach((el, index) => {
+                            if (!el.id) el.id = `scroll-${mode}-${index}`;
+                            const savedScroll = localStorage.getItem(
+                                `scrollPos-${el.id}`,
+                            );
+                            if (savedScroll)
+                                el.scrollTop = parseInt(savedScroll, 10);
+                            el.addEventListener("scroll", saveScrollPosition);
+                            activeScrollListeners.push({
+                                el: el,
+                                handler: saveScrollPosition,
+                            });
+                        });
+                }, 50); // Pequeño delay para asegurar que el contenido se ha renderizado
             };
 
             function renderMyCharacters(filter = "") {
@@ -2241,6 +2298,16 @@ const favoritesOrdered = db.favorites
                         position;
                 },
             );
+            function updateCharCoverOffset(pos) {
+                const position = Math.round(pos);
+                document.getElementById(
+                    "charEditorPreviewCover",
+                ).style.objectPosition = `center ${position}%`;
+                document.getElementById("charCoverOffsetText").innerText =
+                    `${position}%`;
+                document.getElementById("charCoverOffsetYRange").value =
+                    position;
+            }
 
             // Auto-update finish date year based on start date year
             document
