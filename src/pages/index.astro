@@ -45,7 +45,7 @@ const [
 // Perfil y configuración
 const profile = {
     username: configRes.data?.username || "Admin",
-    bio: configRes.data?.bio || "Cargando...",
+    bio: configRes.data?.bio || "",
 };
 
 // Contenido principal (obras)
@@ -211,7 +211,7 @@ const monthlyWorks = (db.monthlyPicks || [])
             year: y,
             month: monthName,
             rawDate: pick.month,
-            coverOffsetY: fullItem?.coverOffsetY,
+            coverOffsetY: fullItem?.coverOffsetY ?? fullItem?.cover_offset_y,
         };
     })
     .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
@@ -233,7 +233,7 @@ const monthlyChars = (db.monthlyChars || [])
             year: y,
             month: monthName,
             rawDate: pick.month,
-            coverOffsetY: fullChar?.coverOffsetY,
+            coverOffsetY: fullChar?.coverOffsetY ?? fullChar?.cover_offset_y,
         };
     })
     .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
