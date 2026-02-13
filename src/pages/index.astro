@@ -188,6 +188,23 @@ const favorites = (db.favorites || [])
                 }
             }
             return fav;
+        } else if (typeof fav === "object" && !fav.is_saga) {
+            // Es una obra individual, que ahora es un objeto.
+            const item = allContent.find((contentItem) => {
+                // Comprobación directa para juegos y animes
+                if (contentItem.title === fav.title) {
+                    return true;
+                }
+                // Comprobación especial para mangas, que en favoritos tienen el sufijo "-M"
+                if (
+                    contentItem.type === "manga" &&
+                    `${contentItem.title} -M` === fav.title
+                ) {
+                    return true;
+                }
+                return false;
+            });
+            return item;
         }
         return null;
     })

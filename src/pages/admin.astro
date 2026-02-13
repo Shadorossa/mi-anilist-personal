@@ -180,6 +180,72 @@ const favoritesOrdered = (db.favorites || [])
             </div>
         </div>
 
+        <!-- Modal para cambiar imagen por URL con preview -->
+        <div
+            id="url-image-changer-modal"
+            class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-lg rounded-3xl shadow-2xl p-6 relative flex flex-col gap-4"
+            >
+                <h3 class="text-lg font-bold text-white">
+                    Cambiar Imagen por URL
+                </h3>
+
+                <div class="relative">
+                    <label for="imageUrlInput" class="form-label"
+                        >URL de la imagen</label
+                    >
+                    <input
+                        type="text"
+                        id="imageUrlInput"
+                        placeholder="https://..."
+                        class="form-input !pr-10"
+                    />
+                    <button
+                        onclick="pasteFromClipboard()"
+                        class="absolute top-7 right-2 w-7 h-7 flex items-center justify-center text-gray-500 hover:text-white"
+                        title="Pegar desde portapapeles"
+                    >
+                        <i class="fa-solid fa-paste text-xs"></i>
+                    </button>
+                </div>
+
+                <div>
+                    <label class="form-label">Vista Previa</label>
+                    <div
+                        class="w-full aspect-video bg-[#121215] border border-white/10 rounded-lg flex items-center justify-center overflow-hidden"
+                    >
+                        <img
+                            id="imageUrlPreview"
+                            src=""
+                            alt="Vista previa"
+                            class="max-w-full max-h-full object-contain hidden"
+                        />
+                        <span
+                            id="imageUrlPreviewPlaceholder"
+                            class="text-xs text-gray-600"
+                            >Pega una URL para ver la imagen</span
+                        >
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-4 mt-4">
+                    <button
+                        onclick="closeUrlImageChanger()"
+                        class="text-gray-400 font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg hover:text-white transition"
+                        >Cancelar</button
+                    >
+                    <button
+                        id="saveUrlImageBtn"
+                        onclick="saveNewUrlImage()"
+                        class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-indigo-500 transition text-xs uppercase tracking-wide"
+                        >Guardar Imagen</button
+                    >
+                </div>
+            </div>
+        </div>
+
         <script
             define:vars={{
                 localLibrary,
@@ -418,19 +484,6 @@ const favoritesOrdered = (db.favorites || [])
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
             let localIsAscending = false;
-            const sagaOrderMap = new Map();
-            const sortedSagaNamesForMap = Object.keys(
-                window.sagas || {},
-            ).sort();
-            sortedSagaNamesForMap.forEach((sagaName, sagaIndex) => {
-                (window.sagas[sagaName] || []).forEach((title, gameIndex) => {
-                    sagaOrderMap.set(title, {
-                        sagaName,
-                        sagaIndex,
-                        gameIndex,
-                    });
-                });
-            });
 
             // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
@@ -981,6 +1034,23 @@ const favoritesOrdered = (db.favorites || [])
             };
 
             function renderWorkPickerGrid(filter = "") {
+                // Re-create the saga order map every time to reflect current saga order
+                const sagaOrderMap = new Map();
+                const sortedSagaNamesForMap = Object.keys(
+                    window.sagas || {},
+                ).sort();
+                sortedSagaNamesForMap.forEach((sagaName, sagaIndex) => {
+                    (window.sagas[sagaName] || []).forEach(
+                        (title, gameIndex) => {
+                            sagaOrderMap.set(title, {
+                                sagaName,
+                                sagaIndex,
+                                gameIndex,
+                            });
+                        },
+                    );
+                });
+
                 const grid = document.getElementById("work-picker-grid");
                 const filteredLibrary = window.localLibrary
                     .filter((item) =>
@@ -1786,7 +1856,10 @@ const favoritesOrdered = (db.favorites || [])
                 }
                 if (mode === "my-characters") renderMyCharacters();
                 if (mode === "sagas") renderSagasPanel();
-                if (mode === "images") renderImageManager();
+                if (mode === "images") {
+                    renderImageManager(); // Renderiza el contenido inicial
+                    switchImageManagerView("works"); // Activa la vista de obras por defecto
+                }
 
                 // 7. Restaurar posición de scroll y añadir nuevos listeners
                 setTimeout(() => {
@@ -1809,82 +1882,276 @@ const favoritesOrdered = (db.favorites || [])
             };
 
             function renderImageManager() {
-                const unusedGrid =
-                    document.getElementById("unused-images-grid");
-                const allGrid = document.getElementById("all-images-grid");
+                const worksGrid = document.getElementById(
+                    "image-manager-works-grid",
+                );
+                const charsGrid = document.getElementById(
+                    "image-manager-chars-grid",
+                );
 
-                const renderImageCard = (imgPath, isUnused) => {
-                    const fileName = imgPath.split("/").pop();
-                    return `
-                        <div class="relative group aspect-[2/3] bg-zinc-900 rounded-lg overflow-hidden border border-white/5">
-                            <img src="${imgPath}" loading="lazy" class="w-full h-full object-cover">
-                            <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                                <p class="text-[9px] text-white/70 truncate font-mono" title="${fileName}">${fileName}</p>
-                            </div>
-                            ${
-                                isUnused
-                                    ? `
-                            <button onclick="deleteImage('${imgPath}', this)" class="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-red-500/30 hover:bg-red-500/40">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
-                            `
-                                    : ""
-                            }
-                        </div>
-                    `;
-                };
+                if (!worksGrid || !charsGrid) return;
 
-                unusedGrid.innerHTML = window.unusedImages
-                    .map((p) => renderImageCard(p, true))
-                    .join("");
-                allGrid.innerHTML = window.allImages
-                    .map((p) => renderImageCard(p, false))
+                const sortedWorks = [...window.localLibrary].sort((a, b) =>
+                    a.title.localeCompare(b.title),
+                );
+                worksGrid.innerHTML = sortedWorks
+                    .map((item) => renderImageManagerCard(item, "work"))
                     .join("");
 
-                document.getElementById("unused-count").textContent =
-                    window.unusedImages.length;
-                document.getElementById("all-images-count").textContent =
-                    window.allImages.length;
+                const allChars = [
+                    ...window.charactersGlobal,
+                    ...window.likedCharactersGlobal,
+                    ...window.interestedCharactersGlobal,
+                    ...window.dislikedCharactersGlobal,
+                ].sort((a, b) => a.title.localeCompare(b.title));
+
+                charsGrid.innerHTML = allChars
+                    .map((item) => renderImageManagerCard(item, "char"))
+                    .join("");
             }
 
-            window.deleteImage = async (imgPath, btn) => {
-                if (
-                    !confirm(
-                        `¿Seguro que quieres eliminar la imagen ${imgPath.split("/").pop()}? Esta acción no se puede deshacer.`,
-                    )
-                )
+            function renderImageManagerCard(item, type) {
+                const itemId = type === "work" ? item.id : String(item.id);
+
+                return `
+                    <div class="relative aspect-[2/3] bg-zinc-900 rounded-lg overflow-hidden group border border-white/5">
+                        <img src="${item.cover}" loading="lazy" class="w-full h-full object-cover object-center">
+                        <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                            <p class="text-[10px] text-white/80 truncate font-bold" title="${item.title}">${item.title}</p>
+                        </div>
+                        <button onclick="changeItemCover('${itemId}', '${type}', this)" class="absolute top-1.5 right-1.5 w-7 h-7 bg-indigo-500/50 text-indigo-200 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-indigo-500/50 hover:bg-indigo-500/80" title="Cambiar imagen">
+                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            // --- NUEVA LÓGICA PARA SUBIR IMÁGENES ---
+            let currentItemForCoverChange = null;
+
+            window.closeImageUploader = () => {
+                document
+                    .getElementById("image-uploader-modal")
+                    .classList.add("hidden");
+                document.getElementById("image-uploader-status").innerHTML = "";
+                currentItemForCoverChange = null;
+            };
+
+            window.changeItemCover = (itemId, itemType, btn) => {
+                currentItemForCoverChange = { itemId, itemType, btn };
+                document
+                    .getElementById("image-uploader-modal")
+                    .classList.remove("hidden");
+            };
+
+            async function handleImageUpload(file) {
+                if (!file || !file.type.startsWith("image/")) {
+                    alert("Por favor, selecciona un archivo de imagen válido.");
                     return;
-                btn.innerHTML =
-                    '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-                btn.disabled = true;
-                try {
-                    const res = await fetch("/api/delete-image.json", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ path: imgPath }),
-                    });
-                    if (res.ok) {
-                        btn.closest(".relative").remove();
-                        window.unusedImages = window.unusedImages.filter(
-                            (p) => p !== imgPath,
-                        );
-                        window.allImages = window.allImages.filter(
-                            (p) => p !== imgPath,
-                        );
-                        document.getElementById("unused-count").textContent =
-                            window.unusedImages.length;
-                        document.getElementById(
-                            "all-images-count",
-                        ).textContent = window.allImages.length;
-                    } else {
-                        throw new Error("Server failed to delete image");
-                    }
-                } catch (e) {
-                    console.error("Error deleting image:", e);
-                    alert("Error al eliminar la imagen.");
+                }
+                if (!currentItemForCoverChange) return;
+
+                const { itemId, itemType, btn } = currentItemForCoverChange;
+                const statusEl = document.getElementById(
+                    "image-uploader-status",
+                );
+
+                statusEl.innerHTML = `<div class="flex items-center justify-center gap-2 text-indigo-400"><i class="fa-solid fa-circle-notch fa-spin"></i> Subiendo imagen...</div>`;
+                if (btn) {
                     btn.innerHTML =
-                        '<i class="fa-solid fa-trash-can text-xs"></i>';
-                    btn.disabled = false;
+                        '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+                    btn.disabled = true;
+                }
+
+                const tableName = itemType === "work" ? "works" : "characters";
+
+                // Lógica robusta para obtener la extensión del archivo
+                let fileExt = "png"; // Extensión por defecto
+                if (file.name) {
+                    // Si es un objeto File con nombre
+                    const nameParts = file.name.split(".");
+                    if (nameParts.length > 1) {
+                        fileExt = nameParts.pop();
+                    }
+                } else if (file.type && file.type.startsWith("image/")) {
+                    // Si es un Blob del portapapeles
+                    fileExt = file.type.substring(6); // 'image/png' -> 'png'
+                }
+
+                const filePath = `${itemType}/${itemId}-${Date.now()}.${fileExt.toLowerCase()}`;
+
+                try {
+                    const { error: uploadError } = await supabase.storage
+                        .from("covers")
+                        .upload(filePath, file);
+
+                    if (uploadError)
+                        throw new Error(
+                            `Error de Supabase Storage: ${uploadError.message}`,
+                        );
+
+                    const { data: urlData } = supabase.storage
+                        .from("covers")
+                        .getPublicUrl(filePath);
+
+                    const newUrl = urlData.publicUrl;
+
+                    const { error: dbError } = await supabase
+                        .from(tableName)
+                        .update({ cover: newUrl })
+                        .eq("id", itemId);
+
+                    if (dbError)
+                        throw new Error(
+                            `Error de base de datos: ${dbError.message}`,
+                        );
+
+                    if (itemType === "work") {
+                        const work = window.localLibrary.find(
+                            (w) => w.id === itemId,
+                        );
+                        if (work) work.cover = newUrl;
+                    } else {
+                        const allCharLists = [
+                            window.charactersGlobal,
+                            window.likedCharactersGlobal,
+                            window.interestedCharactersGlobal,
+                            window.dislikedCharactersGlobal,
+                        ];
+                        for (const list of allCharLists) {
+                            const char = list.find(
+                                (c) => String(c.id) === String(itemId),
+                            );
+                            if (char) {
+                                char.cover = newUrl;
+                                break;
+                            }
+                        }
+                    }
+
+                    const cardImg = btn.closest(".group").querySelector("img");
+                    if (cardImg) cardImg.src = newUrl;
+
+                    statusEl.innerHTML = `<div class="flex items-center justify-center gap-2 text-green-400"><i class="fa-solid fa-check"></i> ¡Imagen actualizada!</div>`;
+
+                    if (btn)
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+
+                    setTimeout(() => {
+                        closeImageUploader();
+                        if (btn) {
+                            btn.innerHTML =
+                                '<i class="fa-solid fa-pen-to-square text-xs"></i>';
+                            btn.disabled = false;
+                        }
+                    }, 1500);
+                } catch (e) {
+                    console.error("Error al cambiar la imagen:", e);
+                    statusEl.innerHTML = `<div class="text-red-400">Error: ${e.message}</div>`;
+                    if (btn) {
+                        btn.innerHTML =
+                            '<i class="fa-solid fa-pen-to-square text-xs"></i>';
+                        btn.disabled = false;
+                    }
+                }
+            }
+
+            function setupImageUploader() {
+                const modal = document.getElementById("image-uploader-modal");
+                const dropzone = document.getElementById(
+                    "image-uploader-dropzone",
+                );
+                const fileInput = document.getElementById(
+                    "image-uploader-input",
+                );
+
+                if (!modal || !dropzone || !fileInput) return;
+
+                const preventDefaults = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                };
+                ["dragenter", "dragover", "dragleave", "drop"].forEach(
+                    (eventName) => {
+                        dropzone.addEventListener(
+                            eventName,
+                            preventDefaults,
+                            false,
+                        );
+                    },
+                );
+
+                dropzone.addEventListener("dragenter", () =>
+                    dropzone.classList.add("border-indigo-500"),
+                );
+                dropzone.addEventListener("dragleave", () =>
+                    dropzone.classList.remove("border-indigo-500"),
+                );
+
+                dropzone.addEventListener("drop", (e) => {
+                    dropzone.classList.remove("border-indigo-500");
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleImageUpload(e.dataTransfer.files[0]);
+                    }
+                });
+
+                fileInput.addEventListener("change", (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        handleImageUpload(e.target.files[0]);
+                    }
+                });
+
+                document.body.addEventListener("paste", async (e) => {
+                    if (modal.classList.contains("hidden")) return; // Only paste when modal is open
+                    e.preventDefault();
+                    try {
+                        const items = e.clipboardData?.items || [];
+                        for (const item of items) {
+                            if (item.type.indexOf("image") !== -1) {
+                                const blob = item.getAsFile();
+                                if (blob) {
+                                    handleImageUpload(blob);
+                                    return;
+                                }
+                            }
+                        }
+                        document.getElementById(
+                            "image-uploader-status",
+                        ).innerHTML =
+                            `<div class="text-red-400">No se encontró una imagen en el portapapeles.</div>`;
+                    } catch (err) {
+                        console.error("Error al leer el portapapeles: ", err);
+                        document.getElementById(
+                            "image-uploader-status",
+                        ).innerHTML =
+                            `<div class="text-red-400">No se pudo leer el portapapeles.</div>`;
+                    }
+                });
+            }
+
+            window.switchImageManagerView = (type) => {
+                const worksView = document.getElementById(
+                    "image-manager-works-view",
+                );
+                const charsView = document.getElementById(
+                    "image-manager-chars-view",
+                );
+                const btnWorks = document.getElementById("btn-img-mgr-works");
+                const btnChars = document.getElementById("btn-img-mgr-chars");
+                const bg = document.getElementById("img-mgr-tab-bg");
+
+                if (type === "works") {
+                    worksView.classList.remove("hidden");
+                    charsView.classList.add("hidden");
+                    bg.style.transform = "translateX(0)";
+                    btnWorks.classList.remove("opacity-50");
+                    btnChars.classList.add("opacity-50");
+                } else {
+                    worksView.classList.add("hidden");
+                    charsView.classList.remove("hidden");
+                    bg.style.transform = "translateX(100%)";
+                    btnChars.classList.remove("opacity-50");
+                    btnWorks.classList.add("opacity-50");
                 }
             };
 
@@ -3089,6 +3356,9 @@ const favoritesOrdered = (db.favorites || [])
                 document.getElementById("charCoverOffsetYRange").value =
                     position;
             }
+
+            // Inicializar el nuevo gestor de subida de imágenes
+            setupImageUploader();
 
             // Auto-update finish date year based on start date year
             document
