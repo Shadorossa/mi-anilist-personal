@@ -1,11 +1,12 @@
 {
   "title": "Gintama. Porori-hen",
   "cover": "/img/covers/gintama-porori-hen.png",
-  "year": 2017,
+  "year": "2017",
   "type": "anime",
   "status": "Completado",
   "score": 3,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 0
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 0,
+  "private_notes": ""
 }

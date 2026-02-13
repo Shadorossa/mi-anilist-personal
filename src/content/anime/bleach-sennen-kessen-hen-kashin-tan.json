@@ -1,11 +1,12 @@
 {
   "title": "Bleach: Sennen Kessen-hen - Kashin-tan",
   "cover": "/img/covers/bleach-sennen-kessen-hen-kashin-tan.png",
-  "year": 2026,
+  "year": "2026",
   "type": "anime",
   "status": "Pendiente",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 24
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 24,
+  "private_notes": ""
 }

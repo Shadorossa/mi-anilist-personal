@@ -1,11 +1,12 @@
 {
   "title": "Fate/Zero",
   "cover": "/img/covers/fatezero.png",
-  "year": 2011,
+  "year": "2011",
   "type": "anime",
   "status": "Completado",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 50
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 50,
+  "private_notes": ""
 }

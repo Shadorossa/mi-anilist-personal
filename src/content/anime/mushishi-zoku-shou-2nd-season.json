@@ -1,11 +1,12 @@
 {
   "title": "Mushishi Zoku Shou 2nd Season",
   "cover": "/img/covers/mushishi-zoku-shou-2nd-season.png",
-  "year": 2014,
+  "year": "2014",
   "type": "anime",
   "status": "Completado",
   "score": 10,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 73
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 73,
+  "private_notes": ""
 }

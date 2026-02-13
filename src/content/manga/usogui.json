@@ -5,7 +5,8 @@
   "type": "manga",
   "status": "Completado",
   "score": 10,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 50
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 50,
+  "private_notes": ""
 }

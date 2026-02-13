@@ -5,7 +5,8 @@
   "type": "manga",
   "status": "Jugando",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 14
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 14,
+  "private_notes": ""
 }

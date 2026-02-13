@@ -1,11 +1,12 @@
 {
   "title": "Mushishi",
   "cover": "/img/covers/mushishi.png",
-  "year": 2005,
+  "year": "2005",
   "type": "anime",
   "status": "Completado",
   "score": 9,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 70
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 70,
+  "private_notes": ""
 }

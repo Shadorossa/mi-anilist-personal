@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Completado",
   "score": 9,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 33
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 33,
+  "private_notes": ""
 }

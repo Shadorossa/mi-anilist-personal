@@ -1,11 +1,12 @@
 {
   "title": "Bungou Stray Dogs 2nd Season",
   "cover": "/img/covers/bungou-stray-dogs-2nd-season.png",
-  "year": 2016,
+  "year": "2016",
   "type": "anime",
   "status": "Completado",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 19
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 19,
+  "private_notes": ""
 }

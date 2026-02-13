@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Jugando",
   "score": 0,
-  "startDate": "2025-09-25",
-  "finishDate": "",
-  "coverOffsetY": 43
+  "start_date": "2025-09-25",
+  "finish_date": "",
+  "cover_offset_y": 43,
+  "private_notes": ""
 }

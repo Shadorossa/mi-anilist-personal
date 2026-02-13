@@ -1,11 +1,12 @@
 {
   "title": "Bleach: Sennen Kessen-hen - Ketsubetsu-tan",
   "cover": "/img/covers/bleach-sennen-kessen-hen-ketsubetsu-tan.png",
-  "year": 2023,
+  "year": "2023",
   "type": "anime",
   "status": "Completado",
   "score": 9,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 67
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 67,
+  "private_notes": ""
 }

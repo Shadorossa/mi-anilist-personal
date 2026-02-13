@@ -1,11 +1,12 @@
 {
   "title": "Bleach: Sennen Kessen-hen",
   "cover": "/img/covers/bleach-sennen-kessen-hen.png",
-  "year": 2022,
+  "year": "2022",
   "type": "anime",
   "status": "Completado",
   "score": 9,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 73
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 73,
+  "private_notes": ""
 }

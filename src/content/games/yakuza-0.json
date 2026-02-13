@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Completado",
   "score": 9,
-  "startDate": "2024-01-14",
-  "finishDate": "2024-02-24",
-  "coverOffsetY": 58
+  "start_date": "2024-01-14",
+  "finish_date": "2024-02-24",
+  "cover_offset_y": 58,
+  "private_notes": ""
 }

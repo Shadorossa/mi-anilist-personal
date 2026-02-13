@@ -5,7 +5,8 @@
   "type": "anime",
   "status": "Completado",
   "score": 10,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 85
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 85,
+  "private_notes": ""
 }

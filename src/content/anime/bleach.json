@@ -1,11 +1,12 @@
 {
   "title": "Bleach",
   "cover": "/img/covers/bleach.png",
-  "year": 2004,
+  "year": "2004",
   "type": "anime",
   "status": "Completado",
   "score": 8,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 35
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 35,
+  "private_notes": ""
 }

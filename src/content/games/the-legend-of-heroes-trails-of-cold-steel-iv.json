@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Completado",
   "score": 10,
-  "startDate": "2025-05-03",
-  "finishDate": "2025-05-21",
-  "coverOffsetY": 17
+  "start_date": "2025-05-03",
+  "finish_date": "2025-05-21",
+  "cover_offset_y": 17,
+  "private_notes": ""
 }

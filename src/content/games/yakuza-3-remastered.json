@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Abandonado",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 31
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 31,
+  "private_notes": ""
 }

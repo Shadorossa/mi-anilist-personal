@@ -1,11 +1,12 @@
 {
   "title": "Gintama",
   "cover": "/img/covers/gintama.jpg",
-  "year": 2006,
+  "year": "2006",
   "type": "anime",
   "status": "Completado",
   "score": 10,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 50
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 50,
+  "private_notes": ""
 }

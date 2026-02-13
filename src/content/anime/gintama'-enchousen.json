@@ -1,11 +1,12 @@
 {
   "title": "Gintama': Enchousen",
   "cover": "/img/covers/gintama'-enchousen.png",
-  "year": 2012,
+  "year": "2012",
   "type": "anime",
   "status": "Completado",
   "score": 10,
-  "startDate": "2021-03-19",
-  "finishDate": "2021-03-20",
-  "coverOffsetY": 59
+  "start_date": "2021-03-19",
+  "finish_date": "2021-03-20",
+  "cover_offset_y": 59,
+  "private_notes": ""
 }

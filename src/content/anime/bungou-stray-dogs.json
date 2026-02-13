@@ -1,11 +1,12 @@
 {
   "title": "Bungou Stray Dogs",
   "cover": "/img/covers/bungou-stray-dogs.png",
-  "year": 2016,
+  "year": "2016",
   "type": "anime",
   "status": "Completado",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 26
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 26,
+  "private_notes": ""
 }

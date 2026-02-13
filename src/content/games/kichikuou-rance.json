@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Pendiente",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 27
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 27,
+  "private_notes": ""
 }

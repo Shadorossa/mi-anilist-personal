@@ -1,11 +1,12 @@
 {
   "title": "Bungou Stray Dogs 5th Season",
   "cover": "/img/covers/bungou-stray-dogs-5th-season.png",
-  "year": 2023,
+  "year": "2023",
   "type": "anime",
   "status": "Pendiente",
   "score": 0,
-  "startDate": "",
-  "finishDate": "",
-  "coverOffsetY": 61
+  "start_date": "",
+  "finish_date": "",
+  "cover_offset_y": 61,
+  "private_notes": ""
 }

@@ -5,7 +5,8 @@
   "type": "games",
   "status": "Completado",
   "score": 1,
-  "startDate": "2023-06-11",
-  "finishDate": "2023-06-11",
-  "coverOffsetY": 40
+  "start_date": "2023-06-11",
+  "finish_date": "2023-06-11",
+  "cover_offset_y": 40,
+  "private_notes": ""
 }
