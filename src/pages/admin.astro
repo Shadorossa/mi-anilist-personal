@@ -544,8 +544,8 @@ const favoritesOrdered = (db.favorites || [])
                     ).innerText = item.title;
 
                     const charOffsetY =
-                        item.coverOffsetY !== undefined
-                            ? item.coverOffsetY
+                        item.cover_offset_y ??
+                        item.coverOffsetY ??
                             : 50;
                     document.getElementById("charCoverOffsetYRange").value =
                         charOffsetY;
@@ -822,20 +822,20 @@ const favoritesOrdered = (db.favorites || [])
                     data.year || "----";
                 document.getElementById("editorCover").src = data.cover;
 
-                document.getElementById("privateNotes").value =
-                    data.privateNotes || "";
+                document.getElementById("privateNotes").value = data.private_notes || data.privateNotes || "";
 
                 // Saga Selector Logic
                 const sagaSelector = document.getElementById("sagaSelector");
                 sagaSelector.innerHTML = '<option value="">Ninguna</option>';
 
                 let currentSaga = "";
+                const workTitle = data.title.endsWith(" -M") ? data.title.slice(0, -3) : data.title;
                 for (const sagaName in window.sagas) {
                     const option = document.createElement("option");
                     option.value = sagaName;
                     option.textContent = sagaName;
                     sagaSelector.appendChild(option);
-                    if (window.sagas[sagaName].includes(data.title)) {
+                    if (window.sagas[sagaName].includes(workTitle)) {
                         currentSaga = sagaName;
                     }
                 }
@@ -848,17 +848,17 @@ const favoritesOrdered = (db.favorites || [])
                         r.checked = r.value === status;
                     });
 
-                document.getElementById("startDate").value =
-                    data.startDate || "";
-                document.getElementById("finishDate").value =
-                    data.finishDate || "";
+                document.getElementById("startDate").value = data.start_date || data.startDate || "";
+                document.getElementById("finishDate").value = data.finish_date || data.finishDate || "";
 
                 // --- Lógica para el nuevo PREVIEW de la cover ---
                 document.getElementById("editorPreviewCover").src = data.cover;
                 document.getElementById("editorPreviewTitle").innerText =
                     displayTitle;
                 const offsetY =
-                    data.coverOffsetY !== undefined ? data.coverOffsetY : 50;
+                    data.cover_offset_y ??
+                    data.coverOffsetY ??
+                    50;
                 document.getElementById("coverOffsetYRange").value = offsetY;
                 document.getElementById(
                     "editorPreviewCover",
@@ -2339,8 +2339,8 @@ const favoritesOrdered = (db.favorites || [])
                     };
 
                     // Asignar el sourceId y eliminar el source antiguo para evitar inconsistencias
-                    updatedChar.sourceId = currentSelection.sourceId || null;
-                    delete updatedChar.source;
+                    updatedChar.sourceId = currentSelection.sourceId || currentSelection.source_id || null;
+                    if ('source' in updatedChar) delete updatedChar.source;
 
                     const favIndex = window.charactersGlobal.findIndex(
                         (c) => c.id === updatedChar.id,
