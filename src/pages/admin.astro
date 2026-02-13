@@ -1118,6 +1118,19 @@ const favoritesOrdered = (db.favorites || [])
                 }
             };
 
+            /**
+             * Obtiene el año de una obra, buscando en `item.year` (para datos locales)
+             * o en `item.startDate.year` (para datos de API de búsqueda).
+             * @param {object} item - El objeto de la obra.
+             * @returns {number|null} El año o null si no se encuentra.
+             */
+            function getWorkYear(item) {
+                if (item.year) return item.year;
+                if (item.startDate && item.startDate.year)
+                    return item.startDate.year;
+                return null;
+            }
+
             function renderCard(item, actionName, isChar = false) {
                 const fullId = isChar ? item.id : `${item.type}/${item.id}`;
                 const isWorkBulkSelected =
@@ -1175,6 +1188,10 @@ const favoritesOrdered = (db.favorites || [])
                 const showBulkCheckbox =
                     (isBulkEditing && !isChar) || (isCharBulkEditing && isChar);
 
+                const year = getWorkYear(item);
+                const itemType = (item.type || item.format || "").toLowerCase();
+                const isManga = itemType === "manga";
+
                 return `
     <div
         data-id="${fullId}"
@@ -1184,8 +1201,9 @@ const favoritesOrdered = (db.favorites || [])
         draggable="false"
     >
         ${showBulkCheckbox ? `<div class="bulk-checkbox"><i class="fa-solid fa-check"></i></div>` : ""}
-        <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false">
-        ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
+        <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false" />
+        ${!isChar && year ? `<div class="fixed-badge">${year}</div>` : ""}
+        ${!isChar && isManga && actionName === "openEditorSearch" ? `<div class="fixed-badge" style="top: 30px; background: rgba(239, 68, 68, 0.6); font-size: 8px;">MANGA</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
         <div class="asearch-info">
             <h4 class="asearch-title">${displayTitle}</h4>
@@ -1231,6 +1249,24 @@ const favoritesOrdered = (db.favorites || [])
                 const filtered = window.localLibrary.filter((item) =>
                     item.title.toLowerCase().includes(filterText.toLowerCase()),
                 );
+
+                // FIX: Crear el mapa de sagas para la ordenación.
+                // Esta variable no estaba definida, causando un error que impedía renderizar la biblioteca.
+                const sagaOrderMap = new Map();
+                const sortedSagaNamesForMap = Object.keys(
+                    window.sagas || {},
+                ).sort();
+                sortedSagaNamesForMap.forEach((sagaName, sagaIndex) => {
+                    (window.sagas[sagaName] || []).forEach(
+                        (title, gameIndex) => {
+                            sagaOrderMap.set(title, {
+                                sagaName,
+                                sagaIndex,
+                                gameIndex,
+                            });
+                        },
+                    );
+                });
 
                 filtered.sort((a, b) => {
                     if (localCurrentSort === "saga") {
@@ -1280,10 +1316,15 @@ const favoritesOrdered = (db.favorites || [])
                     if (l.type !== typeToFind) return false;
                     // Para mangas, buscar con y sin el sufijo -M
                     if (typeToFind === "manga") {
-                        return (
-                            l.title === item.title ||
-                            l.title === `${item.title} -M`
-                        );
+                        // Normaliza ambos títulos eliminando el sufijo " -M" antes de comparar.
+                        // Esto hace la búsqueda robusta sin importar si el título en la BD está "sucio" o "limpio".
+                        const libTitle = l.title.endsWith(" -M")
+                            ? l.title.slice(0, -3)
+                            : l.title;
+                        const searchTitle = item.title.endsWith(" -M")
+                            ? item.title.slice(0, -3)
+                            : item.title;
+                        return libTitle === searchTitle;
                     }
                     return l.title === item.title;
                 });

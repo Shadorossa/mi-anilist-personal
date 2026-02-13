@@ -122,13 +122,18 @@ export const GET: APIRoute = async ({ url }) => {
       const res = await fetch(`https://api.jikan.moe/v4/${type}?q=${encodeURIComponent(query)}&limit=25`);
       const data = await res.json();
       if (data.data) {
-        results = data.data.map((i: any) => ({
-          id: i.mal_id,
-          title: i.title,
-          cover: i.images?.jpg?.large_image_url || i.images?.jpg?.image_url,
-          year: i.year || (i.aired?.from ? i.aired.from.split('-')[0] : 'N/A'),
-          score: i.score ? i.score * 10 : 0
-        }));
+        results = data.data.map((i: any) => {
+          // Anime usa 'aired', Manga usa 'published'. Ambos tienen una propiedad 'from'.
+          const dateInfo = i.aired || i.published;
+          return {
+            id: i.mal_id,
+            title: i.title,
+            cover: i.images?.jpg?.large_image_url || i.images?.jpg?.image_url,
+            year: i.year || (dateInfo?.from ? dateInfo.from.split('-')[0] : 'N/A'),
+            score: i.score ? i.score * 10 : 0,
+            format: i.type // Se pasa el formato para que el frontend pueda distinguir (ej. "Manga")
+          };
+        });
       }
     }
 

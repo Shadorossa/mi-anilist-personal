@@ -31,8 +31,6 @@ body {
 .admin-main {
     flex: 1;
     position: relative;
-    display: flex;
-    flex-direction: column;
     min-width: 0;
     height: 100%;
 }
@@ -41,7 +39,8 @@ body {
    2. PANELES Y BARRAS
    ========================================= */
 .panel {
-    flex: 1;
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     padding: 2rem;
