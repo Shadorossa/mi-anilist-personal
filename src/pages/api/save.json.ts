@@ -48,13 +48,35 @@ export const POST = async ({ request }) => {
       const { favorites, monthlyPicks, characters, likedCharacters, interestedCharacters, dislikedCharacters, monthlyChars, sagas } = body.dbData;
 
       if (favorites) {
-        const favsToInsert = favorites.map((fav, index) => {
-          if (typeof fav === 'string') {
-            return { order: index, is_saga: false, title: fav };
-          }
-          return { order: index, is_saga: true, title: fav.title, cover: fav.cover };
-        });
-        await supabase.from('favorites').delete().neq('order', -1);
+        const seenTitles = new Set();
+        const favsToInsert = favorites
+          .map(fav => { // 1. Normalizar estructura
+            if (!fav || (typeof fav === 'object' && !fav.title)) {
+              return null;
+            }
+            if (typeof fav === 'string') {
+              return { is_saga: false, title: fav, cover: null };
+            }
+            return {
+              is_saga: fav.is_saga || fav.isSaga || false,
+              title: fav.title,
+              cover: fav.cover || null,
+            };
+          })
+          .filter(fav => { // 2. Filtrar nulos y duplicados
+            if (!fav) return false;
+            if (seenTitles.has(fav.title)) {
+              return false;
+            }
+            seenTitles.add(fav.title);
+            return true;
+          })
+          .map((fav, index) => ({ // 3. Asignar orden final
+            ...fav,
+            order: index,
+          }));
+        // Borramos todos los favoritos existentes para reinsertarlos con el nuevo orden. Usamos `neq` en la PK como método seguro.
+        await supabase.from('favorites').delete().neq('title', 'dummy-title-to-delete-all');
         const { error } = await supabase.from('favorites').insert(favsToInsert);
         if (error) throw new Error(`Favorites Error: ${error.message}`);
       }
@@ -186,9 +208,8 @@ export const POST = async ({ request }) => {
     }
 
     return new Response(JSON.stringify({ success: true }));
-
-  } catch (error) {
-    console.error("Error en SAVE API:", error);
-    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), { status: 500 });
+  } catch (e) {
+    console.error("Error en /api/save:", e);
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
-}
+};

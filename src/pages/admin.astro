@@ -522,13 +522,21 @@ const favoritesOrdered = (db.favorites || [])
                     "charSourceDisplayText",
                 );
 
-                if (modal && img && nameInput && sourceDisplayContainer && sourceDisplayText) {
+                if (
+                    modal &&
+                    img &&
+                    nameInput &&
+                    sourceDisplayContainer &&
+                    sourceDisplayText
+                ) {
                     img.src = item.cover;
                     nameInput.value = item.title;
 
                     const sourceId = item.source_id || item.sourceId;
                     if (sourceId) {
-                        const sourceWork = window.localLibrary.find(w => w.id === sourceId);
+                        const sourceWork = window.localLibrary.find(
+                            (w) => w.id === sourceId,
+                        );
                         sourceDisplayText.innerHTML = `<span class="text-white">${sourceWork ? sourceWork.title : "Obra no encontrada"}</span>`;
                         sourceDisplayContainer.title = sourceWork
                             ? sourceWork.title
@@ -544,9 +552,7 @@ const favoritesOrdered = (db.favorites || [])
                     ).innerText = item.title;
 
                     const charOffsetY =
-                        item.cover_offset_y ??
-                        item.coverOffsetY ??
-                            : 50;
+                        item.cover_offset_y ?? item.coverOffsetY ?? 50;
                     document.getElementById("charCoverOffsetYRange").value =
                         charOffsetY;
                     document.getElementById("charEditorPreviewCover").src =
@@ -681,7 +687,8 @@ const favoritesOrdered = (db.favorites || [])
                             (w) => w.id === sourceId,
                         );
                         if (sourceWork) sourceTitle = sourceWork.title;
-                    } else if (item.source) { // Backwards compatibility
+                    } else if (item.source) {
+                        // Backwards compatibility
                         // Backwards compatibility
                         sourceTitle = item.source;
                     }
@@ -690,6 +697,7 @@ const favoritesOrdered = (db.favorites || [])
                 return `
     <div
         data-id="${fullId}"
+        data-title="${item.title}"
         onclick="${isBulkEditing && !isChar ? `toggleItemSelection('${fullId}')` : `handleCardClick('${actionName}', '${safeItem}')`}"
         class="asearch-card ${isSelected ? "selected" : ""}"
         draggable="false"
@@ -822,14 +830,17 @@ const favoritesOrdered = (db.favorites || [])
                     data.year || "----";
                 document.getElementById("editorCover").src = data.cover;
 
-                document.getElementById("privateNotes").value = data.private_notes || data.privateNotes || "";
+                document.getElementById("privateNotes").value =
+                    data.private_notes || data.privateNotes || "";
 
                 // Saga Selector Logic
                 const sagaSelector = document.getElementById("sagaSelector");
                 sagaSelector.innerHTML = '<option value="">Ninguna</option>';
 
                 let currentSaga = "";
-                const workTitle = data.title.endsWith(" -M") ? data.title.slice(0, -3) : data.title;
+                const workTitle = data.title.endsWith(" -M")
+                    ? data.title.slice(0, -3)
+                    : data.title;
                 for (const sagaName in window.sagas) {
                     const option = document.createElement("option");
                     option.value = sagaName;
@@ -848,17 +859,16 @@ const favoritesOrdered = (db.favorites || [])
                         r.checked = r.value === status;
                     });
 
-                document.getElementById("startDate").value = data.start_date || data.startDate || "";
-                document.getElementById("finishDate").value = data.finish_date || data.finishDate || "";
+                document.getElementById("startDate").value =
+                    data.start_date || data.startDate || "";
+                document.getElementById("finishDate").value =
+                    data.finish_date || data.finishDate || "";
 
                 // --- Lógica para el nuevo PREVIEW de la cover ---
                 document.getElementById("editorPreviewCover").src = data.cover;
                 document.getElementById("editorPreviewTitle").innerText =
                     displayTitle;
-                const offsetY =
-                    data.cover_offset_y ??
-                    data.coverOffsetY ??
-                    50;
+                const offsetY = data.cover_offset_y ?? data.coverOffsetY ?? 50;
                 document.getElementById("coverOffsetYRange").value = offsetY;
                 document.getElementById(
                     "editorPreviewCover",
@@ -873,7 +883,17 @@ const favoritesOrdered = (db.favorites || [])
                     currentPickYear;
 
                 updateStarsVisual(data.score || 0);
-                isFavorite = window.favoritesTitles.includes(data.title);
+
+                let favTitleToCheck = data.title;
+                if (data.type === "manga") {
+                    // In localLibrary, manga titles are stored without "-M".
+                    // In favorites, they should be stored WITH "-M".
+                    favTitleToCheck = `${data.title} -M`;
+                }
+                isFavorite = window.favoritesTitles.some((fav) => {
+                    const favTitle = typeof fav === "object" ? fav.title : fav;
+                    return favTitle === favTitleToCheck;
+                });
                 updateFavBtn();
                 renderMonthTags();
                 checkScoreLock();
@@ -1124,20 +1144,36 @@ const favoritesOrdered = (db.favorites || [])
                         fileData.title = `${fileData.title} -M`;
                     }
 
-                    if (
-                        isFavorite &&
-                        !window.favoritesTitles.includes(fileData.title)
-                    ) {
-                        window.favoritesTitles.push(fileData.title);
-                    } else if (!isFavorite) {
-                        // When un-favoriting, remove both potential manga title formats
+                    // This is the title that will be in the favorites list if added/removed.
+                    // It MUST have the -M suffix for manga.
+                    let favTitleToManage;
+                    if (fileData.type === "manga") {
+                        favTitleToManage = fileData.title.endsWith(" -M")
+                            ? fileData.title
+                            : `${fileData.title} -M`;
+                    } else {
+                        favTitleToManage = fileData.title;
+                    }
+
+                    const isAlreadyInFavs = window.favoritesTitles.some(
+                        (fav) => {
+                            const existingFavTitle =
+                                typeof fav === "object" ? fav.title : fav;
+                            return existingFavTitle === favTitleToManage;
+                        },
+                    );
+
+                    if (isFavorite && !isAlreadyInFavs) {
+                        window.favoritesTitles.push({
+                            title: favTitleToManage,
+                            is_saga: false,
+                        });
+                    } else if (!isFavorite && isAlreadyInFavs) {
                         window.favoritesTitles = window.favoritesTitles.filter(
-                            (t) => {
-                                if (typeof t !== "string") return true; // Keep saga objects
-                                return (
-                                    t !== currentSelection.title &&
-                                    t !== `${currentSelection.title} -M`
-                                );
+                            (fav) => {
+                                const existingFavTitle =
+                                    typeof fav === "object" ? fav.title : fav;
+                                return existingFavTitle !== favTitleToManage;
                             },
                         );
                     }
@@ -1469,7 +1505,9 @@ const favoritesOrdered = (db.favorites || [])
                         let sourceTitle = "";
                         const sourceId = c.source_id || c.sourceId;
                         if (sourceId) {
-                            const sourceWork = window.localLibrary.find(w => w.id === sourceId);
+                            const sourceWork = window.localLibrary.find(
+                                (w) => w.id === sourceId,
+                            );
                             if (sourceWork) sourceTitle = sourceWork.title;
                         } else if (c.source) {
                             // Backwards compatibility
@@ -1521,22 +1559,47 @@ const favoritesOrdered = (db.favorites || [])
 
                 const listHtml = window.favoritesTitles
                     .map((fav) => {
-                        if (typeof fav === "string") {
-                            const item = window.localLibrary.find(
-                                (i) => i.title === fav,
-                            );
-                            if (item) {
-                                return renderCard(
-                                    item,
-                                    "openEditorLocal",
-                                    false,
-                                );
-                            }
-                            return ""; // Or a placeholder for a missing item
-                        } else if (fav && fav.isSaga) {
+                        const favIsObject =
+                            typeof fav === "object" && fav !== null;
+                        const favTitle = favIsObject ? fav.title : fav;
+                        const isSaga =
+                            favIsObject && (fav.is_saga || fav.isSaga);
+
+                        if (isSaga) {
                             return renderSagaFavoriteCard(fav);
                         }
-                        return "";
+
+                        // It's a work. Find it in the library.
+                        let item = window.localLibrary.find(
+                            (i) => i.title === favTitle,
+                        );
+                        // Handle manga title discrepancy
+                        if (!item) {
+                            if (favTitle.endsWith(" -M")) {
+                                item = window.localLibrary.find(
+                                    (i) =>
+                                        i.title === favTitle.slice(0, -3) &&
+                                        i.type === "manga",
+                                );
+                            } else {
+                                item = window.localLibrary.find(
+                                    (i) =>
+                                        `${i.title} -M` === favTitle &&
+                                        i.type === "manga",
+                                );
+                            }
+                        }
+
+                        if (item) {
+                            // Create a temporary item for the card with the correct favorite title for data-title
+                            const itemForCard = { ...item, title: favTitle };
+                            return renderCard(
+                                itemForCard,
+                                "openEditorLocal",
+                                false,
+                            );
+                        }
+                        return ""; // Or a placeholder for a missing item
                     })
                     .join("");
 
@@ -1832,15 +1895,17 @@ const favoritesOrdered = (db.favorites || [])
                         .forEach((card) => {
                             if (card.dataset.issaga === "true") {
                                 newOrder.push({
-                                    isSaga: true,
+                                    is_saga: true,
                                     title: card.dataset.title,
                                     cover: card.dataset.cover,
                                 });
                             } else {
-                                const titleEl =
-                                    card.querySelector(".asearch-title");
-                                if (titleEl) {
-                                    newOrder.push(titleEl.innerText);
+                                const title = card.dataset.title;
+                                if (title) {
+                                    newOrder.push({
+                                        title: title,
+                                        is_saga: false,
+                                    });
                                 }
                             }
                         });
@@ -1848,21 +1913,25 @@ const favoritesOrdered = (db.favorites || [])
                     window.favoritesTitles = newOrder;
 
                     try {
-                        await fetch("/api/save.json", {
+                        const res = await fetch("/api/save.json", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 dbData: { favorites: newOrder },
                             }),
                         });
-                        btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
+                        if (!res.ok)
+                            throw new Error(
+                                "El servidor falló al guardar el orden.",
+                            );
+
+                        btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado! Recargando...`;
                         setTimeout(() => {
-                            btn.innerHTML = originalText;
-                            btn.disabled = false;
-                        }, 2000);
+                            window.location.reload();
+                        }, 500);
                     } catch (e) {
                         console.error(e);
-                        btn.innerHTML = "Error al guardar";
+                        btn.innerHTML = "Error";
                         setTimeout(() => {
                             btn.innerHTML = originalText;
                             btn.disabled = false;
@@ -2339,8 +2408,11 @@ const favoritesOrdered = (db.favorites || [])
                     };
 
                     // Asignar el sourceId y eliminar el source antiguo para evitar inconsistencias
-                    updatedChar.sourceId = currentSelection.sourceId || currentSelection.source_id || null;
-                    if ('source' in updatedChar) delete updatedChar.source;
+                    updatedChar.sourceId =
+                        currentSelection.sourceId ||
+                        currentSelection.source_id ||
+                        null;
+                    if ("source" in updatedChar) delete updatedChar.source;
 
                     const favIndex = window.charactersGlobal.findIndex(
                         (c) => c.id === updatedChar.id,
