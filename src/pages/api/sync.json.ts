@@ -92,7 +92,13 @@ export const GET: APIRoute = async () => {
                 const localCoverPath = `/img/chara/${slug}${extension}`;
                 urlToLocalPath.set(char.cover, `public${localCoverPath}`);
                 char.cover = localCoverPath;
-                characterUpdates.push({ id: char.id, cover: localCoverPath });
+                // Preparamos para un upsert robusto, incluyendo los campos requeridos
+                characterUpdates.push({
+                    id: char.id,
+                    cover: localCoverPath,
+                    title: char.title,
+                    category: char.category,
+                });
             }
         });
 
@@ -102,19 +108,23 @@ export const GET: APIRoute = async () => {
             return acc;
         }, {});
 
-        const favoritesFormatted = allFavorites.map(fav => {
+        const favoritesFormatted = allFavorites.map((fav) => {
             if (fav.is_saga) {
-                let sagaCover = fav.cover;
-                if (sagaCover && sagaCover.startsWith('http')) {
-                    const slug = createSlug(`saga-${fav.title}`);
-                    const extension = getExtension(sagaCover);
-                    const localCoverPath = `/img/covers/${slug}${extension}`;
-                    urlToLocalPath.set(sagaCover, `public${localCoverPath}`);
-                    favoriteSagaUpdates.push({ title: fav.title, cover: localCoverPath });
-                    sagaCover = localCoverPath;
+                // Generamos una ruta local convencional para la portada de la saga.
+                // Asumimos que el usuario ha colocado una imagen personalizada en esta ruta en su repositorio.
+                // No intentaremos descargarla, solo enlazaremos a ella.
+                const slug = createSlug(fav.title);
+                const conventionalLocalPath = `/img/covers/saga-${slug}.png`;
+
+                // Si la ruta en la base de datos no es la convencional, la actualizamos.
+                if (fav.cover !== conventionalLocalPath) {
+                    favoriteSagaUpdates.push({ title: fav.title, cover: conventionalLocalPath });
                 }
-                return { isSaga: true, title: fav.title, cover: sagaCover };
+                // Devolvemos el objeto de saga con la ruta de portada convencional.
+                return { isSaga: true, title: fav.title, cover: conventionalLocalPath };
             }
+            // Para obras individuales, simplemente devolvemos el título.
+            // El frontend se encargará de buscar la portada en la lista de obras.
             return fav.title;
         });
 
@@ -126,25 +136,33 @@ export const GET: APIRoute = async () => {
         };
 
         const monthlyPicksFormatted = allMonthlyPicks.map(p => {
-            let pickCover = p.cover;
+            // Busca la obra principal para obtener la portada más actualizada
+            const masterWork = allWorks.find(w => w.title === p.work_title);
+            let pickCover = masterWork ? masterWork.cover : p.cover;
+
             if (pickCover && pickCover.startsWith('http')) {
                 const slug = createSlug(`monthly-pick-${p.month}`);
                 const extension = getExtension(pickCover);
                 const localCoverPath = `/img/covers/${slug}${extension}`;
                 urlToLocalPath.set(pickCover, `public${localCoverPath}`);
                 pickCover = localCoverPath;
+                // Aunque la obra principal se actualizará, también actualizamos el pick por consistencia
                 monthlyPickUpdates.push({ month: p.month, cover: localCoverPath });
             }
             return { month: p.month, title: p.work_title, cover: pickCover };
         });
         const monthlyCharsFormatted = allMonthlyChars.map(p => {
-            let pickCover = p.cover;
+            // Busca el personaje principal para obtener la portada más actualizada
+            const masterChar = allCharacters.find(c => c.title === p.char_name);
+            let pickCover = masterChar ? masterChar.cover : p.cover;
+
             if (pickCover && pickCover.startsWith('http')) {
                 const slug = createSlug(`monthly-char-${p.month}`);
                 const extension = getExtension(pickCover);
                 const localCoverPath = `/img/chara/${slug}${extension}`;
                 urlToLocalPath.set(pickCover, `public${localCoverPath}`);
                 pickCover = localCoverPath;
+                // Aunque el personaje principal se actualizará, también actualizamos el pick por consistencia
                 monthlyCharUpdates.push({ month: p.month, cover: localCoverPath });
             }
             return { month: p.month, name: p.char_name, cover: pickCover };
@@ -184,9 +202,8 @@ export const GET: APIRoute = async () => {
             updatePromises.push(supabase.from('works').upsert(workUpdates));
         }
         if (characterUpdates.length > 0) {
-            characterUpdates.forEach(update => {
-                updatePromises.push(supabase.from('characters').update({ cover: update.cover }).eq('id', update.id));
-            });
+            // Usamos upsert para mayor robustez, ya que ahora proporcionamos los campos requeridos
+            updatePromises.push(supabase.from('characters').upsert(characterUpdates));
         }
         if (favoriteSagaUpdates.length > 0) {
             favoriteSagaUpdates.forEach(update => {
