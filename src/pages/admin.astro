@@ -287,7 +287,6 @@ const favoritesOrdered = (db.favorites || [])
             window.toggleAccordion = () => {};
             window.toggleSagaFavorite = (sagaName, starIcon) => {
                 const favIndex = window.favoritesTitles.findIndex(
-                    (fav) => fav && fav.isSaga && fav.title === sagaName,
                     (fav) =>
                         fav &&
                         (fav.is_saga || fav.isSaga) &&
@@ -426,10 +425,7 @@ const favoritesOrdered = (db.favorites || [])
                     btn.classList.add("bg-indigo-500/20", "text-indigo-300");
                     grid.classList.add("bulk-editing");
                 } else {
-                    btn.classList.remove(
-                        "bg-indigo-500/20",
-                        "text-indigo-300",
-                    );
+                    btn.classList.remove("bg-indigo-500/20", "text-indigo-300");
                     grid.classList.remove("bulk-editing");
                     selectedCharIds.clear();
                 }
@@ -2238,9 +2234,6 @@ const favoritesOrdered = (db.favorites || [])
                     const lowerFilter = filter.toLowerCase();
                     sagaEntries = sagaEntries.filter(([sagaName, _]) =>
                         sagaName.toLowerCase().includes(lowerFilter),
-                    sagaEntries = sagaEntries.filter(
-                        ([sagaName, _]) =>
-                            sagaName.toLowerCase().includes(lowerFilter),
                     );
                 }
 
@@ -2249,7 +2242,6 @@ const favoritesOrdered = (db.favorites || [])
                     .map(([sagaName, games]) => {
                         const isFav = window.favoritesTitles.some(
                             (fav) =>
-                                fav && fav.isSaga && fav.title === sagaName,
                                 fav &&
                                 (fav.is_saga || fav.isSaga) &&
                                 fav.title === sagaName,
