@@ -288,6 +288,10 @@ const favoritesOrdered = (db.favorites || [])
             window.toggleSagaFavorite = (sagaName, starIcon) => {
                 const favIndex = window.favoritesTitles.findIndex(
                     (fav) => fav && fav.isSaga && fav.title === sagaName,
+                    (fav) =>
+                        fav &&
+                        (fav.is_saga || fav.isSaga) &&
+                        fav.title === sagaName,
                 );
                 if (favIndex > -1) {
                     window.favoritesTitles.splice(favIndex, 1);
@@ -340,6 +344,7 @@ const favoritesOrdered = (db.favorites || [])
             window.selectSagaCover = (sagaName, coverUrl) => {
                 const sagaFavObject = {
                     isSaga: true,
+                    is_saga: true,
                     title: sagaName,
                     cover: coverUrl,
                 };
@@ -368,27 +373,27 @@ const favoritesOrdered = (db.favorites || [])
             let activeCharCategory = "fav";
             let activeCharListSortable = null;
             // State for Bulk Editing
-            let isBulkEditing = false;
-            let selectedItemIds = new Set();
+            let isBulkEditing = false; // For works
+            let selectedItemIds = new Set(); // For works
+            let isCharBulkEditing = false; // For characters
+            let selectedCharIds = new Set(); // For characters
+            let isBulkSourcePicking = false; // Flag for work picker
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
             let localIsAscending = false;
             const sagaOrderMap = new Map();
-            let sagaIndex = 0;
-            for (const sagaName in window.sagas) {
-                if (
-                    Object.prototype.hasOwnProperty.call(window.sagas, sagaName)
-                ) {
-                    window.sagas[sagaName].forEach((title, gameIndex) => {
-                        sagaOrderMap.set(title, {
-                            sagaName,
-                            sagaIndex,
-                            gameIndex,
-                        });
+            const sortedSagaNamesForMap = Object.keys(
+                window.sagas || {},
+            ).sort();
+            sortedSagaNamesForMap.forEach((sagaName, sagaIndex) => {
+                (window.sagas[sagaName] || []).forEach((title, gameIndex) => {
+                    sagaOrderMap.set(title, {
+                        sagaName,
+                        sagaIndex,
+                        gameIndex,
                     });
-                    sagaIndex++;
-                }
-            }
+                });
+            });
 
             // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
@@ -407,6 +412,100 @@ const favoritesOrdered = (db.favorites || [])
                     console.error("Error al procesar el click:", e);
                 }
             };
+
+            // --- Character Bulk Edit Functions ---
+            window.toggleCharBulkEditMode = (forceState) => {
+                isCharBulkEditing =
+                    typeof forceState === "boolean"
+                        ? forceState
+                        : !isCharBulkEditing;
+                const btn = document.getElementById("char-bulk-edit-btn");
+                const grid = document.getElementById("myCharsGrid");
+
+                if (isCharBulkEditing) {
+                    btn.classList.add("bg-indigo-500/20", "text-indigo-300");
+                    grid.classList.add("bulk-editing");
+                } else {
+                    btn.classList.remove(
+                        "bg-indigo-500/20",
+                        "text-indigo-300",
+                    );
+                    grid.classList.remove("bulk-editing");
+                    selectedCharIds.clear();
+                }
+                updateCharBulkActionBar();
+                renderMyCharacters(
+                    document.getElementById("myCharsFilter").value,
+                );
+            };
+
+            window.toggleCharItemSelection = (charId) => {
+                if (!isCharBulkEditing) return;
+                const card = document.querySelector(
+                    `.asearch-card[data-id='${charId}']`,
+                );
+                if (selectedCharIds.has(charId)) {
+                    selectedCharIds.delete(charId);
+                    card?.classList.remove("selected");
+                } else {
+                    selectedCharIds.add(charId);
+                    card?.classList.add("selected");
+                }
+                updateCharBulkActionBar();
+            };
+
+            function updateCharBulkActionBar() {
+                const bar = document.getElementById("char-bulk-action-bar");
+                const countEl = document.getElementById("char-bulk-count");
+                if (isCharBulkEditing && selectedCharIds.size > 0) {
+                    bar.classList.remove("hidden");
+                    countEl.textContent = `${selectedCharIds.size} seleccionados`;
+                } else {
+                    bar.classList.add("hidden");
+                }
+            }
+
+            window.openBulkSourceChanger = () => {
+                isBulkSourcePicking = true;
+                openWorkPicker();
+            };
+
+            async function applyBulkSourceChange(workId) {
+                const bar = document.getElementById("char-bulk-action-bar");
+                const originalHTML = bar.innerHTML;
+                bar.innerHTML = `<div class="flex items-center gap-2 px-4 py-2"><i class="fa-solid fa-circle-notch fa-spin text-white"></i><span class="text-xs text-gray-400">Aplicando...</span></div>`;
+
+                const payload = {
+                    ids: Array.from(selectedCharIds),
+                    source_id: workId,
+                };
+
+                try {
+                    const res = await fetch("/api/bulk-char-update.json", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    });
+                    if (res.ok) {
+                        alert(
+                            `${payload.ids.length} personajes actualizados. Recargando...`,
+                        );
+                        window.location.reload();
+                    } else {
+                        const errorData = await res.json();
+                        throw new Error(
+                            errorData.error || "Bulk character update failed",
+                        );
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Error al actualizar los personajes.");
+                    bar.innerHTML = originalHTML; // Restore on error
+                } finally {
+                    isBulkSourcePicking = false;
+                    closeWorkPicker();
+                }
+            }
 
             // --- Bulk Edit Functions ---
             window.toggleBulkEditMode = (forceState) => {
@@ -623,7 +722,7 @@ const favoritesOrdered = (db.favorites || [])
                         if (sagaA && sagaB) {
                             // Si están en la misma saga, ordenar por índice de juego
                             if (sagaA.sagaIndex === sagaB.sagaIndex) {
-                                return sagaA.gameIndex - sagaA.gameIndex;
+                                return sagaA.gameIndex - sagaB.gameIndex;
                             }
                             // Si están en sagas diferentes, ordenar por índice de saga
                             return sagaA.sagaIndex - sagaB.sagaIndex;
@@ -653,6 +752,12 @@ const favoritesOrdered = (db.favorites || [])
             }
 
             window.selectWorkForChar = (workId) => {
+                // Handle bulk source picking
+                if (isBulkSourcePicking) {
+                    applyBulkSourceChange(workId);
+                    return;
+                }
+
                 const work = window.localLibrary.find(
                     (item) => item.id === workId,
                 );
@@ -673,7 +778,11 @@ const favoritesOrdered = (db.favorites || [])
 
             function renderCard(item, actionName, isChar = false) {
                 const fullId = isChar ? item.id : `${item.type}/${item.id}`;
-                const isSelected = selectedItemIds.has(fullId);
+                const isWorkBulkSelected =
+                    !isChar && isBulkEditing && selectedItemIds.has(fullId);
+                const isCharBulkSelected =
+                    isChar && isCharBulkEditing && selectedCharIds.has(item.id);
+                const isSelected = isWorkBulkSelected || isCharBulkSelected;
 
                 let isFav;
                 // Para mangas, la comprobación de favorito debe considerar el posible sufijo '-M'
@@ -714,15 +823,25 @@ const favoritesOrdered = (db.favorites || [])
                     }
                 }
 
+                let onclickAction = `handleCardClick('${actionName}', '${safeItem}')`;
+                if (isBulkEditing && !isChar) {
+                    onclickAction = `toggleItemSelection('${fullId}')`;
+                } else if (isCharBulkEditing && isChar) {
+                    onclickAction = `toggleCharItemSelection(${item.id})`;
+                }
+
+                const showBulkCheckbox =
+                    (isBulkEditing && !isChar) || (isCharBulkEditing && isChar);
+
                 return `
     <div
         data-id="${fullId}"
         data-title="${item.title}"
-        onclick="${isBulkEditing && !isChar ? `toggleItemSelection('${fullId}')` : `handleCardClick('${actionName}', '${safeItem}')`}"
+        onclick="${onclickAction}"
         class="asearch-card ${isSelected ? "selected" : ""}"
         draggable="false"
     >
-        ${isBulkEditing && !isChar ? `<div class="bulk-checkbox"><i class="fa-solid fa-check"></i></div>` : ""}
+        ${showBulkCheckbox ? `<div class="bulk-checkbox"><i class="fa-solid fa-check"></i></div>` : ""}
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false">
         ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
@@ -1500,6 +1619,13 @@ const favoritesOrdered = (db.favorites || [])
             function renderMyCharacters(filter = "") {
                 const grid = document.getElementById("myCharsGrid");
                 if (!grid) return;
+
+                if (isCharBulkEditing) {
+                    grid.classList.add("bulk-editing");
+                } else {
+                    grid.classList.remove("bulk-editing");
+                }
+
                 const fullList = [
                     ...(window.charactersGlobal || []),
                     ...(window.likedCharactersGlobal || []),
@@ -2112,6 +2238,9 @@ const favoritesOrdered = (db.favorites || [])
                     const lowerFilter = filter.toLowerCase();
                     sagaEntries = sagaEntries.filter(([sagaName, _]) =>
                         sagaName.toLowerCase().includes(lowerFilter),
+                    sagaEntries = sagaEntries.filter(
+                        ([sagaName, _]) =>
+                            sagaName.toLowerCase().includes(lowerFilter),
                     );
                 }
 
@@ -2121,6 +2250,9 @@ const favoritesOrdered = (db.favorites || [])
                         const isFav = window.favoritesTitles.some(
                             (fav) =>
                                 fav && fav.isSaga && fav.title === sagaName,
+                                fav &&
+                                (fav.is_saga || fav.isSaga) &&
+                                fav.title === sagaName,
                         );
                         const gameObjects = games.map(findItem).filter(Boolean);
 
