@@ -522,15 +522,13 @@ const favoritesOrdered = (db.favorites || [])
                     "charSourceDisplayText",
                 );
 
-                if (modal && img) {
+                if (modal && img && nameInput && sourceDisplayContainer && sourceDisplayText) {
                     img.src = item.cover;
                     nameInput.value = item.title;
 
-                    // Handle source link
-                    if (item.sourceId) {
-                        const sourceWork = window.localLibrary.find(
-                            (w) => w.id === item.sourceId,
-                        );
+                    const sourceId = item.source_id || item.sourceId;
+                    if (sourceId) {
+                        const sourceWork = window.localLibrary.find(w => w.id === sourceId);
                         sourceDisplayText.innerHTML = `<span class="text-white">${sourceWork ? sourceWork.title : "Obra no encontrada"}</span>`;
                         sourceDisplayContainer.title = sourceWork
                             ? sourceWork.title
@@ -677,12 +675,13 @@ const favoritesOrdered = (db.favorites || [])
 
                 let sourceTitle = "";
                 if (isChar) {
-                    if (item.sourceId) {
+                    const sourceId = item.source_id || item.sourceId;
+                    if (sourceId) {
                         const sourceWork = window.localLibrary.find(
-                            (w) => w.id === item.sourceId,
+                            (w) => w.id === sourceId,
                         );
                         if (sourceWork) sourceTitle = sourceWork.title;
-                    } else if (item.source) {
+                    } else if (item.source) { // Backwards compatibility
                         // Backwards compatibility
                         sourceTitle = item.source;
                     }
@@ -1467,12 +1466,10 @@ const favoritesOrdered = (db.favorites || [])
                         ) {
                             return true;
                         }
-                        // Check source work title
                         let sourceTitle = "";
-                        if (c.sourceId) {
-                            const sourceWork = window.localLibrary.find(
-                                (w) => w.id === c.sourceId,
-                            );
+                        const sourceId = c.source_id || c.sourceId;
+                        if (sourceId) {
+                            const sourceWork = window.localLibrary.find(w => w.id === sourceId);
                             if (sourceWork) sourceTitle = sourceWork.title;
                         } else if (c.source) {
                             // Backwards compatibility
@@ -1580,9 +1577,10 @@ const favoritesOrdered = (db.favorites || [])
             });
 
             function getCharSagaInfo(character) {
-                if (!character.sourceId) return null;
+                const sourceId = character.source_id || character.sourceId;
+                if (!sourceId) return null;
                 const sourceWork = window.localLibrary.find(
-                    (w) => w.id === character.sourceId,
+                    (w) => w.id === sourceId,
                 );
                 if (!sourceWork) return null;
                 return workToSagaMap.get(sourceWork.title) || null;

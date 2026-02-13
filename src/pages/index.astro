@@ -242,8 +242,9 @@ const monthlyChars = (db.monthlyChars || [])
 const worksMap = new Map(allContent.map((work) => [work.id, work.title]));
 
 const getSourceTitle = (char) => {
-    if (char.sourceId) {
-        return worksMap.get(char.source_id);
+    const sourceId = char.source_id || char.sourceId; // Handle both snake_case from DB and camelCase from client
+    if (sourceId) {
+        return worksMap.get(sourceId);
     }
     return char.source; // Backwards compatibility
 };

@@ -4,6 +4,12 @@ import path from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
 
+// Asegúrate de que tus variables de entorno están cargadas
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    console.error("Error: SUPABASE_URL and SUPABASE_ANON_KEY must be set in your .env file.");
+    process.exit(1);
+}
+
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
@@ -12,7 +18,7 @@ const supabase = createClient(
 const contentDir = path.resolve('./src/content');
 
 async function migrateWorks() {
-    console.log('Migrating works...');
+    console.log('Migrating works (games, anime, manga)...');
     const collections = ['games', 'anime', 'manga'];
     let allWorks = [];
 
@@ -24,134 +30,63 @@ async function migrateWorks() {
                 if (file.endsWith('.json')) {
                     const content = await fs.readFile(path.join(dirPath, file), 'utf-8');
                     const data = JSON.parse(content);
-                    allWorks.push({
-                        id: file,
-                        ...data
-                    });
+
+                    // **LA CORRECCIÓN ESTÁ AQUÍ**
+                    // Mapeamos los nombres de los campos del JSON (camelCase) a los de la base de datos (snake_case)
+                    const workData = {
+                        id: `${collection}/${file}`, // ID único, ej: 'games/elden-ring.json'
+                        title: data.title,
+                        cover: data.cover,
+                        year: data.year,
+                        type: data.type,
+                        status: data.status,
+                        score: data.score,
+                        start_date: data.startDate || '',
+                        finish_date: data.finishDate || '',
+                        cover_offset_y: data.coverOffsetY,
+                        private_notes: data.privateNotes || ''
+                    };
+                    allWorks.push(workData);
                 }
             }
         } catch (e) {
-            if (e.code !== 'ENOENT') console.error(`Error reading ${collection} dir:`, e);
+            if (e.code === 'ENOENT') {
+                console.log(`Directory not found, skipping: ${dirPath}`);
+            } else {
+                console.error(`Error reading ${collection} dir:`, e);
+            }
         }
     }
 
-    const { error } = await supabase.from('works').upsert(allWorks);
-    if (error) console.error('Error migrating works:', error);
-    else console.log(`Migrated ${allWorks.length} works successfully.`);
-}
+    if (allWorks.length > 0) {
+        console.log(`Found ${allWorks.length} works to migrate.`);
 
-async function migrateDatabaseJson() {
-    console.log('Migrating database.json...');
-    try {
-        const dbPath = path.join(contentDir, 'database.json');
-        const dbContent = await fs.readFile(dbPath, 'utf-8');
-        const db = JSON.parse(dbContent);
-
-        // Favorites
-        if (db.favorites) {
-            const favsToInsert = db.favorites.map((fav, index) => {
-                if (typeof fav === 'string') {
-                    return { order: index, is_saga: false, title: fav };
-                }
-                return { order: index, is_saga: true, title: fav.title, cover: fav.cover };
-            });
-            await supabase.from('favorites').delete().neq('order', -1); // Clear table
-            const { error } = await supabase.from('favorites').insert(favsToInsert);
-            if (error) console.error('Error migrating favorites:', error);
-            else console.log('Migrated favorites.');
+        // 1. Borramos todos los datos existentes para asegurar una migración limpia
+        console.log('Clearing existing works from the database...');
+        const { error: deleteError } = await supabase.from('works').delete().neq('id', 'dummy-id-to-delete-all');
+        if (deleteError) {
+            console.error('Error clearing works table:', deleteError);
+            return; // Detenemos la ejecución si no podemos borrar
         }
+        console.log('Existing works cleared successfully.');
 
-        // Characters
-        const allChars = [];
-        if (db.characters) allChars.push(...db.characters.map((c, i) => ({ ...c, id: c.id || `hof-${i}`, category: 'hall_of_fame', order: i })));
-        if (db.likedCharacters) allChars.push(...db.likedCharacters.map((c, i) => ({ ...c, id: c.id || `liked-${i}`, category: 'liked' })));
-        if (db.interestedCharacters) allChars.push(...db.interestedCharacters.map((c, i) => ({ ...c, id: c.id || `interested-${i}`, category: 'interested' })));
-        if (db.dislikedCharacters) allChars.push(...db.dislikedCharacters.map((c, i) => ({ ...c, id: c.id || `disliked-${i}`, category: 'disliked' })));
-
-        const charsToInsert = allChars.map(c => ({
-            id: c.id,
-            title: c.title,
-            cover: c.cover,
-            source_id: c.sourceId,
-            cover_offset_y: c.coverOffsetY,
-            category: c.category,
-            order: c.order
-        }));
-
-        await supabase.from('characters').delete().neq('id', 'dummy-id-to-delete-all');
-        const { error: charError } = await supabase.from('characters').insert(charsToInsert);
-        if (charError) console.error('Error migrating characters:', charError);
-        else console.log('Migrated characters.');
-
-
-        // Monthly Picks
-        if (db.monthlyPicks) {
-            const picksToInsert = db.monthlyPicks.map(p => ({ month: p.month, work_title: p.title, cover: p.cover }));
-            await supabase.from('monthly_picks').delete().neq('month', 'dummy-month');
-            const { error } = await supabase.from('monthly_picks').insert(picksToInsert);
-            if (error) console.error('Error migrating monthly picks:', error);
-            else console.log('Migrated monthly picks.');
+        // 2. Insertamos los nuevos datos
+        console.log('Inserting new works into the database...');
+        const { error: insertError } = await supabase.from('works').insert(allWorks);
+        if (insertError) {
+            console.error('Error migrating works:', insertError);
+        } else {
+            console.log(`Migrated ${allWorks.length} works successfully.`);
         }
-
-        // Monthly Chars
-        if (db.monthlyChars) {
-            const charPicksToInsert = db.monthlyChars.map(p => ({ month: p.month, char_name: p.name, cover: p.cover }));
-            await supabase.from('monthly_chars').delete().neq('month', 'dummy-month');
-            const { error } = await supabase.from('monthly_chars').insert(charPicksToInsert);
-            if (error) console.error('Error migrating monthly chars:', error);
-            else console.log('Migrated monthly chars.');
-        }
-
-        // Sagas
-        if (db.sagas) {
-            const sagasToInsert = Object.entries(db.sagas).map(([name, titles]) => ({ name, work_titles: titles }));
-            await supabase.from('sagas').delete().neq('name', 'dummy-name');
-            const { error } = await supabase.from('sagas').insert(sagasToInsert);
-            if (error) console.error('Error migrating sagas:', error);
-            else console.log('Migrated sagas.');
-        }
-
-    } catch (e) {
-        console.error('Error reading database.json:', e);
+    } else {
+        console.log('No works found in local JSON files to migrate.');
     }
 }
-
-async function migrateConfigJson() {
-    console.log('Migrating config.json...');
-    try {
-        const configPath = path.join(contentDir, 'config.json');
-        const dbPath = path.join(contentDir, 'database.json');
-
-        const configContent = await fs.readFile(configPath, 'utf-8');
-        const config = JSON.parse(configContent);
-
-        const dbContent = await fs.readFile(dbPath, 'utf-8');
-        const db = JSON.parse(dbContent);
-
-        const configToInsert = {
-            id: 1,
-            username: config.username,
-            bio: config.bio,
-            deco_pairs: db.decoPairs || [],
-            deco_groups: db.decoGroups || []
-        };
-
-        const { error } = await supabase.from('config').upsert(configToInsert);
-        if (error) console.error('Error migrating config:', error);
-        else console.log('Migrated config.');
-
-    } catch (e) {
-        console.error('Error reading config.json or database.json:', e);
-    }
-}
-
 
 async function main() {
-    console.log('Starting migration to Supabase...');
+    console.log('Starting data migration for WORKS only...');
     await migrateWorks();
-    await migrateDatabaseJson();
-    await migrateConfigJson();
-    console.log('Migration finished!');
+    console.log('Migration for works finished! The rest of the data (characters, etc.) was not touched.');
 }
 
 main();

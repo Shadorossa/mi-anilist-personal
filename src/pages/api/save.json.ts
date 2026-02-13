@@ -161,7 +161,7 @@ export const POST = async ({ request }) => {
         }
 
         const mediaData = {
-          id: jsonSlug,
+          id: `${collectionFolder}/${jsonSlug}`,
           title: finalTitle,
           cover: finalCoverPath, year,
           type: collectionFolder,
