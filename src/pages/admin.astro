@@ -483,10 +483,37 @@ const favoritesOrdered = (db.favorites || [])
                         body: JSON.stringify(payload),
                     });
                     if (res.ok) {
-                        alert(
-                            `${payload.ids.length} personajes actualizados. Recargando...`,
+                        // 1. Actualizar los datos locales en memoria
+                        const allCharLists = [
+                            window.charactersGlobal,
+                            window.likedCharactersGlobal,
+                            window.interestedCharactersGlobal,
+                            window.dislikedCharactersGlobal,
+                        ];
+
+                        selectedCharIds.forEach((charId) => {
+                            for (const list of allCharLists) {
+                                const char = list.find((c) => c.id == charId);
+                                if (char) {
+                                    char.source_id = workId;
+                                    char.sourceId = workId; // Actualizar ambos para consistencia
+                                    break;
+                                }
+                            }
+                        });
+
+                        // 2. Mostrar mensaje de éxito en la barra de acciones
+                        bar.innerHTML = `<div class="flex items-center gap-2 px-4 py-2"><i class="fa-solid fa-check text-green-400"></i><span class="text-xs text-green-400">¡Actualizado!</span></div>`;
+
+                        // 3. Re-renderizar la parrilla para mostrar los cambios inmediatamente
+                        renderMyCharacters(
+                            document.getElementById("myCharsFilter").value,
                         );
-                        window.location.reload();
+
+                        // 4. Después de un momento, salir del modo de edición masiva
+                        setTimeout(() => {
+                            toggleCharBulkEditMode(false);
+                        }, 1500);
                     } else {
                         const errorData = await res.json();
                         throw new Error(
