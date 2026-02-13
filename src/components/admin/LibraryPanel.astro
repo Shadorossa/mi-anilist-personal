@@ -53,10 +53,72 @@
                     placeholder="Filtrar..."
                     class="form-input !w-48 !text-xs"
                 />
+                <button
+                    id="bulk-edit-btn"
+                    onclick="toggleBulkEditMode()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                    title="Modo Selección"
+                    ><i class="fa-solid fa-check-double text-xs"></i></button
+                >
             </div>
         </div>
     </div>
     <div class="custom-scrollbar flex-1">
         <div id="localGrid" class="asearch-grid"></div>
+    </div>
+    <div
+        id="bulk-action-bar"
+        class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#121215] border border-white/10 rounded-2xl shadow-2xl p-2 z-[100]"
+    >
+        <div id="bulk-main-view" class="flex items-center gap-4">
+            <span id="bulk-count" class="text-sm font-bold text-white pl-2 pr-1"
+                >0 seleccionados</span
+            >
+            <button
+                onclick="openBulkStatusChanger()"
+                class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-indigo-500 transition text-xs uppercase tracking-wide"
+                >Cambiar Estado</button
+            >
+            <button
+                onclick="toggleBulkEditMode(false)"
+                class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white"
+                title="Cancelar"><i class="fa-solid fa-xmark"></i></button
+            >
+        </div>
+        <div id="bulk-status-view" class="hidden flex items-center gap-2 px-2">
+            <span class="text-xs font-bold text-gray-400 mr-2">Cambiar a:</span>
+            <button
+                onclick="applyBulkStatusChange('Jugando')"
+                class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-green-400/70 hover:bg-green-500/20 hover:border-green-500/50"
+                title="Jugando"><i class="fa-solid fa-gamepad"></i></button
+            >
+            <button
+                onclick="applyBulkStatusChange('Pausado')"
+                class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-orange-400/70 hover:bg-orange-500/20 hover:border-orange-500/50"
+                title="Pausado"><i class="fa-solid fa-pause"></i></button
+            >
+            <button
+                onclick="applyBulkStatusChange('Pendiente')"
+                class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-yellow-400/70 hover:bg-yellow-500/20 hover:border-yellow-500/50"
+                title="Pendiente"><i class="fa-regular fa-clock"></i></button
+            >
+            <button
+                onclick="applyBulkStatusChange('Abandonado')"
+                class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-red-400/70 hover:bg-red-500/20 hover:border-red-500/50"
+                title="Abandonado"><i class="fa-solid fa-ban"></i></button
+            >
+            <button
+                onclick="applyBulkStatusChange('Completado')"
+                class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b] text-blue-400/70 hover:bg-blue-500/20 hover:border-blue-500/50"
+                title="Completado"
+                ><i class="fa-solid fa-check-double"></i></button
+            >
+            <div class="w-px h-6 bg-white/10 mx-2"></div>
+            <button
+                onclick="closeBulkStatusChanger()"
+                class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white"
+                title="Cancelar"><i class="fa-solid fa-xmark"></i></button
+            >
+        </div>
     </div>
 </div>

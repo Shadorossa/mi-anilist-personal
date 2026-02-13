@@ -424,6 +424,9 @@ const favoritesOrdered = db.favorites
             let currentCharPickYear = new Date().getFullYear();
             let activeCharCategory = "fav";
             let activeCharListSortable = null;
+            // State for Bulk Editing
+            let isBulkEditing = false;
+            let selectedItemIds = new Set();
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
             let localIsAscending = false;
@@ -459,6 +462,105 @@ const favoritesOrdered = db.favorites
                     if (actionName === "openCharEditor") openCharEditor(item);
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
+                }
+            };
+
+            // --- Bulk Edit Functions ---
+            window.toggleBulkEditMode = (forceState) => {
+                isBulkEditing =
+                    typeof forceState === "boolean"
+                        ? forceState
+                        : !isBulkEditing;
+                const btn = document.getElementById("bulk-edit-btn");
+                const grid = document.getElementById("localGrid");
+
+                if (isBulkEditing) {
+                    btn.classList.add("bg-indigo-500/20", "text-indigo-300");
+                    grid.classList.add("bulk-editing");
+                } else {
+                    btn.classList.remove("bg-indigo-500/20", "text-indigo-300");
+                    grid.classList.remove("bulk-editing");
+                    selectedItemIds.clear();
+                }
+                updateBulkActionBar();
+                renderLocalLibrary(
+                    document.getElementById("localFilter").value,
+                );
+            };
+
+            window.toggleItemSelection = (itemId) => {
+                if (!isBulkEditing) return;
+                const card = document.querySelector(
+                    `.asearch-card[data-id='${itemId}']`,
+                );
+                if (selectedItemIds.has(itemId)) {
+                    selectedItemIds.delete(itemId);
+                    card?.classList.remove("selected");
+                } else {
+                    selectedItemIds.add(itemId);
+                    card?.classList.add("selected");
+                }
+                updateBulkActionBar();
+            };
+
+            function updateBulkActionBar() {
+                const bar = document.getElementById("bulk-action-bar");
+                const countEl = document.getElementById("bulk-count");
+                if (isBulkEditing && selectedItemIds.size > 0) {
+                    bar.classList.remove("hidden");
+                    countEl.textContent = `${selectedItemIds.size} seleccionados`;
+                } else {
+                    bar.classList.add("hidden");
+                }
+            }
+
+            window.openBulkStatusChanger = () => {
+                document
+                    .getElementById("bulk-main-view")
+                    .classList.add("hidden");
+                document
+                    .getElementById("bulk-status-view")
+                    .classList.remove("hidden");
+            };
+
+            window.closeBulkStatusChanger = () => {
+                document
+                    .getElementById("bulk-main-view")
+                    .classList.remove("hidden");
+                document
+                    .getElementById("bulk-status-view")
+                    .classList.add("hidden");
+            };
+
+            window.applyBulkStatusChange = async (newStatus) => {
+                const statusView = document.getElementById("bulk-status-view");
+                const originalStatusHTML = statusView.innerHTML;
+
+                statusView.innerHTML = `<div class="flex items-center gap-2 px-4 py-2"><i class="fa-solid fa-circle-notch fa-spin text-white"></i><span class="text-xs text-gray-400">Actualizando...</span></div>`;
+
+                const payload = {
+                    ids: Array.from(selectedItemIds),
+                    updates: { status: newStatus },
+                };
+
+                try {
+                    const res = await fetch("/api/bulk-update.json", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    });
+                    if (res.ok) {
+                        alert(
+                            `${payload.ids.length} obras actualizadas a "${newStatus}". Recargando...`,
+                        );
+                        window.location.reload();
+                    } else {
+                        throw new Error("Bulk update failed");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Error al actualizar las obras.");
+                    statusView.innerHTML = originalStatusHTML; // Restore on error
                 }
             };
 
@@ -603,6 +705,9 @@ const favoritesOrdered = db.favorites
             };
 
             function renderCard(item, actionName, isChar = false) {
+                const fullId = isChar ? item.id : `${item.type}/${item.id}`;
+                const isSelected = selectedItemIds.has(fullId);
+
                 let isFav;
                 // Para mangas, la comprobación de favorito debe considerar el posible sufijo '-M'
                 if (item.type === "manga") {
@@ -641,14 +746,24 @@ const favoritesOrdered = db.favorites
                 }
 
                 return `
-    <div onclick="handleCardClick('${actionName}', '${safeItem}')" class="asearch-card" draggable="false">
+    <div
+        data-id="${fullId}"
+        onclick="${isBulkEditing && !isChar ? `toggleItemSelection('${fullId}')` : `handleCardClick('${actionName}', '${safeItem}')`}"
+        class="asearch-card ${isSelected ? "selected" : ""}"
+        draggable="false"
+    >
+        ${isBulkEditing && !isChar ? `<div class="bulk-checkbox"><i class="fa-solid fa-check"></i></div>` : ""}
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false">
         ${!isChar && item.year ? `<div class="fixed-badge">${item.year}</div>` : ""}
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
         <div class="asearch-info">
             <h4 class="asearch-title">${displayTitle}</h4>
             ${!isChar && starRating > 0 ? `<div class="asearch-rating"><span>${starRating}</span><i class="fa-solid fa-star"></i></div>` : ""}
-            ${isChar && sourceTitle ? `<p class="text-[9px] text-pink-400 font-bold uppercase mt-2">${sourceTitle}</p>` : ""}
+            ${
+                isChar && sourceTitle
+                    ? `<p class="text-[9px] text-pink-400 font-bold uppercase mt-2">${sourceTitle}</p>`
+                    : ""
+            }
         </div>
     </div>`;
             }
@@ -764,6 +879,25 @@ const favoritesOrdered = db.favorites
                 document.getElementById("editorYear").innerText =
                     data.year || "----";
                 document.getElementById("editorCover").src = data.cover;
+
+                document.getElementById("privateNotes").value =
+                    data.privateNotes || "";
+
+                // Saga Selector Logic
+                const sagaSelector = document.getElementById("sagaSelector");
+                sagaSelector.innerHTML = '<option value="">Ninguna</option>';
+
+                let currentSaga = "";
+                for (const sagaName in window.sagas) {
+                    const option = document.createElement("option");
+                    option.value = sagaName;
+                    option.textContent = sagaName;
+                    sagaSelector.appendChild(option);
+                    if (window.sagas[sagaName].includes(data.title)) {
+                        currentSaga = sagaName;
+                    }
+                }
+                sagaSelector.value = currentSaga;
 
                 const status = data.status || "Jugando";
                 document
@@ -996,8 +1130,38 @@ const favoritesOrdered = db.favorites
                         document.getElementById("startDate").value;
                     const finishDate =
                         document.getElementById("finishDate").value;
+                    const privateNotes =
+                        document.getElementById("privateNotes").value;
                     const coverOffsetY =
                         document.getElementById("coverOffsetYRange").value;
+
+                    // Handle Saga update
+                    const selectedSaga =
+                        document.getElementById("sagaSelector").value;
+                    let oldSaga = "";
+                    for (const sagaName in window.sagas) {
+                        if (
+                            window.sagas[sagaName].includes(
+                                currentSelection.title,
+                            )
+                        ) {
+                            oldSaga = sagaName;
+                            break;
+                        }
+                    }
+
+                    if (oldSaga !== selectedSaga) {
+                        if (oldSaga && window.sagas[oldSaga]) {
+                            window.sagas[oldSaga] = window.sagas[
+                                oldSaga
+                            ].filter((t) => t !== currentSelection.title);
+                        }
+                        if (selectedSaga && window.sagas[selectedSaga]) {
+                            window.sagas[selectedSaga].push(
+                                currentSelection.title,
+                            );
+                        }
+                    }
 
                     // 2. Preparar los payloads
                     const fileData = {
@@ -1010,6 +1174,7 @@ const favoritesOrdered = db.favorites
                         startDate: startDate,
                         finishDate: finishDate,
                         coverOffsetY: Number(coverOffsetY),
+                        privateNotes: privateNotes,
                     };
 
                     const isNewItem = typeof currentSelection.id === "number";
@@ -1040,6 +1205,7 @@ const favoritesOrdered = db.favorites
                         dbData: {
                             favorites: window.favoritesTitles,
                             monthlyPicks: window.monthlyPicksGlobal,
+                            sagas: window.sagas,
                         },
                     };
 

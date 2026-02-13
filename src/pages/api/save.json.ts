@@ -101,7 +101,7 @@ export const POST = async ({ request }: { request: Request }) => {
 
     // CASO B: Guardar una obra individual (Game, Anime, Manga)
     if (body.fileData) {
-      const { title, type, cover, year, status, score, startDate, finishDate, coverOffsetY } = body.fileData;
+      const { title, type, cover, year, status, score, startDate, finishDate, coverOffsetY, privateNotes } = body.fileData;
 
       if (!title || !type) {
         // Si solo se enviaron datos de la BD, no es un error.
@@ -133,7 +133,7 @@ export const POST = async ({ request }: { request: Request }) => {
           .replace(/[^a-z0-9\s-°'’]/g, '')
           .trim()
           .replace(/\s+/g, '-')
-          .replace(/-+/g, '-');
+          .replace(/-+/g, '-'); n
 
         const fileName = `${jsonSlug}.json`;
         const filePath = path.resolve(`./src/content/${collectionFolder}/${fileName}`);
@@ -174,7 +174,8 @@ export const POST = async ({ request }: { request: Request }) => {
           score: Number(score) || 0,
           startDate: startDate || '',
           finishDate: finishDate || '',
-          coverOffsetY: coverOffsetY !== undefined ? Number(coverOffsetY) : 50
+          coverOffsetY: coverOffsetY !== undefined ? Number(coverOffsetY) : 50,
+          privateNotes: privateNotes || ''
         };
 
         fs.writeFileSync(filePath, JSON.stringify(mediaData, null, 2));

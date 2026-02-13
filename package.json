@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@astrojs/tailwind": "^6.0.2",
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.17.1",
     "inquirer": "^13.2.2",

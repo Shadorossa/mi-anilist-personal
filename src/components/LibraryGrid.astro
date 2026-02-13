@@ -233,7 +233,9 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
                     (s === "Viendo" || s === "Leyendo"));
             const typeMatch =
                 currentType === "all" || item.type === currentType;
-            const titleMatch = item.title.toLowerCase().includes(textFilter);
+            const titleMatch = (item.title || "")
+                .toLowerCase()
+                .includes(textFilter);
             return statusMatch && typeMatch && titleMatch;
         });
 

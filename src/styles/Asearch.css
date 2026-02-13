@@ -816,3 +816,37 @@ body.is-dragging-active .asearch-card:not(.sortable-chosen):hover {
 body.is-dragging-active .asearch-card:not(.sortable-chosen):hover .asearch-info {
     opacity: 0;
 }
+
+/* Bulk Editing */
+.asearch-grid.bulk-editing .asearch-card {
+    cursor: pointer;
+}
+
+.asearch-card .bulk-checkbox {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s;
+}
+
+.asearch-card.selected .bulk-checkbox {
+    background-color: #6366f1;
+    border-color: #818cf8;
+    color: white;
+}
+
+.asearch-card.selected {
+    transform: translateY(-2px) scale(0.98);
+    box-shadow: 0 0 0 3px #6366f1;
+    border-color: #6366f1;
+}

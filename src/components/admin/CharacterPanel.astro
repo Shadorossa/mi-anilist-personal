@@ -1,27 +1,31 @@
 <div id="characters-panel" class="panel hidden">
-    <div class="flex flex-col h-full min-h-0">
-        <div class="search-bar-container shrink-0">
-            <select disabled class="form-input !w-auto !text-xs !font-bold">
-                <option>Personajes</option>
-            </select>
-            <form id="charSearchForm" class="search-form">
-                <input
-                    type="text"
-                    id="charInput"
-                    placeholder="Buscar personaje en Anilist..."
-                    autocomplete="off"
-                    class="search-input"
-                />
-                <button type="submit" class="search-btn"
-                    ><i class="fa-solid fa-search"></i></button
-                >
-            </form>
+    <div class="flex flex-col items-center mb-4 shrink-0">
+        <div class="flex flex-col items-center pt-1">
+            <h2 class="text-lg font-bold text-white tracking-tight">
+                Buscador de Personajes
+            </h2>
+            <div class="w-32 h-px bg-white/10 mt-2 mb-4"></div>
         </div>
-        <div class="custom-scrollbar flex-1 space-y-10">
-            <div>
-                <h3 class="panel-subheader">Resultados de Búsqueda</h3>
-                <div id="charResults" class="asearch-grid mt-4"></div>
-            </div>
-        </div>
+        <form
+            id="charSearchForm"
+            class="relative"
+            onsubmit="event.preventDefault();"
+        >
+            <input
+                type="text"
+                id="charInput"
+                placeholder="Buscar personaje..."
+                autocomplete="off"
+                class="form-input !w-64 !text-xs"
+            />
+            <button
+                type="submit"
+                class="absolute top-0 right-0 h-full px-3 text-gray-500 hover:text-white transition-colors"
+                ><i class="fa-solid fa-search text-xs"></i></button
+            >
+        </form>
+    </div>
+    <div class="custom-scrollbar flex-1">
+        <div id="charResults" class="asearch-grid"></div>
     </div>
 </div>
