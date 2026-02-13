@@ -255,6 +255,7 @@ if (charactersByCategory.hall_of_fame.length > 0) {
         ...c,
         name: c.title,
         img: resolveImagePath(c.cover),
+        source: getSourceTitle(c),
     }));
 } else {
     customCharacters = [
@@ -273,10 +274,11 @@ if (charactersByCategory.liked.length > 0) {
             ...c,
             name: c.title,
             img: resolveImagePath(c.cover),
+            source: getSourceTitle(c),
         }))
         .sort((a, b) => {
-            const sourceA = getSourceTitle(a) || "";
-            const sourceB = getSourceTitle(b) || "";
+            const sourceA = a.source || "";
+            const sourceB = b.source || "";
             const sourceCompare = sourceA.localeCompare(sourceB);
             if (sourceCompare !== 0) return sourceCompare;
             return a.name.localeCompare(b.name);
@@ -290,10 +292,11 @@ if (charactersByCategory.interested.length > 0) {
             ...c,
             name: c.title,
             img: resolveImagePath(c.cover),
+            source: getSourceTitle(c),
         }))
         .sort((a, b) => {
-            const sourceA = getSourceTitle(a) || "";
-            const sourceB = getSourceTitle(b) || "";
+            const sourceA = a.source || "";
+            const sourceB = b.source || "";
             const sourceCompare = sourceA.localeCompare(sourceB);
             if (sourceCompare !== 0) return sourceCompare;
             return a.name.localeCompare(b.name);
@@ -307,10 +310,11 @@ if (charactersByCategory.disliked.length > 0) {
             ...c,
             name: c.title,
             img: resolveImagePath(c.cover),
+            source: getSourceTitle(c),
         }))
         .sort((a, b) => {
-            const sourceA = getSourceTitle(a) || "";
-            const sourceB = getSourceTitle(b) || "";
+            const sourceA = a.source || "";
+            const sourceB = b.source || "";
             const sourceCompare = sourceA.localeCompare(sourceB);
             if (sourceCompare !== 0) return sourceCompare;
             return a.name.localeCompare(b.name);
