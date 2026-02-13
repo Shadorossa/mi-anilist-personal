@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 export const POST: APIRoute = async ({ request }) => {
     try {
