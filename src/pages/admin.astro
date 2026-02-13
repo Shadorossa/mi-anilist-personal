@@ -173,7 +173,7 @@ const favoritesOrdered = (db.favorites || [])
                 <div class="custom-scrollbar flex-1">
                     <div
                         id="bulk-offset-grid"
-                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
+                        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"
                     >
                     </div>
                 </div>
@@ -650,30 +650,23 @@ const favoritesOrdered = (db.favorites || [])
                     tempOffsetMap.set(charId, currentOffset);
 
                     const cardHTML = `
-                        <div class="bg-[#121215] border border-white/5 rounded-lg p-3 flex flex-col gap-2">
-                            <div class="flex items-center justify-center gap-4">
-                                <!-- History-like preview card -->
-                                <div class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group h-[100px] w-[200px] flex flex-col select-none">
-                                    <div class="flex gap-2 h-10 mb-2 shrink-0">
-                                        <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
-                                            <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">PREV</span>
-                                            <span class="text-[9px] text-pink-400 font-black leading-none tracking-wide">VIEW</span>
-                                        </div>
-                                        <div class="flex-1 relative rounded overflow-hidden shadow-sm">
-                                            <img id="bulk-offset-preview-${charId}" src="${char.cover}" class="absolute inset-0 w-full h-full object-cover" style="object-position: center ${currentOffset}%;" />
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]">
-                                        <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2">${char.title}</h4>
-                                    </div>
+                        <div class="bg-[#121215] border border-white/5 rounded-lg p-2 group flex flex-col select-none gap-2">
+                            <div class="flex gap-2 h-10 shrink-0">
+                                <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
+                                    <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">PREV</span>
+                                    <span class="text-[9px] text-pink-400 font-black leading-none tracking-wide">VIEW</span>
                                 </div>
-                                <!-- Slider -->
-                                <div id="bulk-offset-slider-container-${charId}" class="relative h-[100px] w-4 flex justify-center cursor-pointer">
+                                <div class="flex-1 relative rounded overflow-hidden shadow-sm">
+                                    <img id="bulk-offset-preview-${charId}" src="${char.cover}" class="absolute inset-0 w-full h-full object-cover" style="object-position: center ${currentOffset}%;" />
+                                </div>
+                                <!-- Vertical Slider next to image -->
+                                <div id="bulk-offset-slider-container-${charId}" class="relative h-10 w-4 flex justify-center cursor-pointer">
                                     <div class="w-1 h-full bg-white/10 rounded-full"></div>
                                     <div id="bulk-offset-slider-thumb-${charId}" class="absolute w-4 h-4 bg-pink-500 rounded-full cursor-grab" style="top: calc(${100 - currentOffset}% - 8px);"></div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-end mt-1">
+                            <div class="flex items-center justify-between px-0.5 min-h-[24px]">
+                                <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-left line-clamp-2 flex-1" title="${char.title}">${char.title}</h4>
                                 <span id="bulk-offset-text-${charId}" class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-12 text-center">${currentOffset}%</span>
                             </div>
                         </div>
@@ -716,8 +709,26 @@ const favoritesOrdered = (db.favorites || [])
                 btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
                 btn.disabled = true;
 
+                const allCharLists = [
+                    ...window.charactersGlobal,
+                    ...window.likedCharactersGlobal,
+                    ...window.interestedCharactersGlobal,
+                    ...window.dislikedCharactersGlobal,
+                ];
+
                 const updates = Array.from(tempOffsetMap.entries()).map(
-                    ([id, offset]) => ({ id: id, cover_offset_y: offset }),
+                    ([id, offset]) => {
+                        const char = allCharLists.find(
+                            (c) => String(c.id) === id,
+                        );
+                        return {
+                            id: id,
+                            cover_offset_y: offset,
+                            // Añadimos los campos NOT NULL para que el upsert no falle si intenta insertar
+                            title: char ? char.title : "Unknown Character",
+                            category: char ? char.category : "liked",
+                        };
+                    },
                 );
 
                 try {

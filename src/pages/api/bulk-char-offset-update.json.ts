@@ -13,7 +13,10 @@ export const POST: APIRoute = async ({ request }) => {
         // Nos aseguramos de que solo se actualicen los campos deseados
         const cleanUpdates = updates.map(u => ({
             id: u.id,
-            cover_offset_y: u.cover_offset_y
+            cover_offset_y: u.cover_offset_y,
+            // Pasamos los campos NOT NULL para evitar errores en caso de que upsert intente un INSERT
+            title: u.title,
+            category: u.category
         }));
 
         const { error } = await supabase.from('characters').upsert(cleanUpdates);
