@@ -1,14 +1,18 @@
 export const prerender = false;
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
+import { supabase } from '../../lib/supabase';
 
 // Helper function to find an existing local image with flexible extension
-function findLocalImage(baseDir: string, slug: string): string | null {
+async function findLocalImage(baseDir: string, slug: string): Promise<string | null> {
   const commonExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
   for (const ext of commonExtensions) {
     const fullPath = path.join(baseDir, `${slug}${ext}`);
-    if (fs.existsSync(fullPath)) {
+    try {
+      await fs.access(fullPath);
       return `${slug}${ext}`;
+    } catch {
+      // file does not exist, continue
     }
   }
   return null;
@@ -35,68 +39,70 @@ function romanToArabic(roman) {
   return result;
 }
 
-export const POST = async ({ request }: { request: Request }) => {
+export const POST = async ({ request }) => {
   try {
     const body = await request.json();
 
     // CASO A: Actualizar base de datos central (Favoritos / Picks / Personajes)
     if (body.dbData) {
-      const dbPath = path.resolve('./src/content/database.json');
-      let currentDB = { favorites: [], monthlyPicks: [], characters: [], monthlyChars: [], sagas: {} };
-      if (fs.existsSync(dbPath)) {
-        currentDB = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-      }
-      const { favorites, monthlyPicks, characters, monthlyChars, sagas } = body.dbData;
+      const { favorites, monthlyPicks, characters, likedCharacters, interestedCharacters, dislikedCharacters, monthlyChars, sagas } = body.dbData;
 
-      let processedCharacters = currentDB.characters;
-      if (characters) {
-        const charaDir = path.resolve('./public/img/chara');
-        if (!fs.existsSync(charaDir)) {
-          fs.mkdirSync(charaDir, { recursive: true });
-        }
-
-        processedCharacters = await Promise.all(characters.map(async (char) => {
-          if (char.cover && char.cover.startsWith('http')) {
-            const slug = char.title.toLowerCase().replace(/[^a-z0-9\s-°'’]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
-
-            const existingLocalFileName = findLocalImage(charaDir, slug);
-            if (existingLocalFileName) {
-              return { ...char, cover: `/img/chara/${existingLocalFileName}` };
-            }
-
-            // If no local file exists, download and save as PNG
-            const newCoverFileName = `${slug}${DEFAULT_IMAGE_EXTENSION}`;
-            const newLocalCoverPath = path.resolve(charaDir, newCoverFileName);
-            const newPublicCoverPath = `/img/chara/${newCoverFileName}`;
-
-            try {
-              const imageResponse = await fetch(char.cover);
-              if (imageResponse.ok) {
-                const imageBuffer = await imageResponse.arrayBuffer();
-                fs.writeFileSync(newLocalCoverPath, Buffer.from(imageBuffer));
-                return { ...char, cover: newPublicCoverPath };
-              }
-            } catch (e) { console.error(`Failed to download cover for char ${char.title}:`, e); }
-            // Fallback to original URL if download fails
-            return char;
+      if (favorites) {
+        const favsToInsert = favorites.map((fav, index) => {
+          if (typeof fav === 'string') {
+            return { order: index, is_saga: false, title: fav };
           }
-          return char;
-        }));
+          return { order: index, is_saga: true, title: fav.title, cover: fav.cover };
+        });
+        await supabase.from('favorites').delete().neq('order', -1);
+        const { error } = await supabase.from('favorites').insert(favsToInsert);
+        if (error) throw new Error(`Favorites Error: ${error.message}`);
       }
 
-      const newDB = {
-        ...currentDB,
-        favorites: favorites !== undefined ? favorites : currentDB.favorites,
-        monthlyPicks: monthlyPicks !== undefined ? monthlyPicks : currentDB.monthlyPicks,
-        characters: characters !== undefined ? processedCharacters : currentDB.characters,
-        likedCharacters: body.dbData.likedCharacters !== undefined ? body.dbData.likedCharacters : currentDB.likedCharacters,
-        interestedCharacters: body.dbData.interestedCharacters !== undefined ? body.dbData.interestedCharacters : currentDB.interestedCharacters,
-        dislikedCharacters: body.dbData.dislikedCharacters !== undefined ? body.dbData.dislikedCharacters : currentDB.dislikedCharacters,
-        monthlyChars: monthlyChars !== undefined ? monthlyChars : currentDB.monthlyChars,
-        sagas: sagas !== undefined ? sagas : currentDB.sagas
-      };
+      if (monthlyPicks) {
+        const picksToInsert = monthlyPicks.map(p => ({ month: p.month, work_title: p.title, cover: p.cover }));
+        await supabase.from('monthly_picks').delete().neq('month', 'dummy-month');
+        const { error } = await supabase.from('monthly_picks').upsert(picksToInsert);
+        if (error) throw new Error(`MonthlyPicks Error: ${error.message}`);
+      }
 
-      fs.writeFileSync(dbPath, JSON.stringify(newDB, null, 2));
+      if (monthlyChars) {
+        const charPicksToInsert = monthlyChars.map(p => ({ month: p.month, char_name: p.name, cover: p.cover }));
+        await supabase.from('monthly_chars').delete().neq('month', 'dummy-month');
+        const { error } = await supabase.from('monthly_chars').upsert(charPicksToInsert);
+        if (error) throw new Error(`MonthlyChars Error: ${error.message}`);
+      }
+
+      if (sagas) {
+        const sagasToInsert = Object.entries(sagas).map(([name, titles]) => ({ name, work_titles: titles }));
+        await supabase.from('sagas').delete().neq('name', 'dummy-name');
+        const { error } = await supabase.from('sagas').upsert(sagasToInsert);
+        if (error) throw new Error(`Sagas Error: ${error.message}`);
+      }
+
+      // Handle all character lists
+      if (characters || likedCharacters || interestedCharacters || dislikedCharacters) {
+        const allChars = [];
+        if (characters) allChars.push(...characters.map((c, i) => ({ ...c, category: 'hall_of_fame', order: i })));
+        if (likedCharacters) allChars.push(...likedCharacters.map(c => ({ ...c, category: 'liked' })));
+        if (interestedCharacters) allChars.push(...interestedCharacters.map(c => ({ ...c, category: 'interested' })));
+        if (dislikedCharacters) allChars.push(...dislikedCharacters.map(c => ({ ...c, category: 'disliked' })));
+
+        const charsToUpsert = allChars.map(c => ({
+          id: c.id,
+          title: c.title,
+          cover: c.cover,
+          source_id: c.sourceId,
+          cover_offset_y: c.coverOffsetY,
+          category: c.category,
+          order: c.order
+        }));
+
+        // To do a full sync, we delete all and re-insert
+        await supabase.from('characters').delete().neq('id', 'dummy-id-to-delete-all');
+        const { error } = await supabase.from('characters').insert(charsToUpsert);
+        if (error) throw new Error(`Characters Error: ${error.message}`);
+      }
     }
 
     // CASO B: Guardar una obra individual (Game, Anime, Manga)
@@ -104,8 +110,6 @@ export const POST = async ({ request }: { request: Request }) => {
       const { title, type, cover, year, status, score, startDate, finishDate, coverOffsetY, privateNotes } = body.fileData;
 
       if (!title || !type) {
-        // Si solo se enviaron datos de la BD, no es un error.
-        // Pero si se proporcionó fileData y está incompleto, sí lo es.
         if (!body.dbData) {
           return new Response(JSON.stringify({ error: "Faltan datos críticos para guardar el archivo" }), { status: 400 });
         }
@@ -113,11 +117,7 @@ export const POST = async ({ request }: { request: Request }) => {
         let collectionFolder = type;
         if (type === 'game') collectionFolder = 'games';
 
-        // El título tal como estará en el JSON (con -M para mangas)
         const finalTitle = title.endsWith(' -M') ? title.slice(0, -3) : title;
-
-        // El título base para el nombre del archivo JSON (sin -M)
-        //const baseTitleForJson = finalTitle.endsWith(' -M') ? finalTitle.slice(0, -3) : finalTitle;
         const baseTitleForJson = finalTitle;
 
 
@@ -125,27 +125,20 @@ export const POST = async ({ request }: { request: Request }) => {
           .replace(/[^a-z0-9\s-°'’]/g, '') // Permitir ', °, ’ y guiones
           .trim()
           .replace(/\s+/g, '-')
-          .replace(/-+/g, '-');
+          .replace(/-+/g, '-') + '.json';
 
-        // El slug para el archivo de la portada (con -M)
-        //const coverSlug = finalTitle.toLowerCase()
         const coverSlug = title.toLowerCase()
           .replace(/[^a-z0-9\s-°'’]/g, '')
           .trim()
           .replace(/\s+/g, '-')
-          .replace(/-+/g, '-'); n
-
-        const fileName = `${jsonSlug}.json`;
-        const filePath = path.resolve(`./src/content/${collectionFolder}/${fileName}`);
+          .replace(/-+/g, '-');
 
         const coverDir = path.resolve('./public/img/covers');
         let finalCoverPath = cover;
         if (cover && cover.startsWith('http')) {
-          if (!fs.existsSync(coverDir)) {
-            fs.mkdirSync(coverDir, { recursive: true });
-          }
+          await fs.mkdir(coverDir, { recursive: true });
 
-          const existingLocalFileName = findLocalImage(coverDir, coverSlug);
+          const existingLocalFileName = await findLocalImage(coverDir, coverSlug);
           if (existingLocalFileName) {
             finalCoverPath = `/img/covers/${existingLocalFileName}`;
           } else {
@@ -158,7 +151,7 @@ export const POST = async ({ request }: { request: Request }) => {
               const imageResponse = await fetch(cover);
               if (imageResponse.ok) {
                 const imageBuffer = await imageResponse.arrayBuffer();
-                fs.writeFileSync(newLocalCoverPath, Buffer.from(imageBuffer));
+                await fs.writeFile(newLocalCoverPath, Buffer.from(imageBuffer));
                 finalCoverPath = newPublicCoverPath;
               }
             } catch (e) {
@@ -168,75 +161,23 @@ export const POST = async ({ request }: { request: Request }) => {
         }
 
         const mediaData = {
-          title: finalTitle, cover: finalCoverPath, year,
+          id: jsonSlug,
+          title: finalTitle,
+          cover: finalCoverPath, year,
           type: collectionFolder,
           status: status || 'Jugando',
           score: Number(score) || 0,
-          startDate: startDate || '',
-          finishDate: finishDate || '',
-          coverOffsetY: coverOffsetY !== undefined ? Number(coverOffsetY) : 50,
-          privateNotes: privateNotes || ''
+          start_date: startDate || '',
+          finish_date: finishDate || '',
+          cover_offset_y: coverOffsetY !== undefined ? Number(coverOffsetY) : 50,
+          private_notes: privateNotes || ''
         };
 
-        fs.writeFileSync(filePath, JSON.stringify(mediaData, null, 2));
+        const { error } = await supabase.from('works').upsert(mediaData);
+        if (error) throw new Error(`Work upsert error: ${error.message}`);
 
-        // --- Saga Automation ---
-        const dbPathForSaga = path.resolve('./src/content/database.json');
-        if (fs.existsSync(dbPathForSaga)) {
-          try {
-            const dbContent = fs.readFileSync(dbPathForSaga, 'utf-8');
-            const fullDb = JSON.parse(dbContent);
-
-            if (fullDb.sagas) {
-              const newGameTitle = title;
-              const getTitleNumber = (t: string): number | null => {
-                // Matches an arabic number at the end of the string.
-                let match = t.match(/\s(\d+)$/);
-                if (match) return parseInt(match[1], 10);
-
-                // Matches a roman numeral at the end of the string.
-                match = t.match(/\s(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))$/i);
-                if (match && match[1]) {
-                  return romanToArabic(match[1]);
-                }
-                return null;
-              };
-
-              const newGameNumber = getTitleNumber(newGameTitle);
-
-              if (newGameNumber !== null) { // Only run automation if the new game has a number.
-                let sagaUpdated = false;
-                for (const sagaName in fullDb.sagas) {
-                  // Check if the game title starts with the saga name and is not already in the saga
-                  if (newGameTitle.toLowerCase().startsWith(sagaName.toLowerCase()) && !fullDb.sagas[sagaName].includes(newGameTitle)) {
-
-                    fullDb.sagas[sagaName].push(newGameTitle);
-
-                    // Sort the saga list descending by number
-                    fullDb.sagas[sagaName].sort((a: string, b: string) => {
-                      const numA = getTitleNumber(a);
-                      const numB = getTitleNumber(b);
-
-                      if (numA !== null && numB !== null) return numB - numA;
-                      if (numA !== null) return -1; // numbers before no-numbers
-                      if (numB !== null) return 1;
-                      return a.localeCompare(b); // alpha sort for non-numbered
-                    });
-
-                    sagaUpdated = true;
-                    break; // Stop after finding the first matching saga
-                  }
-                }
-
-                if (sagaUpdated) {
-                  fs.writeFileSync(dbPathForSaga, JSON.stringify(fullDb, null, 2));
-                }
-              }
-            }
-          } catch (e) {
-            console.error("Error during saga automation:", e);
-          }
-        }
+        // La automatización de sagas ahora debería hacerse en el lado del cliente o como un trigger en Supabase.
+        // Por simplicidad, la eliminamos de este endpoint. La lógica ya existe en `admin.astro`.
       }
     }
 
@@ -248,6 +189,6 @@ export const POST = async ({ request }: { request: Request }) => {
 
   } catch (error) {
     console.error("Error en SAVE API:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), { status: 500 });
   }
 }

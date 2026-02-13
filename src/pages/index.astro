@@ -1,7 +1,8 @@
 ---
-import fs from "node:fs";
-import path from "node:path";
+import { supabase } from "../lib/supabase";
 import * as Vibrant from "node-vibrant/node";
+import path from "node:path"; // path y fs se mantienen para las imágenes decorativas locales
+import fs from "node:fs";
 
 // Componentes
 import ProfileHeader from "../components/ProfileHeader.astro";
@@ -11,28 +12,71 @@ import TimeTravel from "../components/TimeTravel.astro";
 import SectionWrapper from "../components/SectionWrapper.astro";
 import LibraryGrid from "../components/LibraryGrid.astro";
 
-// 1. CONFIGURACIÓN
-let profile = { username: "Admin", bio: "Cargando..." };
-try {
-    const config = await import("../content/config.json");
-    profile = config.default || config;
-} catch (e) {}
+// --- 1. OBTENER TODOS LOS DATOS DESDE SUPABASE ---
+const [
+    configRes,
+    worksRes,
+    favoritesRes,
+    monthlyPicksRes,
+    charactersRes,
+    monthlyCharsRes,
+    sagasRes,
+] = await Promise.all([
+    supabase.from("config").select("*").single(),
+    supabase.from("works").select("*"),
+    supabase
+        .from("favorites")
+        .select("is_saga, title, cover, order")
+        .order("order"),
+    supabase
+        .from("monthly_picks")
+        .select("month, work_title, cover")
+        .order("month", { ascending: false }),
+    supabase.from("characters").select("*"),
+    supabase
+        .from("monthly_chars")
+        .select("month, char_name, cover")
+        .order("month", { ascending: false }),
+    supabase.from("sagas").select("name, work_titles"),
+]);
 
-// 2. DB
-let db = {
-    favorites: [],
-    monthlyPicks: [],
-    characters: [],
-    monthlyChars: [],
-    interestedCharacters: [],
-    dislikedCharacters: [],
-    decoPairs: [],
-    decoGroups: [],
+// --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
+
+// Perfil y configuración
+const profile = {
+    username: configRes.data?.username || "Admin",
+    bio: configRes.data?.bio || "Cargando...",
 };
-try {
-    const d = await import("../content/database.json");
-    db = d.default || d;
-} catch (e) {}
+
+// Contenido principal (obras)
+const allContent = worksRes.data || [];
+
+// Sagas (convertir array a objeto/mapa)
+const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
+    acc[saga.name] = saga.work_titles;
+    return acc;
+}, {});
+
+// Personajes (separar por categoría)
+const allCharacters = charactersRes.data || [];
+const charactersByCategory = {
+    hall_of_fame: allCharacters
+        .filter((c) => c.category === "hall_of_fame")
+        .sort((a, b) => a.order - b.order),
+    liked: allCharacters.filter((c) => c.category === "liked"),
+    interested: allCharacters.filter((c) => c.category === "interested"),
+    disliked: allCharacters.filter((c) => c.category === "disliked"),
+};
+
+// Base de datos simulada para el resto del código
+const db = {
+    favorites: favoritesRes.data || [],
+    monthlyPicks: monthlyPicksRes.data || [],
+    monthlyChars: monthlyCharsRes.data || [],
+    sagas: sagasMap,
+    decoPairs: configRes.data?.deco_pairs || [],
+    decoGroups: configRes.data?.deco_groups || [],
+};
 
 const bannerPath = "/img/profile/banner.png";
 const avatarPath = "/img/profile/pic.png";
@@ -80,34 +124,7 @@ function resolveImagePath(basePath) {
     return basePath; // Fallback to original path if not found.
 }
 
-function readCollection(collectionName) {
-    const dirPath = path.resolve(`./src/content/${collectionName}`);
-    if (!fs.existsSync(dirPath)) return [];
-    const files = fs.readdirSync(dirPath);
-    return files
-        .filter((file) => file.endsWith(".json"))
-        .map((file) => {
-            try {
-                const filePath = path.join(dirPath, file);
-                const content = fs.readFileSync(filePath, "utf-8");
-                const data = JSON.parse(content);
-                const type =
-                    collectionName === "games" ? "game" : collectionName;
-                return { ...data, id: file, type: type };
-            } catch (e) {
-                return null;
-            }
-        })
-        .filter((item) => item !== null);
-}
-
-// 3. OBRAS
-const allContent = [
-    ...readCollection("games"),
-    ...readCollection("anime"),
-    ...readCollection("manga"),
-];
-
+// 3. ESTADÍSTICAS (sin cambios, ya usa `allContent`)
 const stats = {
     total: allContent.length,
     playing: allContent.filter(
@@ -142,7 +159,7 @@ const favorites = (db.favorites || [])
     .map((fav) => {
         if (typeof fav === "string") {
             const item = allContent.find((contentItem) => {
-                // For manga, check against both "Title" and "Title -M"
+                // Para mangas, comprobar con y sin el sufijo "-M"
                 if (contentItem.type === "manga") {
                     return (
                         contentItem.title === fav ||
@@ -152,8 +169,7 @@ const favorites = (db.favorites || [])
                 return contentItem.title === fav;
             });
             return item;
-        }
-        if (typeof fav === "object" && fav.isSaga) {
+        } else if (typeof fav === "object" && fav.is_saga) {
             const sagaTitles = db.sagas?.[fav.title] || [];
             if (sagaTitles.length > 0) {
                 const sagaItems = sagaTitles
@@ -180,7 +196,9 @@ const favorites = (db.favorites || [])
 // 5. MENSUALES (OBRAS)
 const monthlyWorks = (db.monthlyPicks || [])
     .map((pick) => {
-        const fullItem = allContent.find((item) => item.title === pick.title);
+        const fullItem = allContent.find(
+            (item) => item.title === pick.work_title,
+        );
         const [y, m] = pick.month.split("-");
         const dateObj = new Date(parseInt(y), parseInt(m) - 1);
         const monthName = dateObj
@@ -188,7 +206,7 @@ const monthlyWorks = (db.monthlyPicks || [])
             .toUpperCase()
             .replace(".", "");
         return {
-            title: pick.title,
+            title: pick.work_title,
             cover: fullItem?.cover || pick.cover,
             year: y,
             month: monthName,
@@ -199,10 +217,10 @@ const monthlyWorks = (db.monthlyPicks || [])
     .sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 
 // 6. MENSUALES (PERSONAJES)
-const allDbChars = [...(db.characters || []), ...(db.likedCharacters || [])];
+const allDbChars = allCharacters;
 const monthlyChars = (db.monthlyChars || [])
     .map((pick) => {
-        const fullChar = allDbChars.find((c) => c.title === pick.name);
+        const fullChar = allDbChars.find((c) => c.title === pick.char_name);
         const [y, m] = pick.month.split("-");
         const dateObj = new Date(parseInt(y), parseInt(m) - 1);
         const monthName = dateObj
@@ -210,7 +228,7 @@ const monthlyChars = (db.monthlyChars || [])
             .toUpperCase()
             .replace(".", "");
         return {
-            title: pick.name,
+            title: pick.char_name,
             cover: resolveImagePath(pick.cover),
             year: y,
             month: monthName,
@@ -225,14 +243,14 @@ const worksMap = new Map(allContent.map((work) => [work.id, work.title]));
 
 const getSourceTitle = (char) => {
     if (char.sourceId) {
-        return worksMap.get(char.sourceId);
+        return worksMap.get(char.source_id);
     }
     return char.source; // Backwards compatibility
 };
 
 let customCharacters = [];
-if (db.characters && db.characters.length > 0) {
-    customCharacters = db.characters.map((c) => ({
+if (charactersByCategory.hall_of_fame.length > 0) {
+    customCharacters = charactersByCategory.hall_of_fame.map((c) => ({
         ...c,
         name: c.title,
         img: resolveImagePath(c.cover),
@@ -248,8 +266,8 @@ if (db.characters && db.characters.length > 0) {
 }
 
 let likedCharacters = [];
-if (db.likedCharacters && db.likedCharacters.length > 0) {
-    likedCharacters = db.likedCharacters
+if (charactersByCategory.liked.length > 0) {
+    likedCharacters = charactersByCategory.liked
         .map((c) => ({
             ...c,
             name: c.title,
@@ -265,8 +283,8 @@ if (db.likedCharacters && db.likedCharacters.length > 0) {
 }
 
 let interestedCharacters = [];
-if (db.interestedCharacters && db.interestedCharacters.length > 0) {
-    interestedCharacters = db.interestedCharacters
+if (charactersByCategory.interested.length > 0) {
+    interestedCharacters = charactersByCategory.interested
         .map((c) => ({
             ...c,
             name: c.title,
@@ -282,8 +300,8 @@ if (db.interestedCharacters && db.interestedCharacters.length > 0) {
 }
 
 let dislikedCharacters = [];
-if (db.dislikedCharacters && db.dislikedCharacters.length > 0) {
-    dislikedCharacters = db.dislikedCharacters
+if (charactersByCategory.disliked.length > 0) {
+    dislikedCharacters = charactersByCategory.disliked
         .map((c) => ({
             ...c,
             name: c.title,

@@ -122,16 +122,13 @@ export const GET: APIRoute = async ({ url }) => {
       const res = await fetch(`https://api.jikan.moe/v4/${type}?q=${encodeURIComponent(query)}&limit=25`);
       const data = await res.json();
       if (data.data) {
-        results = data.data.map((i: any) => {
-          const fromDate = type === 'manga' ? i.published?.from : i.aired?.from;
-          return {
-            id: i.mal_id,
-            title: i.title,
-            cover: i.images?.jpg?.large_image_url || i.images?.jpg?.image_url,
-            year: i.year || (fromDate ? fromDate.split('-')[0] : 'N/A'),
-            score: i.score ? i.score * 10 : 0
-          };
-        });
+        results = data.data.map((i: any) => ({
+          id: i.mal_id,
+          title: i.title,
+          cover: i.images?.jpg?.large_image_url || i.images?.jpg?.image_url,
+          year: i.year || (i.aired?.from ? i.aired.from.split('-')[0] : 'N/A'),
+          score: i.score ? i.score * 10 : 0
+        }));
       }
     }
 
