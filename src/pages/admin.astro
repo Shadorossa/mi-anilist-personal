@@ -144,6 +144,42 @@ const favoritesOrdered = (db.favorites || [])
             </div>
         </div>
 
+        <!-- NUEVO: Modal para editar offsets de personajes en masa -->
+        <div
+            id="bulk-offset-editor-modal"
+            class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        >
+            <div
+                class="bg-[#0c0c0e] border border-white/10 w-full max-w-7xl rounded-3xl shadow-2xl p-6 relative flex flex-col max-h-[90vh]"
+            >
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <h3 class="text-lg font-bold text-white">
+                        Editor de Offsets en Masa
+                    </h3>
+                    <div class="flex items-center gap-4">
+                        <button
+                            id="save-bulk-offsets-btn"
+                            onclick="saveBulkOffsets()"
+                            class="bg-green-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-green-500 transition text-xs uppercase tracking-wide"
+                            >Guardar Cambios</button
+                        >
+                        <button
+                            onclick="closeBulkOffsetEditor()"
+                            class="w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-white hover:text-black transition"
+                            ><i class="fa-solid fa-xmark"></i></button
+                        >
+                    </div>
+                </div>
+                <div class="custom-scrollbar flex-1">
+                    <div
+                        id="bulk-offset-grid"
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4"
+                    >
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script
             define:vars={{
                 localLibrary,
@@ -377,6 +413,8 @@ const favoritesOrdered = (db.favorites || [])
             let isCharBulkEditing = false; // For characters
             let selectedCharIds = new Set(); // For characters
             let isBulkSourcePicking = false; // Flag for work picker
+            let tempOffsetMap = new Map(); // For the new bulk offset editor
+            let hideAssignedChars = false;
             // --- Lógica para ordenación de la biblioteca local ---
             let localCurrentSort = "saga";
             let localIsAscending = false;
@@ -412,6 +450,19 @@ const favoritesOrdered = (db.favorites || [])
                 }
             };
 
+            window.toggleHideAssigned = () => {
+                hideAssignedChars = !hideAssignedChars;
+                const btn = document.getElementById("char-hide-assigned-btn");
+                if (hideAssignedChars) {
+                    btn.classList.add("bg-indigo-500/20", "text-indigo-300");
+                } else {
+                    btn.classList.remove("bg-indigo-500/20", "text-indigo-300");
+                }
+                renderMyCharacters(
+                    document.getElementById("myCharsFilter").value,
+                );
+            };
+
             // --- Character Bulk Edit Functions ---
             window.toggleCharBulkEditMode = (forceState) => {
                 isCharBulkEditing =
@@ -419,13 +470,18 @@ const favoritesOrdered = (db.favorites || [])
                         ? forceState
                         : !isCharBulkEditing;
                 const btn = document.getElementById("char-bulk-edit-btn");
+                const selectAllBtn = document.getElementById(
+                    "char-select-all-btn",
+                );
                 const grid = document.getElementById("myCharsGrid");
 
                 if (isCharBulkEditing) {
                     btn.classList.add("bg-indigo-500/20", "text-indigo-300");
+                    selectAllBtn.classList.remove("hidden");
                     grid.classList.add("bulk-editing");
                 } else {
                     btn.classList.remove("bg-indigo-500/20", "text-indigo-300");
+                    selectAllBtn.classList.add("hidden");
                     grid.classList.remove("bulk-editing");
                     selectedCharIds.clear();
                 }
@@ -433,6 +489,40 @@ const favoritesOrdered = (db.favorites || [])
                 renderMyCharacters(
                     document.getElementById("myCharsFilter").value,
                 );
+            };
+
+            window.toggleSelectAllChars = () => {
+                const allVisibleCards = document.querySelectorAll(
+                    "#myCharsGrid .asearch-card",
+                );
+                const allVisibleIds = Array.from(allVisibleCards).map((card) =>
+                    String(card.dataset.id),
+                );
+
+                const allAreSelected =
+                    allVisibleIds.length > 0 &&
+                    allVisibleIds.every((id) => selectedCharIds.has(id));
+
+                if (allAreSelected) {
+                    // Deseleccionar todos los visibles
+                    allVisibleIds.forEach((id) => {
+                        selectedCharIds.delete(id);
+                        const card = document.querySelector(
+                            `.asearch-card[data-id='${id}']`,
+                        );
+                        card?.classList.remove("selected");
+                    });
+                } else {
+                    // Seleccionar todos los visibles
+                    allVisibleIds.forEach((id) => {
+                        selectedCharIds.add(id);
+                        const card = document.querySelector(
+                            `.asearch-card[data-id='${id}']`,
+                        );
+                        card?.classList.add("selected");
+                    });
+                }
+                updateCharBulkActionBar();
             };
 
             window.toggleCharItemSelection = (charId) => {
@@ -531,6 +621,152 @@ const favoritesOrdered = (db.favorites || [])
                     closeWorkPicker();
                 }
             }
+
+            // --- Bulk Offset Editor Functions ---
+            window.openBulkOffsetEditor = () => {
+                const modal = document.getElementById(
+                    "bulk-offset-editor-modal",
+                );
+                const grid = document.getElementById("bulk-offset-grid");
+                if (!modal || !grid) return;
+
+                tempOffsetMap.clear();
+                grid.innerHTML = ""; // Limpiar contenido previo
+
+                const allCharLists = [
+                    ...window.charactersGlobal,
+                    ...window.likedCharactersGlobal,
+                    ...window.interestedCharactersGlobal,
+                    ...window.dislikedCharactersGlobal,
+                ];
+                const selectedChars = Array.from(selectedCharIds)
+                    .map((id) => allCharLists.find((c) => c.id == id))
+                    .filter(Boolean);
+
+                selectedChars.forEach((char) => {
+                    const charId = String(char.id);
+                    const currentOffset =
+                        char.cover_offset_y ?? char.coverOffsetY ?? 50;
+                    tempOffsetMap.set(charId, currentOffset);
+
+                    const cardHTML = `
+                        <div class="bg-[#121215] border border-white/5 rounded-lg p-3 flex flex-col gap-2">
+                            <div class="flex items-center justify-center gap-4">
+                                <!-- History-like preview card -->
+                                <div class="bg-[#0a0a0c] border border-white/5 rounded-lg p-2 group h-[100px] w-[200px] flex flex-col select-none">
+                                    <div class="flex gap-2 h-10 mb-2 shrink-0">
+                                        <div class="w-10 bg-[#0a0a0c] rounded border border-white/5 flex flex-col items-center justify-center shrink-0">
+                                            <span class="text-[8px] text-gray-500 font-bold leading-none mb-0.5">PREV</span>
+                                            <span class="text-[9px] text-pink-400 font-black leading-none tracking-wide">VIEW</span>
+                                        </div>
+                                        <div class="flex-1 relative rounded overflow-hidden shadow-sm">
+                                            <img id="bulk-offset-preview-${charId}" src="${char.cover}" class="absolute inset-0 w-full h-full object-cover" style="object-position: center ${currentOffset}%;" />
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center px-0.5 min-h-[24px]">
+                                        <h4 class="text-[10px] font-bold text-gray-400 leading-tight text-center line-clamp-2">${char.title}</h4>
+                                    </div>
+                                </div>
+                                <!-- Slider -->
+                                <div id="bulk-offset-slider-container-${charId}" class="relative h-[100px] w-4 flex justify-center cursor-pointer">
+                                    <div class="w-1 h-full bg-white/10 rounded-full"></div>
+                                    <div id="bulk-offset-slider-thumb-${charId}" class="absolute w-4 h-4 bg-pink-500 rounded-full cursor-grab" style="top: calc(${100 - currentOffset}% - 8px);"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-end mt-1">
+                                <span id="bulk-offset-text-${charId}" class="text-white text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded w-12 text-center">${currentOffset}%</span>
+                            </div>
+                        </div>
+                    `;
+                    grid.insertAdjacentHTML("beforeend", cardHTML);
+                });
+
+                setTimeout(() => {
+                    selectedChars.forEach((char) => {
+                        const charId = String(char.id);
+                        initCustomSlider(
+                            `bulk-offset-slider-container-${charId}`,
+                            `bulk-offset-slider-thumb-${charId}`,
+                            (pos) => {
+                                const position = Math.round(pos);
+                                document.getElementById(
+                                    `bulk-offset-preview-${charId}`,
+                                ).style.objectPosition = `center ${position}%`;
+                                document.getElementById(
+                                    `bulk-offset-text-${charId}`,
+                                ).innerText = `${position}%`;
+                                tempOffsetMap.set(charId, position);
+                            },
+                        );
+                    });
+                }, 50);
+
+                modal.classList.remove("hidden");
+            };
+
+            window.closeBulkOffsetEditor = () => {
+                document
+                    .getElementById("bulk-offset-editor-modal")
+                    .classList.add("hidden");
+            };
+
+            window.saveBulkOffsets = async () => {
+                const btn = document.getElementById("save-bulk-offsets-btn");
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
+                btn.disabled = true;
+
+                const updates = Array.from(tempOffsetMap.entries()).map(
+                    ([id, offset]) => ({ id: id, cover_offset_y: offset }),
+                );
+
+                try {
+                    const res = await fetch(
+                        "/api/bulk-char-offset-update.json",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ updates }),
+                        },
+                    );
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(
+                            errorData.error ||
+                                "Falló la actualización masiva de offsets.",
+                        );
+                    }
+
+                    const allCharLists = [
+                        window.charactersGlobal,
+                        window.likedCharactersGlobal,
+                        window.interestedCharactersGlobal,
+                        window.dislikedCharactersGlobal,
+                    ];
+                    updates.forEach((update) => {
+                        for (const list of allCharLists) {
+                            const char = list.find((c) => c.id == update.id);
+                            if (char) {
+                                char.cover_offset_y = update.cover_offset_y;
+                                char.coverOffsetY = update.cover_offset_y;
+                                break;
+                            }
+                        }
+                    });
+
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
+                    setTimeout(() => {
+                        closeBulkOffsetEditor();
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }, 1500);
+                } catch (e) {
+                    console.error(e);
+                    alert("Error al guardar los offsets: " + e.message);
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            };
 
             // --- Bulk Edit Functions ---
             window.toggleBulkEditMode = (forceState) => {
@@ -852,7 +1088,7 @@ const favoritesOrdered = (db.favorites || [])
                 if (isBulkEditing && !isChar) {
                     onclickAction = `toggleItemSelection('${fullId}')`;
                 } else if (isCharBulkEditing && isChar) {
-                    onclickAction = `toggleCharItemSelection(${item.id})`;
+                    onclickAction = `toggleCharItemSelection('${item.id}')`;
                 }
 
                 const showBulkCheckbox =
@@ -1651,12 +1887,18 @@ const favoritesOrdered = (db.favorites || [])
                     grid.classList.remove("bulk-editing");
                 }
 
-                const fullList = [
+                let fullList = [
                     ...(window.charactersGlobal || []),
                     ...(window.likedCharactersGlobal || []),
                     ...(window.interestedCharactersGlobal || []),
                     ...(window.dislikedCharactersGlobal || []),
                 ];
+
+                if (hideAssignedChars) {
+                    fullList = fullList.filter(
+                        (c) => !c.source_id && !c.sourceId,
+                    );
+                }
 
                 let list = fullList.sort((a, b) =>
                     getDisplayTitle(a).localeCompare(getDisplayTitle(b)),
