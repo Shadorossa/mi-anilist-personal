@@ -114,8 +114,10 @@ export const POST = async ({ request }) => {
           id: c.id,
           title: c.title,
           cover: c.cover,
-          source_id: c.sourceId,
-          cover_offset_y: c.coverOffsetY,
+          // Comprueba tanto camelCase (del cliente) como snake_case (de la BD)
+          source_id: c.sourceId || c.source_id,
+          // Usa ?? para manejar correctamente el valor 0 en el offset
+          cover_offset_y: c.coverOffsetY ?? c.cover_offset_y,
           category: c.category,
           order: c.order
         }));

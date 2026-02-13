@@ -513,6 +513,8 @@ const favoritesOrdered = (db.favorites || [])
                         // 4. Después de un momento, salir del modo de edición masiva
                         setTimeout(() => {
                             toggleCharBulkEditMode(false);
+                            // Restaurar el contenido original de la barra para el próximo uso
+                            bar.innerHTML = originalHTML;
                         }, 1500);
                     } else {
                         const errorData = await res.json();
