@@ -615,7 +615,27 @@ const favoritesOrdered = (db.favorites || [])
                     .filter((item) =>
                         item.title.toLowerCase().includes(filter.toLowerCase()),
                     )
-                    .sort((a, b) => a.title.localeCompare(b.title));
+                    .sort((a, b) => {
+                        const sagaA = sagaOrderMap.get(a.title);
+                        const sagaB = sagaOrderMap.get(b.title);
+
+                        // Si ambos están en sagas
+                        if (sagaA && sagaB) {
+                            // Si están en la misma saga, ordenar por índice de juego
+                            if (sagaA.sagaIndex === sagaB.sagaIndex) {
+                                return sagaA.gameIndex - sagaA.gameIndex;
+                            }
+                            // Si están en sagas diferentes, ordenar por índice de saga
+                            return sagaA.sagaIndex - sagaB.sagaIndex;
+                        }
+
+                        // Priorizar obras que están en sagas
+                        if (sagaA && !sagaB) return -1;
+                        if (!sagaA && sagaB) return 1;
+
+                        // Si ninguno está en una saga, ordenar alfabéticamente
+                        return a.title.localeCompare(b.title);
+                    });
 
                 grid.innerHTML = filteredLibrary
                     .map((item) => {
