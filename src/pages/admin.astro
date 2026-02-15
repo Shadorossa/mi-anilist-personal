@@ -2,32 +2,6 @@
 import { supabase } from "../lib/supabase";
 import "../styles/Asearch.css";
 
-const ADMIN_SECRET = import.meta.env.ADMIN_SECRET;
-
-if (!ADMIN_SECRET) {
-    return new Response("Admin secret not configured on the server.", { status: 500 });
-}
-
-const isAuthenticated = Astro.cookies.get('admin-auth')?.value === ADMIN_SECRET;
-let loginError = false;
-
-if (Astro.request.method === "POST") {
-    const formData = await Astro.request.formData();
-    const password = formData.get("password")?.toString();
-
-    if (password === ADMIN_SECRET) {
-        Astro.cookies.set('admin-auth', ADMIN_SECRET, {
-            path: '/',
-            httpOnly: true,
-            secure: import.meta.env.PROD,
-            maxAge: 60 * 60 * 24 * 30 // 30 days
-        });
-        return Astro.redirect('/admin');
-    } else {
-        loginError = true;
-    }
-}
-
 import Sidebar from "../components/admin/Sidebar.astro";
 import SearchPanel from "../components/admin/SearchPanel.astro";
 import LibraryPanel from "../components/admin/LibraryPanel.astro";
@@ -40,74 +14,76 @@ import EditorModal from "../components/admin/EditorModal.astro";
 import CharacterModal from "../components/admin/CharacterModal.astro";
 import SagaCoverPickerModal from "../components/admin/SagaCoverPickerModal.astro";
 
-let localLibrary, favoritesOrdered, db, allImages, unusedImages;
+// --- 1. OBTENER TODOS LOS DATOS DESDE SUPABASE ---
+const [
+    worksRes,
+    favoritesRes,
+    monthlyPicksRes,
+    charactersRes,
+    monthlyCharsRes,
+    sagasRes,
+] = await Promise.all([
+    supabase.from("works").select("*"),
+    supabase.from("favorites").select("is_saga, title, cover").order("order"),
+    supabase.from("monthly_picks").select("month, work_title, cover"),
+    supabase.from("characters").select("*"),
+    supabase.from("monthly_chars").select("month, char_name, cover"),
+    supabase.from("sagas").select("name, work_titles"),
+]);
 
-if (isAuthenticated) {
-    // --- 1. OBTENER TODOS LOS DATOS DESDE SUPABASE ---
-    const [
-        worksRes,
-        favoritesRes,
-        monthlyPicksRes,
-        charactersRes,
-        monthlyCharsRes,
-        sagasRes,
-    ] = await Promise.all([
-        supabase.from("works").select("*"),
-        supabase.from("favorites").select("is_saga, title, cover").order("order"),
-        supabase.from("monthly_picks").select("month, work_title, cover"),
-        supabase.from("characters").select("*"),
-        supabase.from("monthly_chars").select("month, char_name, cover"),
-        supabase.from("sagas").select("name, work_titles"),
-    ]);
+// --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
+const localLibrary = worksRes.data || [];
 
-    // --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
-    localLibrary = worksRes.data || [];
+const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
+    acc[saga.name] = saga.work_titles;
+    return acc;
+}, {});
 
-    const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
-        acc[saga.name] = saga.work_titles;
-        return acc;
-    }, {});
+const allCharacters = charactersRes.data || [];
+const charactersByCategory = {
+    hall_of_fame: allCharacters
+        .filter((c) => c.category === "hall_of_fame")
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    liked: allCharacters.filter((c) => c.category === "liked"),
+    interested: allCharacters.filter((c) => c.category === "interested"),
+    disliked: allCharacters.filter((c) => c.category === "disliked"),
+};
 
-    const allCharacters = charactersRes.data || [];
-    const charactersByCategory = {
-        hall_of_fame: allCharacters
-            .filter((c) => c.category === "hall_of_fame")
-            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-        liked: allCharacters.filter((c) => c.category === "liked"),
-        interested: allCharacters.filter((c) => c.category === "interested"),
-        disliked: allCharacters.filter((c) => c.category === "disliked"),
-    };
+// Recrear el objeto `db` en el formato que espera el script del cliente
+const db = {
+    favorites: favoritesRes.data || [],
+    monthlyPicks: (monthlyPicksRes.data || []).map((p) => ({
+        month: p.month,
+        title: p.work_title,
+        cover: p.cover,
+    })),
+    characters: charactersByCategory.hall_of_fame,
+    monthlyChars: (monthlyCharsRes.data || []).map((p) => ({
+        month: p.month,
+        name: p.char_name,
+        cover: p.cover,
+    })),
+    likedCharacters: charactersByCategory.liked,
+    interestedCharacters: charactersByCategory.interested,
+    dislikedCharacters: charactersByCategory.disliked,
+    sagas: sagasMap,
+};
 
-    // Recrear el objeto `db` en el formato que espera el script del cliente
-    db = {
-        favorites: favoritesRes.data || [],
-        monthlyPicks: (monthlyPicksRes.data || []).map((p) => ({
-            month: p.month,
-            title: p.work_title,
-            cover: p.cover,
-        })),
-        characters: charactersByCategory.hall_of_fame,
-        monthlyChars: (monthlyCharsRes.data || []).map((p) => ({
-            month: p.month,
-            name: p.char_name,
-            cover: p.cover,
-        })),
-        likedCharacters: charactersByCategory.liked,
-        interestedCharacters: charactersByCategory.interested,
-        dislikedCharacters: charactersByCategory.disliked,
-        sagas: sagasMap,
-    };
+// El gestor de imágenes basado en `fs` se elimina. No es fiable en un entorno serverless.
+// Por ahora, pasamos arrays vacíos.
+const allImages = [];
+const unusedImages = [];
 
-    allImages = [];
-    unusedImages = [];
-
-    favoritesOrdered = (db.favorites || []).map((fav) => {
+// La lógica de `favoritesOrdered` se actualiza para manejar el nuevo formato de `db.favorites`
+const favoritesOrdered = (db.favorites || [])
+    .map((fav) => {
         if (fav.is_saga) {
-            return fav;
+            return fav; // Pasa los objetos de saga directamente
         }
+        // Busca la obra en la biblioteca por título
         return localLibrary.find((item) => item.title === fav.title);
-    }).filter(Boolean);
-}
+    })
+    .filter(Boolean);
 ---
 
 <html lang="es" class="dark">
@@ -124,27 +100,6 @@ if (isAuthenticated) {
         ></script>
     </head>
     <body>
-        { !isAuthenticated ? (
-            <div class="login-container">
-                <form method="POST" class="login-form">
-                    <h1 class="login-title">Admin Access</h1>
-                    <div>
-                        <label for="password" class="form-label">Secret Key</label>
-                        <input
-                            type="password"
-                            name="password"
-                            id="password"
-                            class="form-input"
-                            placeholder="••••••••"
-                            autofocus
-                        />
-                    </div>
-                    {loginError && <p class="login-error">Clave incorrecta. Inténtalo de nuevo.</p>}
-                    <button type="submit" class="login-btn">Entrar</button>
-                </form>
-            </div>
-        ) : (
-            <>
         <Sidebar />
 
         <main class="admin-main">
@@ -299,7 +254,7 @@ if (isAuthenticated) {
                 allImages,
                 unusedImages,
             }}
-        >   
+        >
             window.localLibrary = localLibrary;
             window.favoritesList = favoritesOrdered;
             window.favoritesTitles = db.favorites || [];
@@ -325,6 +280,10 @@ if (isAuthenticated) {
         </script>
 
         <script is:inline>
+            // CSS para el panel de sagas
+            // NOTA: Recuerda añadir un botón en Sidebar.astro para activar el panel 'images'
+            // ej: <button onclick="switchMode('images')" ...><i class="fa-solid fa-images"></i></button>
+
             const sagaStyles = `
                 .saga-list {
                     background-color: rgba(255,255,255,0.02);
@@ -526,14 +485,18 @@ if (isAuthenticated) {
             let localCurrentSort = "saga";
             let localIsAscending = false;
 
+            // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
                 if (!actionName) return; // No hacer nada si no hay acción
                 try {
                     const item = JSON.parse(decodeURIComponent(encodedItem));
 
+                    // Abrir editores de obras
                     if (actionName === "openEditorSearch")
                         openEditorSearch(item);
                     if (actionName === "openEditorLocal") openEditorLocal(item);
+
+                    // --- ESTA ES LA LÍNEA QUE TE FALTA ---
                     if (actionName === "openCharEditor") openCharEditor(item);
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
@@ -3090,7 +3053,7 @@ if (isAuthenticated) {
 
             if (charForm) {
                 charForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
+                    e.preventDefault(); // CRÍTICO: Evita que el Enter te lleve a otro lado
 
                     const q = document.getElementById("charInput").value;
                     if (!q) return;
@@ -3456,8 +3419,6 @@ if (isAuthenticated) {
                         finishDateInput.value = `${startYear}${restOfFinishDate}`;
                     }
                 });
-            </>
-        )}
         </script>
     </body>
 </html>
