@@ -43,27 +43,6 @@ export const POST = async ({ request }) => {
   try {
     const body = await request.json();
 
-    // CASO DE ELIMINACIÓN: Eliminar una canción
-    if (body.deleteSongId) {
-      const { error } = await supabase.from('songs').delete().eq('id', body.deleteSongId);
-      if (error) {
-        throw new Error(`Song deletion error: ${error.message}`);
-      }
-    }
-
-    // CASO C: Guardar una canción individual
-    if (body.songData) {
-      const { id, title, artist, album, year, cover, is_favorite } = body.songData;
-      if (!id || !title) {
-        return new Response(JSON.stringify({ error: "Faltan datos críticos para guardar la canción" }), { status: 400 });
-      }
-
-      const songToUpsert = { id, title, artist, album, year, cover, is_favorite };
-
-      const { error } = await supabase.from('songs').upsert(songToUpsert, { onConflict: 'id' });
-      if (error) throw new Error(`Song upsert error: ${error.message}`);
-    }
-
     // CASO A: Actualizar base de datos central (Favoritos / Picks / Personajes)
     if (body.dbData) {
       const { favorites, monthlyPicks, characters, likedCharacters, interestedCharacters, dislikedCharacters, monthlyChars, sagas } = body.dbData;
@@ -226,8 +205,8 @@ export const POST = async ({ request }) => {
       }
     }
 
-    if (!body.dbData && !body.fileData && !body.songData && !body.deleteSongId) {
-      return new Response(JSON.stringify({ error: "No se proporcionaron datos para guardar." }), { status: 400 });
+    if (!body.dbData && !body.fileData) {
+      return new Response(JSON.stringify({ error: "No se proporcionaron datos para guardar" }), { status: 400 });
     }
 
     return new Response(JSON.stringify({ success: true }));
