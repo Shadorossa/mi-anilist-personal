@@ -1,0 +1,83 @@
+<div
+    id="songEditor"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+>
+    <div
+        class="bg-[#0c0c0e] border border-white/10 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-row relative h-[480px]"
+    >
+        <div class="w-[240px] bg-black relative shrink-0 overflow-hidden">
+            <img
+                id="songEditorCover"
+                src=""
+                class="absolute inset-0 w-full h-full object-cover object-center opacity-80 mask-fade-right"
+            />
+            <div
+                class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0c0c0e] to-transparent"
+            >
+            </div>
+        </div>
+
+        <div class="flex-1 p-8 flex flex-col relative min-w-0 bg-[#0c0c0e]">
+            <button
+                onclick="closeSongEditor()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-white transition"
+                ><i class="fa-solid fa-xmark text-lg"></i></button
+            >
+
+            <div class="mb-5 pr-8">
+                <h2
+                    id="songEditorTitle"
+                    class="text-xl font-black text-white leading-tight line-clamp-2"
+                >
+                </h2>
+                <div class="flex items-center gap-2 mt-2">
+                    <p
+                        id="songEditorYear"
+                        class="text-[10px] text-green-400 font-bold uppercase tracking-widest bg-green-500/10 px-2 py-0.5 rounded"
+                    >
+                    </p>
+                    <button
+                        id="songFavBtn"
+                        onclick="toggleSongFav()"
+                        class="text-gray-600 transition-all hover:scale-110 hover:text-yellow-400 text-sm"
+                        ><i class="fa-regular fa-heart"></i></button
+                    >
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-start gap-4">
+                <div>
+                    <label class="form-label">Título</label>
+                    <input type="text" id="songTitleInput" class="form-input" />
+                </div>
+                <div>
+                    <label class="form-label">Artista(s)</label>
+                    <input
+                        type="text"
+                        id="songArtistInput"
+                        class="form-input"
+                    />
+                </div>
+                <div>
+                    <label class="form-label">Álbum</label>
+                    <input type="text" id="songAlbumInput" class="form-input" />
+                </div>
+            </div>
+
+            <div class="pt-4 mt-auto">
+                <div class="flex gap-2">
+                    <button
+                        id="deleteSongBtn"
+                        class="bg-red-500/10 text-red-500 h-9 w-12 rounded-lg flex items-center justify-center hover:bg-red-500/20 transition"
+                        ><i class="fa-solid fa-trash"></i></button
+                    >
+                    <button
+                        id="saveSongBtn"
+                        class="flex-1 bg-white text-black h-9 rounded-lg font-bold hover:bg-gray-200 transition shadow-lg active:scale-[0.98] text-[10px] uppercase tracking-widest"
+                        >Guardar</button
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

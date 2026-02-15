@@ -1,0 +1,22 @@
+<div id="my-songs-panel" class="panel hidden">
+    <div class="flex justify-between items-start mb-4 shrink-0">
+        <div class="flex-1"></div>
+        <div class="flex flex-col items-center pt-1">
+            <h2 class="text-lg font-bold text-white tracking-tight">
+                Mi Música
+            </h2>
+            <div class="w-32 h-px bg-white/10 mt-2"></div>
+        </div>
+        <div class="flex-1 flex justify-end">
+            <input
+                type="text"
+                id="mySongsFilter"
+                placeholder="Filtrar en tu música..."
+                class="form-input !w-48 !text-xs"
+            />
+        </div>
+    </div>
+    <div class="custom-scrollbar flex-1">
+        <div id="mySongsGrid" class="asearch-grid"></div>
+    </div>
+</div>

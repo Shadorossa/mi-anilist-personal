@@ -10,15 +10,19 @@ import MyCharactersPanel from "../components/admin/MyCharactersPanel.astro";
 import FavoritesPanel from "../components/admin/FavoritesPanel.astro";
 import SagasPanel from "../components/admin/SagasPanel.astro";
 import ImageManagerPanel from "../components/admin/ImageManagerPanel.astro";
+import SongsPanel from "../components/admin/SongsPanel.astro";
+import MySongsPanel from "../components/admin/MySongsPanel.astro";
 import EditorModal from "../components/admin/EditorModal.astro";
 import CharacterModal from "../components/admin/CharacterModal.astro";
 import SagaCoverPickerModal from "../components/admin/SagaCoverPickerModal.astro";
+import SongEditorModal from "../components/admin/SongEditorModal.astro";
 
 // --- 1. OBTENER TODOS LOS DATOS DESDE SUPABASE ---
 const [
     worksRes,
     favoritesRes,
     monthlyPicksRes,
+    songsRes,
     charactersRes,
     monthlyCharsRes,
     sagasRes,
@@ -26,6 +30,7 @@ const [
     supabase.from("works").select("*"),
     supabase.from("favorites").select("is_saga, title, cover").order("order"),
     supabase.from("monthly_picks").select("month, work_title, cover"),
+    supabase.from("songs").select("*"),
     supabase.from("characters").select("*"),
     supabase.from("monthly_chars").select("month, char_name, cover"),
     supabase.from("sagas").select("name, work_titles"),
@@ -33,6 +38,7 @@ const [
 
 // --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
 const localLibrary = worksRes.data || [];
+const allSongs = songsRes.data || [];
 
 const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
     acc[saga.name] = saga.work_titles;
@@ -109,12 +115,15 @@ const favoritesOrdered = (db.favorites || [])
             <MyCharactersPanel />
             <FavoritesPanel />
             <SagasPanel />
+            <SongsPanel />
+            <MySongsPanel />
             <ImageManagerPanel />
         </main>
 
         <EditorModal />
         <CharacterModal />
         <SagaCoverPickerModal />
+        <SongEditorModal />
 
         <!-- NUEVO: Modal para seleccionar obra de origen del personaje -->
         <div
@@ -251,6 +260,7 @@ const favoritesOrdered = (db.favorites || [])
                 localLibrary,
                 favoritesOrdered,
                 db,
+                allSongs,
                 allImages,
                 unusedImages,
             }}
@@ -265,6 +275,7 @@ const favoritesOrdered = (db.favorites || [])
             window.sagas = db.sagas || {};
             window.interestedCharactersGlobal = db.interestedCharacters || [];
             window.dislikedCharactersGlobal = db.dislikedCharacters || [];
+            window.allSongs = allSongs;
             window.allImages = allImages;
             window.unusedImages = unusedImages;
         </script>
@@ -498,6 +509,9 @@ const favoritesOrdered = (db.favorites || [])
 
                     // --- ESTA ES LA LÍNEA QUE TE FALTA ---
                     if (actionName === "openCharEditor") openCharEditor(item);
+                    if (actionName === "openSongEditor") openSongEditor(item);
+                    if (actionName === "openMySongEditor")
+                        openMySongEditor(item);
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
                 }
@@ -1131,12 +1145,20 @@ const favoritesOrdered = (db.favorites || [])
                 return null;
             }
 
-            function renderCard(item, actionName, isChar = false) {
-                const fullId = isChar ? item.id : `${item.type}/${item.id}`;
+            function renderCard(
+                item,
+                actionName,
+                isChar = false,
+                isSong = false,
+            ) {
+                const fullId =
+                    isChar || isSong ? item.id : `${item.type}/${item.id}`;
                 const isWorkBulkSelected =
                     !isChar && isBulkEditing && selectedItemIds.has(fullId);
                 const isCharBulkSelected =
-                    isChar && isCharBulkEditing && selectedCharIds.has(item.id);
+                    isChar &&
+                    isCharBulkEditing &&
+                    selectedCharIds.has(String(item.id));
                 const isSelected = isWorkBulkSelected || isCharBulkSelected;
 
                 let isFav;
@@ -1146,7 +1168,15 @@ const favoritesOrdered = (db.favorites || [])
                         window.favoritesTitles.includes(item.title) ||
                         window.favoritesTitles.includes(`${item.title} -M`);
                 } else {
-                    isFav = window.favoritesTitles.includes(item.title);
+                    // Para obras y canciones, la comprobación es directa
+                    isFav = isSong
+                        ? item.is_favorite
+                        : window.favoritesTitles.some(
+                              (fav) =>
+                                  (typeof fav === "object"
+                                      ? fav.title
+                                      : fav) === item.title,
+                          );
                 }
 
                 // encodeURIComponent doesn't escape single quotes, which breaks the onclick attribute.
@@ -1159,7 +1189,7 @@ const favoritesOrdered = (db.favorites || [])
 
                 // Si es personaje, no mostramos estrellas
                 const starRating =
-                    !isChar && window.calculateRating
+                    !isChar && !isSong && window.calculateRating
                         ? window.calculateRating(item.score || 0)
                         : 0;
 
@@ -1186,7 +1216,8 @@ const favoritesOrdered = (db.favorites || [])
                 }
 
                 const showBulkCheckbox =
-                    (isBulkEditing && !isChar) || (isCharBulkEditing && isChar);
+                    (!isSong && isBulkEditing && !isChar) ||
+                    (isCharBulkEditing && isChar);
 
                 const year = getWorkYear(item);
                 const itemType = (item.type || item.format || "").toLowerCase();
@@ -1202,15 +1233,20 @@ const favoritesOrdered = (db.favorites || [])
     >
         ${showBulkCheckbox ? `<div class="bulk-checkbox"><i class="fa-solid fa-check"></i></div>` : ""}
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false" />
-        ${!isChar && year ? `<div class="fixed-badge">${year}</div>` : ""}
+        ${year ? `<div class="fixed-badge">${year}</div>` : ""}
         ${!isChar && isManga && actionName === "openEditorSearch" ? `<div class="fixed-badge" style="top: 30px; background: rgba(239, 68, 68, 0.6); font-size: 8px;">MANGA</div>` : ""}
-        ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
+        ${isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
         <div class="asearch-info">
             <h4 class="asearch-title">${displayTitle}</h4>
             ${!isChar && starRating > 0 ? `<div class="asearch-rating"><span>${starRating}</span><i class="fa-solid fa-star"></i></div>` : ""}
             ${
                 isChar && sourceTitle
                     ? `<p class="text-[9px] text-pink-400 font-bold uppercase mt-2">${sourceTitle}</p>`
+                    : ""
+            }
+            ${
+                isSong && item.artist
+                    ? `<p class="text-[9px] text-green-400 font-bold uppercase mt-2">${item.artist}</p>`
                     : ""
             }
         </div>
@@ -1836,6 +1872,45 @@ const favoritesOrdered = (db.favorites || [])
                     }
                 });
 
+            document
+                .getElementById("songSearchForm")
+                ?.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const q = document.getElementById("songInput").value;
+                    if (!q) return;
+
+                    const resultsGrid = document.getElementById("songResults");
+                    resultsGrid.innerHTML =
+                        '<p class="col-span-full text-indigo-400 text-xs py-4 text-center animate-pulse">Buscando en Spotify...</p>';
+
+                    try {
+                        const res = await fetch(
+                            `/api/search-songs.json?q=${encodeURIComponent(q)}`,
+                        );
+                        const data = await res.json();
+
+                        if (!data || data.length === 0) {
+                            resultsGrid.innerHTML =
+                                '<p class="col-span-full text-white/20 text-xs py-4 text-center">No se encontraron resultados.</p>';
+                        } else {
+                            resultsGrid.innerHTML = data
+                                .map((i) =>
+                                    renderCard(
+                                        i,
+                                        "openSongEditor",
+                                        false,
+                                        true,
+                                    ),
+                                )
+                                .join("");
+                        }
+                    } catch (e) {
+                        console.error("Error en la búsqueda de canciones:", e);
+                        resultsGrid.innerHTML =
+                            '<p class="col-span-full text-red-500/50 text-xs py-4 text-center">Error de conexión con el servidor.</p>';
+                    }
+                });
+
             // --- Lógica para guardar la posición de scroll ---
             let activeScrollListeners = [];
 
@@ -1869,7 +1944,9 @@ const favoritesOrdered = (db.favorites || [])
                     .forEach((b) => b.classList.remove("active"));
 
                 // 3. Mostrar el panel activo
-                const panel = document.getElementById(`${mode}-panel`);
+                const panel =
+                    document.getElementById(`${mode}-panel`) ||
+                    document.getElementById(`${mode}`);
                 if (!panel) return; // Parar si el panel no existe
                 panel.classList.remove("hidden");
 
@@ -1901,6 +1978,9 @@ const favoritesOrdered = (db.favorites || [])
                     renderImageManager(); // Renderiza el contenido inicial
                     switchImageManagerView("works"); // Activa la vista de obras por defecto
                 }
+                if (mode === "my-songs") renderMySongs();
+                if (mode === "search-songs")
+                    document.getElementById("songResults").innerHTML = "";
 
                 // 7. Restaurar posición de scroll y añadir nuevos listeners
                 setTimeout(() => {
