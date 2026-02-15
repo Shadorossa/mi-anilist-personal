@@ -11,6 +11,8 @@ import FavoritesPanel from "../components/admin/FavoritesPanel.astro";
 import SagasPanel from "../components/admin/SagasPanel.astro";
 import ImageManagerPanel from "../components/admin/ImageManagerPanel.astro";
 import EditorModal from "../components/admin/EditorModal.astro";
+import MusicSearchPanel from "../components/admin/MusicSearchPanel.astro";
+import MyMusicPanel from "../components/admin/MyMusicPanel.astro";
 import CharacterModal from "../components/admin/CharacterModal.astro";
 import SagaCoverPickerModal from "../components/admin/SagaCoverPickerModal.astro";
 
@@ -22,6 +24,7 @@ const [
     charactersRes,
     monthlyCharsRes,
     sagasRes,
+    musicRes,
 ] = await Promise.all([
     supabase.from("works").select("*"),
     supabase.from("favorites").select("is_saga, title, cover").order("order"),
@@ -29,10 +32,12 @@ const [
     supabase.from("characters").select("*"),
     supabase.from("monthly_chars").select("month, char_name, cover"),
     supabase.from("sagas").select("name, work_titles"),
+    supabase.from("music").select("*"),
 ]);
 
 // --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
 const localLibrary = worksRes.data || [];
+const localMusic = musicRes.data || [];
 
 const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
     acc[saga.name] = saga.work_titles;
@@ -110,6 +115,8 @@ const favoritesOrdered = (db.favorites || [])
             <FavoritesPanel />
             <SagasPanel />
             <ImageManagerPanel />
+            <MusicSearchPanel />
+            <MyMusicPanel />
         </main>
 
         <EditorModal />
@@ -253,6 +260,7 @@ const favoritesOrdered = (db.favorites || [])
                 db,
                 allImages,
                 unusedImages,
+                localMusic,
             }}
         >
             window.localLibrary = localLibrary;
@@ -267,6 +275,7 @@ const favoritesOrdered = (db.favorites || [])
             window.dislikedCharactersGlobal = db.dislikedCharacters || [];
             window.allImages = allImages;
             window.unusedImages = unusedImages;
+            window.localMusic = localMusic;
         </script>
 
         <!-- Script para restaurar el estado de la página -->
@@ -282,6 +291,7 @@ const favoritesOrdered = (db.favorites || [])
         <script is:inline>
             // CSS para el panel de sagas
             // NOTA: Recuerda añadir un botón en Sidebar.astro para activar el panel 'images'
+            // NOTA: Recuerda añadir botones en Sidebar.astro para 'music-search' y 'my-music'
             // ej: <button onclick="switchMode('images')" ...><i class="fa-solid fa-images"></i></button>
 
             const sagaStyles = `
@@ -494,6 +504,7 @@ const favoritesOrdered = (db.favorites || [])
                     // Abrir editores de obras
                     if (actionName === "openEditorSearch")
                         openEditorSearch(item);
+                    if (actionName === "openEditorMusic") openEditorMusic(item);
                     if (actionName === "openEditorLocal") openEditorLocal(item);
 
                     // --- ESTA ES LA LÍNEA QUE TE FALTA ---
@@ -1192,6 +1203,8 @@ const favoritesOrdered = (db.favorites || [])
                 const itemType = (item.type || item.format || "").toLowerCase();
                 const isManga = itemType === "manga";
 
+                const isMusic = itemType === "music";
+
                 return `
     <div
         data-id="${fullId}"
@@ -1207,6 +1220,7 @@ const favoritesOrdered = (db.favorites || [])
         ${!isChar && isFav ? `<div class="heart-badge"><i class="fa-solid fa-heart"></i></div>` : ""}
         <div class="asearch-info">
             <h4 class="asearch-title">${displayTitle}</h4>
+            ${isMusic && item.artist ? `<p class="text-[10px] text-gray-400 -mt-1 mb-1">${item.artist}</p>` : ""}
             ${!isChar && starRating > 0 ? `<div class="asearch-rating"><span>${starRating}</span><i class="fa-solid fa-star"></i></div>` : ""}
             ${
                 isChar && sourceTitle
@@ -1312,6 +1326,10 @@ const favoritesOrdered = (db.favorites || [])
             window.openEditorSearch = (item) => {
                 const type = document.getElementById("mediaType").value;
                 const typeToFind = type === "game" ? "games" : type;
+                if (type === "music") {
+                    openEditorMusic(item);
+                    return;
+                }
                 const existing = window.localLibrary.find((l) => {
                     if (l.type !== typeToFind) return false;
                     // Para mangas, buscar con y sin el sufijo -M
@@ -1339,12 +1357,30 @@ const favoritesOrdered = (db.favorites || [])
                                     ? "manga"
                                     : "anime",
                       };
-                fillEditor(dataToFill);
+                fillEditor(dataToFill, type);
             };
-            window.openEditorLocal = (item) => fillEditor(item);
+            window.openEditorLocal = (item) => fillEditor(item, item.type);
 
-            function fillEditor(data) {
+            window.openEditorMusic = (item) => {
+                const existing = window.localMusic.find(
+                    (l) =>
+                        l.title === item.title &&
+                        (l.artist ? l.artist === item.artist : true),
+                );
+                const dataToFill = existing
+                    ? existing
+                    : {
+                          ...item,
+                          type: "music",
+                          artist: item.artist || "Artista Desconocido",
+                          album: item.album || "Álbum Desconocido",
+                      };
+                fillEditor(dataToFill, "music");
+            };
+
+            function fillEditor(data, type) {
                 currentSelection = data;
+                currentSelection.type = type; // Asegurarse de que el tipo está bien definido
                 const displayTitle = getDisplayTitle(data);
                 document.getElementById("editor").classList.remove("hidden");
                 document.getElementById("editorTitle").innerText = displayTitle;
@@ -1356,23 +1392,39 @@ const favoritesOrdered = (db.favorites || [])
                     data.private_notes || data.privateNotes || "";
 
                 // Saga Selector Logic
-                const sagaSelector = document.getElementById("sagaSelector");
-                sagaSelector.innerHTML = '<option value="">Ninguna</option>';
+                const sagaContainer = document.getElementById("sagaContainer");
+                const albumContainer =
+                    document.getElementById("albumContainer");
 
-                let currentSaga = "";
-                const workTitle = data.title.endsWith(" -M")
-                    ? data.title.slice(0, -3)
-                    : data.title;
-                for (const sagaName in window.sagas) {
-                    const option = document.createElement("option");
-                    option.value = sagaName;
-                    option.textContent = sagaName;
-                    sagaSelector.appendChild(option);
-                    if (window.sagas[sagaName].includes(workTitle)) {
-                        currentSaga = sagaName;
+                if (type === "music") {
+                    sagaContainer.classList.add("hidden");
+                    albumContainer.classList.remove("hidden");
+                    document.getElementById("albumInput").value =
+                        data.album || "";
+                } else {
+                    sagaContainer.classList.remove("hidden");
+                    albumContainer.classList.add("hidden");
+
+                    const sagaSelector =
+                        document.getElementById("sagaSelector");
+                    sagaSelector.innerHTML =
+                        '<option value="">Ninguna</option>';
+
+                    let currentSaga = "";
+                    const workTitle = data.title.endsWith(" -M")
+                        ? data.title.slice(0, -3)
+                        : data.title;
+                    for (const sagaName in window.sagas) {
+                        const option = document.createElement("option");
+                        option.value = sagaName;
+                        option.textContent = sagaName;
+                        sagaSelector.appendChild(option);
+                        if (window.sagas[sagaName].includes(workTitle)) {
+                            currentSaga = sagaName;
+                        }
                     }
+                    sagaSelector.value = currentSaga;
                 }
-                sagaSelector.value = currentSaga;
 
                 const status = data.status || "Jugando";
                 document
@@ -1388,8 +1440,17 @@ const favoritesOrdered = (db.favorites || [])
 
                 // --- Lógica para el nuevo PREVIEW de la cover ---
                 document.getElementById("editorPreviewCover").src = data.cover;
-                document.getElementById("editorPreviewTitle").innerText =
-                    displayTitle;
+                const editorPreviewTitle =
+                    document.getElementById("editorPreviewTitle");
+                editorPreviewTitle.innerText =
+                    type === "music"
+                        ? `${data.artist || ""} - ${displayTitle}`
+                        : displayTitle;
+                const editorSubtitle =
+                    document.getElementById("editorSubtitle");
+                editorSubtitle.innerText = type === "music" ? data.album : "";
+                editorSubtitle.style.display =
+                    type === "music" ? "block" : "none";
                 const offsetY = data.cover_offset_y ?? data.coverOffsetY ?? 50;
                 document.getElementById("coverOffsetYRange").value = offsetY;
                 document.getElementById(
@@ -1406,16 +1467,21 @@ const favoritesOrdered = (db.favorites || [])
 
                 updateStarsVisual(data.score || 0);
 
-                let favTitleToCheck = data.title;
-                if (data.type === "manga") {
-                    // In localLibrary, manga titles are stored without "-M".
-                    // In favorites, they should be stored WITH "-M".
-                    favTitleToCheck = `${data.title} -M`;
+                if (type === "music") {
+                    isFavorite = false; // La música no está en favoritos (por ahora)
+                    document.getElementById("favBtn").style.display = "none";
+                } else {
+                    document.getElementById("favBtn").style.display = "flex";
+                    let favTitleToCheck = data.title;
+                    if (data.type === "manga") {
+                        favTitleToCheck = `${data.title} -M`;
+                    }
+                    isFavorite = window.favoritesTitles.some((fav) => {
+                        const favTitle =
+                            typeof fav === "object" ? fav.title : fav;
+                        return favTitle === favTitleToCheck;
+                    });
                 }
-                isFavorite = window.favoritesTitles.some((fav) => {
-                    const favTitle = typeof fav === "object" ? fav.title : fav;
-                    return favTitle === favTitleToCheck;
-                });
                 updateFavBtn();
                 renderMonthTags();
                 checkScoreLock();
@@ -1653,6 +1719,7 @@ const favoritesOrdered = (db.favorites || [])
                         cover: currentSelection.cover,
                         year: currentSelection.year,
                         type: currentSelection.type,
+                        artist: currentSelection.artist, // Para música
                         status: status,
                         score: status === "Completado" ? Number(scoreVal) : 0,
                         startDate: startDate,
@@ -1661,43 +1728,54 @@ const favoritesOrdered = (db.favorites || [])
                         privateNotes: privateNotes,
                     };
 
-                    const isNewItem = typeof currentSelection.id === "number";
-                    if (isNewItem && fileData.type === "manga") {
-                        fileData.title = `${fileData.title} -M`;
+                    if (fileData.type === "music") {
+                        fileData.album =
+                            document.getElementById("albumInput").value;
                     }
 
-                    // This is the title that will be in the favorites list if added/removed.
-                    // It MUST have the -M suffix for manga.
-                    let favTitleToManage;
-                    if (fileData.type === "manga") {
-                        favTitleToManage = fileData.title.endsWith(" -M")
-                            ? fileData.title
-                            : `${fileData.title} -M`;
-                    } else {
-                        favTitleToManage = fileData.title;
-                    }
+                    if (fileData.type !== "music") {
+                        const isNewItem =
+                            typeof currentSelection.id === "number";
+                        if (isNewItem && fileData.type === "manga") {
+                            fileData.title = `${fileData.title} -M`;
+                        }
 
-                    const isAlreadyInFavs = window.favoritesTitles.some(
-                        (fav) => {
-                            const existingFavTitle =
-                                typeof fav === "object" ? fav.title : fav;
-                            return existingFavTitle === favTitleToManage;
-                        },
-                    );
+                        // This is the title that will be in the favorites list if added/removed.
+                        // It MUST have the -M suffix for manga.
+                        let favTitleToManage;
+                        if (fileData.type === "manga") {
+                            favTitleToManage = fileData.title.endsWith(" -M")
+                                ? fileData.title
+                                : `${fileData.title} -M`;
+                        } else {
+                            favTitleToManage = fileData.title;
+                        }
 
-                    if (isFavorite && !isAlreadyInFavs) {
-                        window.favoritesTitles.push({
-                            title: favTitleToManage,
-                            is_saga: false,
-                        });
-                    } else if (!isFavorite && isAlreadyInFavs) {
-                        window.favoritesTitles = window.favoritesTitles.filter(
+                        const isAlreadyInFavs = window.favoritesTitles.some(
                             (fav) => {
                                 const existingFavTitle =
                                     typeof fav === "object" ? fav.title : fav;
-                                return existingFavTitle !== favTitleToManage;
+                                return existingFavTitle === favTitleToManage;
                             },
                         );
+
+                        if (isFavorite && !isAlreadyInFavs) {
+                            window.favoritesTitles.push({
+                                title: favTitleToManage,
+                                is_saga: false,
+                            });
+                        } else if (!isFavorite && isAlreadyInFavs) {
+                            window.favoritesTitles =
+                                window.favoritesTitles.filter((fav) => {
+                                    const existingFavTitle =
+                                        typeof fav === "object"
+                                            ? fav.title
+                                            : fav;
+                                    return (
+                                        existingFavTitle !== favTitleToManage
+                                    );
+                                });
+                        }
                     }
 
                     const combinedPayload = {
@@ -1836,6 +1914,41 @@ const favoritesOrdered = (db.favorites || [])
                     }
                 });
 
+            // Búsqueda de música
+            document
+                .getElementById("musicSearchForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const q = document.getElementById("musicSearchInput").value;
+                    if (!q) return;
+                    document.getElementById("musicSearchResults").innerHTML =
+                        `<p class="col-span-full text-center text-white/50 animate-pulse">Buscando...</p>`;
+                    try {
+                        const res = await fetch(
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=music`,
+                        );
+                        const data = await res.json();
+                        // La API ahora devuelve los datos en el formato correcto: { title, artist, cover, year, type: 'music' }
+
+                        document.getElementById(
+                            "musicSearchResults",
+                        ).innerHTML =
+                            data.length > 0
+                                ? data
+                                      .map((i) =>
+                                          renderCard(i, "openEditorMusic"),
+                                      )
+                                      .join("")
+                                : `<p class="col-span-full text-center text-white/20">No se encontraron resultados.</p>`;
+                    } catch (e) {
+                        console.error("Error en búsqueda de música:", e);
+                        document.getElementById(
+                            "musicSearchResults",
+                        ).innerHTML =
+                            `<p class="col-span-full text-red-400">Error al buscar música</p>`;
+                    }
+                });
+
             // --- Lógica para guardar la posición de scroll ---
             let activeScrollListeners = [];
 
@@ -1897,6 +2010,11 @@ const favoritesOrdered = (db.favorites || [])
                 }
                 if (mode === "my-characters") renderMyCharacters();
                 if (mode === "sagas") renderSagasPanel();
+                if (mode === "my-music") renderLocalMusic();
+                if (mode === "music-search") {
+                    document.getElementById("musicSearchResults").innerHTML =
+                        "";
+                }
                 if (mode === "images") {
                     renderImageManager(); // Renderiza el contenido inicial
                     switchImageManagerView("works"); // Activa la vista de obras por defecto
@@ -1921,6 +2039,39 @@ const favoritesOrdered = (db.favorites || [])
                         });
                 }, 50); // Pequeño delay para asegurar que el contenido se ha renderizado
             };
+
+            function renderLocalMusic(filterText = "") {
+                const grid = document.getElementById("localMusicGrid");
+                if (!grid) return;
+
+                const lowerFilter = filterText.toLowerCase();
+                const filtered = window.localMusic.filter(
+                    (item) =>
+                        item.title.toLowerCase().includes(lowerFilter) ||
+                        (item.artist &&
+                            item.artist.toLowerCase().includes(lowerFilter)),
+                );
+
+                filtered.sort(
+                    (a, b) =>
+                        (a.artist || "").localeCompare(b.artist || "") ||
+                        a.title.localeCompare(b.title),
+                );
+
+                grid.innerHTML =
+                    filtered.length > 0
+                        ? filtered
+                              .map((item) =>
+                                  renderCard(item, "openEditorMusic"),
+                              )
+                              .join("")
+                        : `<p class="col-span-full text-center text-white/20 text-sm py-10">No tienes música en tu colección.</p>`;
+            }
+            document
+                .getElementById("localMusicFilter")
+                .addEventListener("input", (e) =>
+                    renderLocalMusic(e.target.value),
+                );
 
             function renderImageManager() {
                 const worksGrid = document.getElementById(

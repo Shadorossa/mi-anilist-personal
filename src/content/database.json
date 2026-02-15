@@ -8,34 +8,34 @@
     {
       "isSaga": true,
       "title": "The Legend of Heroes: Trails",
-      "cover": "/img/covers/saga-trails.png"
+      "cover": "/img/covers/saga-the-legend-of-heroes-trails.png"
     },
     "Silent Hill 2",
     "Usogui -M",
     {
       "isSaga": true,
       "title": "Like a Dragon",
-      "cover": "/img/covers/saga-LaD.png"
+      "cover": "/img/covers/saga-like-a-dragon.png"
     },
     {
       "isSaga": true,
       "title": "The Legend of the Galactic Heroes",
-      "cover": "/img/covers/ginga-eiyuu-densetsu.png"
+      "cover": "/img/covers/saga-the-legend-of-the-galactic-heroes.png"
     },
     {
       "isSaga": true,
       "title": "The House in Fata Morgana",
-      "cover": "/img/covers/the-house-in-fata-morgana.png"
+      "cover": "/img/covers/saga-the-house-in-fata-morgana.png"
     },
     {
       "isSaga": true,
       "title": "Monogatari series",
-      "cover": "/img/covers/monogatari-series-first-season.png"
+      "cover": "/img/covers/saga-monogatari-series.png"
     },
     {
       "isSaga": true,
       "title": "Umineko no naku koro ni",
-      "cover": "/img/covers/umineko-no-naku-koro-ni-episode-4-alliance-of-the-golden-witch.png"
+      "cover": "/img/covers/saga-umineko-no-naku-koro-ni.png"
     },
     {
       "isSaga": true,
@@ -47,12 +47,12 @@
     {
       "month": "2026-02",
       "title": "The Legend of Heroes: Trails Beyond the Horizon",
-      "cover": "/img/covers/monthly-pick-2026-02.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-beyond-the-horizon.jpg"
     },
     {
       "month": "2026-01",
       "title": "Rance 03: The Fall of Leazas",
-      "cover": "/img/covers/monthly-pick-2026-01.jpg"
+      "cover": "/img/covers/rance-03-the-fall-of-leazas.jpg"
     },
     {
       "month": "2025-12",
@@ -62,7 +62,7 @@
     {
       "month": "2025-11",
       "title": "The Legend of Heroes: Trails through Daybreak II",
-      "cover": "/img/covers/monthly-pick-2025-11.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-through-daybreak-ii.jpg"
     },
     {
       "month": "2025-10",
@@ -72,12 +72,12 @@
     {
       "month": "2025-09",
       "title": "Bayonetta 2",
-      "cover": "/img/covers/monthly-pick-2025-09.jpg"
+      "cover": "/img/covers/bayonetta-2.jpg"
     },
     {
       "month": "2025-06",
       "title": "The Legend of Heroes: Trails into Reverie",
-      "cover": "/img/covers/monthly-pick-2025-06.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-into-reverie.jpg"
     },
     {
       "month": "2025-05",
@@ -87,32 +87,32 @@
     {
       "month": "2025-04",
       "title": "The Legend of Heroes: Trails to Azure",
-      "cover": "/img/covers/monthly-pick-2025-04.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-to-azure.jpg"
     },
     {
       "month": "2025-03",
       "title": "The Legend of Heroes: Trails from Zero",
-      "cover": "/img/covers/monthly-pick-2025-03.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-from-zero.jpg"
     },
     {
       "month": "2025-02",
       "title": "Final Fantasy VII Rebirth",
-      "cover": "/img/covers/monthly-pick-2025-02.jpg"
+      "cover": "/img/covers/final-fantasy-vii-rebirth.png"
     },
     {
       "month": "2025-01",
       "title": "The Legend of Heroes: Trails in the Sky the 3rd",
-      "cover": "/img/covers/monthly-pick-2025-01.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-in-the-sky-the-3rd.png"
     },
     {
       "month": "2024-12",
       "title": "The Legend of Heroes: Trails in the Sky SC",
-      "cover": "/img/covers/monthly-pick-2024-12.jpg"
+      "cover": "/img/covers/the-legend-of-heroes-trails-in-the-sky-sc.png"
     },
     {
       "month": "2024-08",
       "title": "The Great Ace Attorney 2: Resolve",
-      "cover": "/img/covers/monthly-pick-2024-08.jpg"
+      "cover": "/img/covers/the-great-ace-attorney-2-resolve.png"
     },
     {
       "month": "2024-07",
@@ -122,12 +122,12 @@
     {
       "month": "2024-06",
       "title": "The Great Ace Attorney: Adventures",
-      "cover": "/img/covers/monthly-pick-2024-06.jpg"
+      "cover": "/img/covers/the-great-ace-attorney-adventures.png"
     },
     {
       "month": "2024-02",
       "title": "Persona 3 Reload",
-      "cover": "/img/covers/monthly-pick-2024-02.jpg"
+      "cover": "/img/covers/persona-3-reload.jpg"
     },
     {
       "month": "2024-01",
@@ -137,27 +137,27 @@
     {
       "month": "2023-09",
       "title": "The House in Fata Morgana",
-      "cover": "/img/covers/monthly-pick-2023-09.jpg"
+      "cover": "/img/covers/the-house-in-fata-morgana.png"
     },
     {
       "month": "2023-08",
       "title": "Usogui",
-      "cover": "/img/covers/monthly-pick-2023-08.jpg"
+      "cover": "/img/covers/usogui-m.png"
     },
     {
       "month": "2023-07",
       "title": "Final Fantasy XVI",
-      "cover": "/img/covers/monthly-pick-2023-07.jpg"
+      "cover": "/img/covers/final-fantasy-xvi.png"
     },
     {
       "month": "2023-05",
       "title": "Metal Gear Solid 4: Guns of the Patriots",
-      "cover": "/img/covers/monthly-pick-2023-05.jpg"
+      "cover": "/img/covers/metal-gear-solid-4-guns-of-the-patriots.png"
     },
     {
       "month": "2023-03",
       "title": "Metal Gear Solid 3: Snake Eater",
-      "cover": "/img/covers/monthly-pick-2023-03.jpg"
+      "cover": "/img/covers/metal-gear-solid-3-snake-eater.png"
     },
     {
       "month": "2023-02",
@@ -167,34 +167,35 @@
     {
       "month": "2022-12",
       "title": "Final Fantasy VII",
-      "cover": "/img/covers/monthly-pick-2022-12.jpg"
+      "cover": "/img/covers/final-fantasy-vii.png"
     },
     {
       "month": "2022-09",
       "title": "Devil May Cry 3: Dante's Awakening",
-      "cover": "/img/covers/monthly-pick-2022-09.jpg"
+      "cover": "/img/covers/devil-may-cry-3-dante's-awakening.png"
     },
     {
       "month": "2022-07",
       "title": "Ginga Eiyuu Densetsu",
-      "cover": "/img/covers/monthly-pick-2022-07.jpg"
+      "cover": "/img/covers/ginga-eiyuu-densetsu.png"
     },
     {
       "month": "2021-07",
       "title": "Gintama: The Final",
-      "cover": "/img/covers/monthly-pick-2021-07.jpg"
+      "cover": "/img/covers/gintama-the-final.png"
     },
     {
       "month": "2021-03",
       "title": "Gintama°",
-      "cover": "/img/covers/monthly-pick-2021-03.jpg"
+      "cover": "/img/covers/gintama°.jpg"
     }
   ],
   "sagas": {
     "Ace Attorney": [
       "The Great Ace Attorney 2: Resolve",
       "The Great Ace Attorney: Adventures",
-      "Phoenix Wright: Ace Attorney"
+      "Phoenix Wright: Ace Attorney",
+      "Get Over the Barrier!"
     ],
     "Bayonetta": [
       "Bayonetta Origins: Cereza and the Lost Demon",
@@ -248,6 +249,9 @@
       "Gintama°",
       "Gintama': Enchousen",
       "Gintama"
+    ],
+    "God of War": [
+      "God of War"
     ],
     "Hades": [
       "Hades II",
@@ -344,20 +348,20 @@
       "Ginga Eiyuu Densetsu: Waga Yuku wa Hoshi no Taikai"
     ],
     "Umineko no naku koro ni": [
+      "Umineko no Naku Koro ni Chiru: Episode 8 - Twilight of the Golden Witch",
+      "Umineko no Naku Koro ni: Episode 7 - Requiem of the Golden Witch",
+      "Umineko no Naku Koro ni: Episode 6 - Dawn of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 5 - End of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 4 - Alliance of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 3 - Banquet of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 2 - Turn of the Golden Witch",
       "Umineko no Naku Koro ni: Episode 1 - Legend of the Golden Witch"
-    ],
-    "God of War": [
-      "God of War"
     ]
   },
   "characters": [
     {
       "id": "53961",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Renne Bright",
       "cover": "/img/chara/renne-bright.png",
       "source_id": "games/the-legend-of-heroes-trails-in-the-sky-sc.json",
@@ -367,7 +371,7 @@
     },
     {
       "id": "168690",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Souichi Kiruma",
       "cover": "/img/chara/souichi-kiruma.png",
       "source_id": "manga/usogui.json",
@@ -377,7 +381,7 @@
     },
     {
       "id": "672",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Gintoki Sakata",
       "cover": "/img/chara/gintoki-sakata.jpg",
       "source_id": "manga/gintama.json",
@@ -387,7 +391,7 @@
     },
     {
       "id": "10285",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Beatrice",
       "cover": "/img/chara/beatrice.png",
       "source_id": "games/umineko-no-naku-koro-ni-episode-1-legend-of-the-golden-witch.json",
@@ -397,7 +401,7 @@
     },
     {
       "id": "30247",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Estelle Bright",
       "cover": "/img/chara/estelle-bright.png",
       "source_id": "games/the-legend-of-heroes-trails-in-the-sky.json",
@@ -407,7 +411,7 @@
     },
     {
       "id": "126065",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Michel Bollinger",
       "cover": "/img/chara/michel-bollinger.png",
       "source_id": "games/the-house-in-fata-morgana.json",
@@ -417,7 +421,7 @@
     },
     {
       "id": "89626",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Ayana Otonashi",
       "cover": "/img/chara/ayana-otonashi.png",
       "source_id": "games/wonderful-everyday-down-the-rabbit-hole.json",
@@ -427,7 +431,7 @@
     },
     {
       "id": "190373",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Rufus Albarea",
       "cover": "/img/chara/rufus-albarea.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -437,7 +441,7 @@
     },
     {
       "id": "2948",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Shinsuke Takasugi",
       "cover": "/img/chara/shinsuke-takasugi.png",
       "source_id": "manga/gintama.json",
@@ -447,7 +451,7 @@
     },
     {
       "id": "302808",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Shizuna Misurugi",
       "cover": "/img/chara/shizuna-misurugi.png",
       "source_id": "games/the-legend-of-heroes-trails-through-daybreak.json",
@@ -457,7 +461,7 @@
     },
     {
       "id": "36045",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Erika Furudo",
       "cover": "/img/chara/erika-furudo.png",
       "source_id": "games/umineko-no-naku-koro-ni-episode-5-end-of-the-golden-witch.json",
@@ -467,7 +471,7 @@
     },
     {
       "id": "127452",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Rean Schwarzer",
       "cover": "/img/chara/rean-schwarzer.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -477,7 +481,7 @@
     },
     {
       "id": "3066",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Reinhard von Lohengramm",
       "cover": "/img/chara/reinhard-von-lohengramm.png",
       "source_id": "anime/ginga-eiyuu-densetsu.json",
@@ -487,7 +491,7 @@
     },
     {
       "id": "68809",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Baku Madarame",
       "cover": "/img/chara/baku-madarame.png",
       "source_id": "manga/usogui.json",
@@ -497,7 +501,7 @@
     },
     {
       "id": "72237",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Lloyd Bannings",
       "cover": "/img/chara/lloyd-bannings.png",
       "source_id": "games/the-legend-of-heroes-trails-from-zero.json",
@@ -507,7 +511,7 @@
     },
     {
       "id": "301468",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Elaine Auclair",
       "cover": "/img/chara/elaine-auclair.png",
       "source_id": "games/the-legend-of-heroes-trails-through-daybreak.json",
@@ -517,7 +521,7 @@
     },
     {
       "id": "14040",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Battler Ushiromiya",
       "cover": "/img/chara/battler-ushiromiya.png",
       "source_id": "games/umineko-no-naku-koro-ni-episode-1-legend-of-the-golden-witch.json",
@@ -527,7 +531,7 @@
     },
     {
       "id": "81735",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Arianrhod",
       "cover": "/img/chara/arianrhod.png",
       "source_id": "games/the-legend-of-heroes-trails-to-azure.json",
@@ -537,7 +541,7 @@
     },
     {
       "id": "6",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Rukia Kuchiki",
       "cover": "/img/chara/rukia-kuchiki.png",
       "source_id": "manga/bleach.json",
@@ -547,7 +551,7 @@
     },
     {
       "id": "87886",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Ougi Oshino",
       "cover": "/img/chara/ougi-oshino.png",
       "source_id": null,
@@ -557,7 +561,7 @@
     },
     {
       "id": "209887",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Kevin Graham",
       "cover": "/img/chara/kevin-graham.png",
       "source_id": "games/the-legend-of-heroes-trails-in-the-sky-the-3rd.json",
@@ -567,7 +571,7 @@
     },
     {
       "id": "124135",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Utsuro",
       "cover": "/img/chara/utsuro.png",
       "source_id": "manga/gintama.json",
@@ -577,7 +581,7 @@
     },
     {
       "id": "1816",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Sephiroth",
       "cover": "/img/chara/sephiroth.png",
       "source_id": "games/final-fantasy-vii.json",
@@ -587,7 +591,7 @@
     },
     {
       "id": "17464",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Godot",
       "cover": "/img/chara/godot.png",
       "source_id": null,
@@ -597,7 +601,7 @@
     },
     {
       "id": "8673",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Miles Edgeworth",
       "cover": "/img/chara/miles-edgeworth.png",
       "source_id": "games/phoenix-wright-ace-attorney.json",
@@ -607,7 +611,7 @@
     },
     {
       "id": "309955",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Barok van Zieks",
       "cover": "/img/chara/barok-van-zieks.png",
       "source_id": "games/the-great-ace-attorney-adventures.json",
@@ -617,7 +621,7 @@
     },
     {
       "id": "298406",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Claire Rieveldt",
       "cover": "/img/chara/claire-rieveldt.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -627,7 +631,7 @@
     },
     {
       "id": "301467",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Agnès Claudel",
       "cover": "/img/chara/agns-claudel.png",
       "source_id": "games/the-legend-of-heroes-trails-through-daybreak.json",
@@ -637,49 +641,19 @@
     },
     {
       "id": "309954",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Kazuma Asogi",
       "cover": "/img/chara/kazuma-asogi.png",
       "source_id": "games/the-great-ace-attorney-adventures.json",
       "cover_offset_y": 50,
       "category": "hall_of_fame",
       "order": 28
-    },
-    {
-      "id": "143077",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
-      "title": "Takayanagi",
-      "cover": "/img/chara/takayanagi.png",
-      "source_id": null,
-      "cover_offset_y": 32,
-      "category": "hall_of_fame",
-      "order": 29
-    },
-    {
-      "id": "132810",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
-      "title": "Yakata no Jochuu",
-      "cover": "/img/chara/yakata-no-jochuu.png",
-      "source_id": "games/the-house-in-fata-morgana.json",
-      "cover_offset_y": 39,
-      "category": "hall_of_fame",
-      "order": 30
-    },
-    {
-      "id": "126151",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
-      "title": "Morgana",
-      "cover": "/img/chara/morgana.png",
-      "source_id": "games/the-house-in-fata-morgana.json",
-      "cover_offset_y": 42,
-      "category": "hall_of_fame",
-      "order": 31
     }
   ],
   "likedCharacters": [
     {
       "id": "136284",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Shizuka Masou",
       "cover": "/img/chara/shizuka-masou.png",
       "source_id": "games/rance-02-the-rebellious-maidens.json",
@@ -689,7 +663,7 @@
     },
     {
       "id": "272535",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Solid Snake",
       "cover": "/img/chara/solid-snake.png",
       "source_id": "games/metal-gear.json",
@@ -699,7 +673,7 @@
     },
     {
       "id": "72233",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Elie MacDowell",
       "cover": "/img/chara/elie-macdowell.png",
       "source_id": "games/the-legend-of-heroes-trails-from-zero.json",
@@ -709,7 +683,7 @@
     },
     {
       "id": "674",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Kagura",
       "cover": "/img/chara/kagura.png",
       "source_id": "manga/gintama.json",
@@ -719,7 +693,7 @@
     },
     {
       "id": "308161",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Naked Snake",
       "cover": "/img/chara/naked-snake.jpg",
       "source_id": "games/metal-gear-solid-3-snake-eater.json",
@@ -729,7 +703,7 @@
     },
     {
       "id": "9879",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Phoenix Wright",
       "cover": "/img/chara/phoenix-wright.png",
       "source_id": "games/phoenix-wright-ace-attorney.json",
@@ -739,7 +713,7 @@
     },
     {
       "id": "302811",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Quatre Salision",
       "cover": "/img/chara/quatre-salision.jpg",
       "source_id": "games/the-legend-of-heroes-trails-through-daybreak.json",
@@ -749,7 +723,7 @@
     },
     {
       "id": "309957",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Sherlock Holmes",
       "cover": "/img/chara/sherlock-holmes.jpg",
       "source_id": "games/the-great-ace-attorney-adventures.json",
@@ -759,7 +733,7 @@
     },
     {
       "id": "249642",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Shirley Orlando",
       "cover": "/img/chara/shirley-orlando.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -769,7 +743,7 @@
     },
     {
       "id": "28144",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Shouyou Yoshida",
       "cover": "/img/chara/shouyou-yoshida.jpg",
       "source_id": "manga/gintama.json",
@@ -779,7 +753,7 @@
     },
     {
       "id": "2282",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Sougo Okita",
       "cover": "/img/chara/sougo-okita.png",
       "source_id": "manga/gintama.json",
@@ -789,7 +763,7 @@
     },
     {
       "id": "3760",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Taizou Hasegawa",
       "cover": "/img/chara/taizou-hasegawa.png",
       "source_id": "manga/gintama.json",
@@ -799,7 +773,7 @@
     },
     {
       "id": "2945",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Tatsuma Sakamoto",
       "cover": "/img/chara/tatsuma-sakamoto.jpg",
       "source_id": "manga/gintama.json",
@@ -809,7 +783,7 @@
     },
     {
       "id": "72239",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Tio Plato",
       "cover": "/img/chara/tio-plato.png",
       "source_id": "games/the-legend-of-heroes-trails-from-zero.json",
@@ -819,7 +793,7 @@
     },
     {
       "id": "2650",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Toushirou Hijikata",
       "cover": "/img/chara/toushirou-hijikata.png",
       "source_id": "manga/gintama.json",
@@ -829,7 +803,7 @@
     },
     {
       "id": "275204",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Van Arkride",
       "cover": "/img/chara/van-arkride.png",
       "source_id": "games/the-legend-of-heroes-trails-through-daybreak.json",
@@ -839,7 +813,7 @@
     },
     {
       "id": "182731",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Kadokura Yuudai",
       "cover": "/img/chara/kadokura-yuudai.png",
       "source_id": "manga/usogui.json",
@@ -849,7 +823,7 @@
     },
     {
       "id": "134608",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Laura S. Arseid",
       "cover": "/img/chara/laura-s-arseid.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -859,7 +833,7 @@
     },
     {
       "id": "244076",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Lechter Arundel",
       "cover": "/img/chara/lechter-arundel.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -869,7 +843,7 @@
     },
     {
       "id": "168688",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Hikoichi Yakou",
       "cover": "/img/chara/hikoichi-yakou.png",
       "source_id": "manga/usogui.json",
@@ -879,7 +853,7 @@
     },
     {
       "id": "219275",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Jeanne",
       "cover": "/img/chara/jeanne.png",
       "source_id": "games/bayonetta.json",
@@ -889,7 +863,7 @@
     },
     {
       "id": "1533",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Kotarou Katsura",
       "cover": "/img/chara/kotarou-katsura.png",
       "source_id": "manga/gintama.json",
@@ -899,7 +873,7 @@
     },
     {
       "id": "272948",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Raiden",
       "cover": "/img/chara/raiden.png",
       "source_id": "games/metal-gear-solid-2-sons-of-liberty.json",
@@ -909,7 +883,7 @@
     },
     {
       "id": "126990",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Alisa Reinford",
       "cover": "/img/chara/alisa-reinford.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -919,7 +893,7 @@
     },
     {
       "id": "243128",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Arios MacLaine",
       "cover": "/img/chara/arios-maclaine.png",
       "source_id": "games/the-legend-of-heroes-trails-from-zero.json",
@@ -929,7 +903,7 @@
     },
     {
       "id": "87496",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Bayonetta",
       "cover": "/img/chara/bayonetta.png",
       "source_id": "games/bayonetta.json",
@@ -938,18 +912,8 @@
       "order": null
     },
     {
-      "id": "191328",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
-      "title": "Crow Armbrust",
-      "cover": "/img/chara/crow-armbrust.jpg",
-      "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
-      "cover_offset_y": 39,
-      "category": "liked",
-      "order": null
-    },
-    {
       "id": "309956",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Gina Lestrade",
       "cover": "/img/chara/gina-lestrade.jpg",
       "source_id": "games/the-great-ace-attorney-adventures.json",
@@ -959,7 +923,7 @@
     },
     {
       "id": "242074",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Ries Argent",
       "cover": "/img/chara/ries-argent.png",
       "source_id": "games/the-legend-of-heroes-trails-in-the-sky-the-3rd.json",
@@ -969,7 +933,7 @@
     },
     {
       "id": "309953",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Ryunosuke Naruhodou",
       "cover": "/img/chara/ryunosuke-naruhodou.jpg",
       "source_id": "games/the-great-ace-attorney-adventures.json",
@@ -979,7 +943,7 @@
     },
     {
       "id": "299531",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Sara Valestein",
       "cover": "/img/chara/sara-valestein.png",
       "source_id": "games/the-legend-of-heroes-trails-of-cold-steel.json",
@@ -989,7 +953,7 @@
     },
     {
       "id": "319315",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Susato Mikotoba",
       "cover": "/img/chara/susato-mikotoba.jpg",
       "source_id": "games/the-great-ace-attorney-adventures.json",
@@ -999,11 +963,171 @@
     },
     {
       "id": "76170",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Wazy Hemisphere",
       "cover": "/img/chara/wazy-hemisphere.png",
       "source_id": "games/the-legend-of-heroes-trails-from-zero.json",
       "cover_offset_y": 45,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "19407",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Ange Ushiromiya",
+      "cover": "/img/chara/ange-ushiromiya.jpg",
+      "source_id": "games/umineko-no-naku-koro-ni-episode-3-banquet-of-the-golden-witch.json",
+      "cover_offset_y": 40,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "132810",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Yakata no Jochuu",
+      "cover": "/img/chara/yakata-no-jochuu.png",
+      "source_id": "games/the-house-in-fata-morgana.json",
+      "cover_offset_y": 37,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "126151",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Morgana",
+      "cover": "/img/chara/morgana.png",
+      "source_id": "games/the-house-in-fata-morgana.json",
+      "cover_offset_y": 42,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "456",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Cloud Strife",
+      "cover": "/img/chara/cloud-strife.png",
+      "source_id": "games/final-fantasy-vii.json",
+      "cover_offset_y": 38,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "758",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Tifa Lockhart",
+      "cover": "/img/chara/tifa-lockhart.png",
+      "source_id": "games/final-fantasy-vii.json",
+      "cover_offset_y": 30,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "39576",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Willard Wright",
+      "cover": "/img/chara/willard-wright.png",
+      "source_id": "games/umineko-no-naku-koro-ni-episode-7-requiem-of-the-golden-witch.json",
+      "cover_offset_y": 59,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "10196",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Lambdadelta",
+      "cover": "/img/chara/lambdadelta.png",
+      "source_id": "games/umineko-no-naku-koro-ni-episode-2-turn-of-the-golden-witch.json",
+      "cover_offset_y": 44,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "11840",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Frederica Bernkastel",
+      "cover": "/img/chara/frederica-bernkastel.png",
+      "source_id": "games/umineko-no-naku-koro-ni-episode-2-turn-of-the-golden-witch.json",
+      "cover_offset_y": 42,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "6203",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Makoto Yuuki",
+      "cover": "/img/chara/makoto-yuuki.png",
+      "source_id": "games/persona-3-reload.json",
+      "cover_offset_y": 40,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "3683",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Makoto Shishio",
+      "cover": "/img/chara/makoto-shishio.jpg",
+      "source_id": "manga/rurouni-kenshin-meiji-kenkaku-romantan.json",
+      "cover_offset_y": 30,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "122977",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Makoto Niijima",
+      "cover": "/img/chara/makoto-niijima.jpg",
+      "source_id": "games/persona-5-royal.json",
+      "cover_offset_y": 59,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "1742",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Conan Edogawa",
+      "cover": "/img/chara/conan-edogawa.png",
+      "source_id": null,
+      "cover_offset_y": 40,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "18673",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Kyrie Ushiromiya",
+      "cover": "/img/chara/kyrie-ushiromiya.jpg",
+      "source_id": "games/umineko-no-naku-koro-ni-episode-1-legend-of-the-golden-witch.json",
+      "cover_offset_y": 44,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "14043",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Rudolf Ushiromiya",
+      "cover": "/img/chara/rudolf-ushiromiya.png",
+      "source_id": "games/umineko-no-naku-koro-ni-episode-1-legend-of-the-golden-witch.json",
+      "cover_offset_y": 41,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "27596",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Rance",
+      "cover": "/img/chara/rance.jpg",
+      "source_id": "games/rance-01-quest-for-hikari.json",
+      "cover_offset_y": 30,
+      "category": "liked",
+      "order": null
+    },
+    {
+      "id": "27597",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Sill Plain",
+      "cover": "/img/chara/sill-plain.png",
+      "source_id": "games/rance-01-quest-for-hikari.json",
+      "cover_offset_y": 39,
       "category": "liked",
       "order": null
     }
@@ -1011,7 +1135,7 @@
   "interestedCharacters": [
     {
       "id": "31933",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Meiya Mitsurugi",
       "cover": "/img/chara/meiya-mitsurugi.jpg",
       "source_id": "games/muv-luv.json",
@@ -1021,7 +1145,7 @@
     },
     {
       "id": "497",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Artoria Pendragon",
       "cover": "/img/chara/artoria-pendragon.png",
       "source_id": "games/fatestay-night-remastered.json",
@@ -1031,11 +1155,31 @@
     },
     {
       "id": "498",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Rin Tohsaka",
       "cover": "/img/chara/rin-tohsaka.png",
       "source_id": "games/fatestay-night-remastered.json",
       "cover_offset_y": 40,
+      "category": "interested",
+      "order": null
+    },
+    {
+      "id": "191241",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "Chinatsu Kano",
+      "cover": "/img/chara/chinatsu-kano.png",
+      "source_id": "manga/ao-no-hako.json",
+      "cover_offset_y": 42,
+      "category": "interested",
+      "order": null
+    },
+    {
+      "id": "2253",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
+      "title": "R. Dorothy Wayneright",
+      "cover": "/img/chara/r-dorothy-wayneright.jpg",
+      "source_id": "anime/the-big-o.json",
+      "cover_offset_y": 36,
       "category": "interested",
       "order": null
     }
@@ -1043,7 +1187,7 @@
   "dislikedCharacters": [
     {
       "id": "89028",
-      "created_at": "2026-02-13T15:29:52.945498+00:00",
+      "created_at": "2026-02-13T16:31:04.77564+00:00",
       "title": "Izuku Midoriya",
       "cover": "/img/chara/izuku-midoriya.png",
       "source_id": null,
@@ -1061,7 +1205,7 @@
     {
       "month": "2026-01",
       "name": "Shizuka Masou",
-      "cover": "/img/chara/monthly-char-2026-01.png"
+      "cover": "/img/chara/shizuka-masou.png"
     },
     {
       "month": "2025-11",
@@ -1076,12 +1220,12 @@
     {
       "month": "2025-09",
       "name": "Bayonetta",
-      "cover": "/img/chara/monthly-char-2025-09.jpg"
+      "cover": "/img/chara/bayonetta.png"
     },
     {
       "month": "2025-07",
       "name": "Erika Furudo",
-      "cover": "/img/chara/monthly-char-2025-07.png"
+      "cover": "/img/chara/erika-furudo.png"
     },
     {
       "month": "2025-06",

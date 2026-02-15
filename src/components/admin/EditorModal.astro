@@ -30,6 +30,13 @@
                     class="text-xl font-black text-white leading-tight line-clamp-1"
                 >
                 </h2>
+                <p
+                    id="editorSubtitle"
+                    class="text-sm text-gray-400 -mt-1"
+                    style="display: none;"
+                >
+                    <!-- Album name will be inserted here -->
+                </p>
                 <div class="flex items-center gap-2 mt-1">
                     <p
                         id="editorYear"
@@ -39,15 +46,18 @@
                     <button
                         id="favBtn"
                         onclick="toggleFav()"
-                        class="text-gray-600 transition-all hover:scale-110 hover:text-red-400 text-sm"
+                        class="music-hidden text-gray-600 transition-all hover:scale-110 hover:text-red-400 text-sm"
                         ><i class="fa-solid fa-heart"></i></button
                     >
                 </div>
             </div>
 
             <div class="flex-1 flex flex-col justify-start">
-                <div class="flex justify-between items-center mb-4 px-2">
+                <div
+                    class="music-hidden flex justify-between items-center mb-4 px-2"
+                >
                     {
+                        // Status buttons
                         [
                             { v: "Jugando", i: "play", l: "Jugando" },
                             { v: "Pausado", i: "pause", l: "Pausa" },
@@ -76,7 +86,7 @@
                     }
                 </div>
 
-                <div class="mb-3">
+                <div id="sagaContainer" class="music-hidden mb-3">
                     <label class="form-label">Saga</label>
                     <select id="sagaSelector" class="form-input">
                         <option value="">Ninguna</option>
@@ -84,7 +94,17 @@
                     </select>
                 </div>
 
-                <div class="mb-4">
+                <div id="albumContainer" class="mb-3 hidden">
+                    <label for="albumInput" class="form-label">Álbum</label>
+                    <input
+                        type="text"
+                        id="albumInput"
+                        class="form-input"
+                        placeholder="Nombre del álbum..."
+                    />
+                </div>
+
+                <div class="music-hidden mb-4">
                     <label class="form-label">Notas Privadas (Solo Admin)</label
                     >
                     <textarea
@@ -94,7 +114,7 @@
                     ></textarea>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="music-hidden grid grid-cols-2 gap-3 mb-4">
                     <div class="date-input-wrapper">
                         <label class="date-input-label">Fecha Inicio</label>
                         <input type="date" id="startDate" class="date-input" />
@@ -135,7 +155,7 @@
                     />
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mt-4">
+                <div class="music-hidden grid grid-cols-2 gap-4 mt-4">
                     <div
                         class="bg-[#121215] border border-white/5 rounded-lg p-3 mb-4"
                     >
@@ -280,7 +300,7 @@
                     <button
                         id="deleteMediaBtn"
                         type="button"
-                        class="bg-red-500/10 text-red-400 h-9 rounded-lg font-bold hover:bg-red-500/20 transition text-[10px] uppercase tracking-widest px-6"
+                        class="music-hidden bg-red-500/10 text-red-400 h-9 rounded-lg font-bold hover:bg-red-500/20 transition text-[10px] uppercase tracking-widest px-6"
                     >
                         Eliminar Logs
                     </button>
@@ -296,3 +316,44 @@
         </div>
     </div>
 </div>
+
+<style>
+    #editor[data-media-type="music"] .music-hidden {
+        display: none;
+    }
+    #editor[data-media-type="music"] #albumContainer {
+        display: block;
+    }
+</style>
+
+<script is:inline>
+    // Este script soluciona el problema de que el editor no se adapta para la música.
+    // "Envuelve" la función global `openEditor` para añadir la lógica necesaria.
+    document.addEventListener("DOMContentLoaded", () => {
+        // Esperamos un instante para asegurarnos de que el script principal (admin.js) se haya cargado.
+        setTimeout(() => {
+            if (
+                typeof window.openEditor === "function" &&
+                !window.openEditor.isWrapped
+            ) {
+                const originalOpenEditor = window.openEditor;
+
+                window.openEditor = function (data, isNew, existingData) {
+                    const editorEl = document.getElementById("editor");
+                    const subtitleEl =
+                        document.getElementById("editorSubtitle");
+
+                    if (data.type === "music") {
+                        editorEl.dataset.mediaType = "music";
+                        subtitleEl.textContent = data.artist || "";
+                        subtitleEl.style.display = "block";
+                    } else {
+                        delete editorEl.dataset.mediaType;
+                    }
+                    originalOpenEditor.apply(this, arguments);
+                };
+                window.openEditor.isWrapped = true;
+            }
+        }, 100); // Un pequeño retardo para asegurar que `openEditor` original exista.
+    });
+</script>
