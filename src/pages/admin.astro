@@ -1,24 +1,5 @@
 ---
 import { supabase } from "../lib/supabase";
-
-// --- Bloqueo de Acceso ---
-// Lee la variable de entorno para la clave secreta.
-const ADMIN_SECRET = import.meta.env.ADMIN_SECRET;
-
-// Obtiene la clave secreta del path de la URL (ej: /260405).
-const providedSecret = Astro.params.secret;
-
-// Comprobamos si la clave proporcionada es la correcta.
-const isAuthorized = providedSecret === ADMIN_SECRET;
-
-// En modo de desarrollo, también permitimos el acceso a través de '/admin' para facilitar.
-const isDevAdminAccess = import.meta.env.DEV && providedSecret === "admin";
-
-// Si no está autorizado (y no es el caso especial de dev), mostramos un 404.
-if (!isAuthorized && !isDevAdminAccess) {
-    return new Response(null, { status: 404 });
-}
-
 import "../styles/Asearch.css";
 
 import Sidebar from "../components/admin/Sidebar.astro";
