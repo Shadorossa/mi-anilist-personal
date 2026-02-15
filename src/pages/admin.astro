@@ -1381,6 +1381,7 @@ const favoritesOrdered = (db.favorites || [])
             function fillEditor(data, type) {
                 currentSelection = data;
                 currentSelection.type = type; // Asegurarse de que el tipo está bien definido
+                const editorEl = document.getElementById("editor");
                 const displayTitle = getDisplayTitle(data);
                 document.getElementById("editor").classList.remove("hidden");
                 document.getElementById("editorTitle").innerText = displayTitle;
@@ -1397,11 +1398,13 @@ const favoritesOrdered = (db.favorites || [])
                     document.getElementById("albumContainer");
 
                 if (type === "music") {
+                    editorEl.dataset.mediaType = "music";
                     sagaContainer.classList.add("hidden");
                     albumContainer.classList.remove("hidden");
                     document.getElementById("albumInput").value =
                         data.album || "";
                 } else {
+                    delete editorEl.dataset.mediaType;
                     sagaContainer.classList.remove("hidden");
                     albumContainer.classList.add("hidden");
 
@@ -1448,7 +1451,11 @@ const favoritesOrdered = (db.favorites || [])
                         : displayTitle;
                 const editorSubtitle =
                     document.getElementById("editorSubtitle");
-                editorSubtitle.innerText = type === "music" ? data.album : "";
+                // Para música, el subtítulo es el artista. El álbum tiene su propio input.
+                editorSubtitle.innerText =
+                    type === "music"
+                        ? data.artist || "Artista Desconocido"
+                        : "";
                 editorSubtitle.style.display =
                     type === "music" ? "block" : "none";
                 const offsetY = data.cover_offset_y ?? data.coverOffsetY ?? 50;
