@@ -325,10 +325,6 @@ if (isAuthenticated) {
         </script>
 
         <script is:inline>
-            // CSS para el panel de sagas
-            // NOTA: Recuerda añadir un botón en Sidebar.astro para activar el panel 'images'
-            // ej: <button onclick="switchMode('images')" ...><i class="fa-solid fa-images"></i></button>
-
             const sagaStyles = `
                 .saga-list {
                     background-color: rgba(255,255,255,0.02);
@@ -530,18 +526,14 @@ if (isAuthenticated) {
             let localCurrentSort = "saga";
             let localIsAscending = false;
 
-            // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
                 if (!actionName) return; // No hacer nada si no hay acción
                 try {
                     const item = JSON.parse(decodeURIComponent(encodedItem));
 
-                    // Abrir editores de obras
                     if (actionName === "openEditorSearch")
                         openEditorSearch(item);
                     if (actionName === "openEditorLocal") openEditorLocal(item);
-
-                    // --- ESTA ES LA LÍNEA QUE TE FALTA ---
                     if (actionName === "openCharEditor") openCharEditor(item);
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
@@ -3098,7 +3090,7 @@ if (isAuthenticated) {
 
             if (charForm) {
                 charForm.addEventListener("submit", async (e) => {
-                    e.preventDefault(); // CRÍTICO: Evita que el Enter te lleve a otro lado
+                    e.preventDefault();
 
                     const q = document.getElementById("charInput").value;
                     if (!q) return;
