@@ -2165,14 +2165,44 @@ const favoritesOrdered = (db.favorites || [])
                         const data = await res.json();
                         const keywordsToFilter = [
                             "digital deluxe",
+                            "deluxe edition",
                             "collection",
                             "hd edition",
+                            "limited edition",
+                            "bundle",
+                            "limited box",
+                            "digital premium edition",
+                            "special outfit",
+                            "trial version",
+                            "season pass",
                         ];
+                        const patternsToFilter = [
+                            /\w+\s+set(\s+\d+)?$/, // ej: "costume set", "persona set 2"
+                            /\w+\s+pack$/, // ej: "outfit pack"
+                            /\w+\s+suit$/, // ej: "gundam suit"
+                            /\w+\s+costume(\s+(v\d+|\d+))?$/, // ej: "idol costume", "special costume v1"
+                            /\w+\s+uniform$/, // ej: "school uniform"
+                        ];
+
                         const filteredData = data.filter((item) => {
                             const lowerCaseTitle = item.title.toLowerCase();
-                            return !keywordsToFilter.some((keyword) =>
-                                lowerCaseTitle.includes(keyword),
-                            );
+                            // Filtra por palabras clave que indican ediciones
+                            if (
+                                keywordsToFilter.some((keyword) =>
+                                    lowerCaseTitle.includes(keyword),
+                                )
+                            ) {
+                                return false;
+                            }
+                            // Filtra por patrones de terminación (ej: "costume set", "outfit pack")
+                            if (
+                                patternsToFilter.some((pattern) =>
+                                    pattern.test(lowerCaseTitle),
+                                )
+                            ) {
+                                return false;
+                            }
+                            return true;
                         });
                         document.getElementById("searchResults").innerHTML =
                             filteredData
@@ -3727,58 +3757,36 @@ const favoritesOrdered = (db.favorites || [])
                     }
 
                     const btn = document.getElementById("deleteMediaBtn");
-                    const originalText = btn.innerText;
-                    btn.innerText = "Eliminando...";
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML =
+                        '<i class="fa-solid fa-circle-notch fa-spin"></i>';
                     btn.disabled = true;
 
                     try {
-                        const deleteRes = await fetch("/api/delete.json", {
+                        const res = await fetch("/api/delete.json", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 type: currentSelection.type,
                                 id: currentSelection.id,
+                                title: currentSelection.title, // Pasamos el título para la limpieza
                             }),
                         });
-                        if (!deleteRes.ok)
-                            throw new Error("File deletion failed");
 
-                        window.favoritesTitles = window.favoritesTitles.filter(
-                            (t) => {
-                                // For manga, we need to check for both "Title" and "Title -M"
-                                if (typeof t === "string") {
-                                    return (
-                                        t !== currentSelection.title &&
-                                        t !== `${currentSelection.title} -M`
-                                    );
-                                }
-                                // Keep saga objects
-                                return true;
-                            },
-                        );
-                        window.monthlyPicksGlobal =
-                            window.monthlyPicksGlobal.filter(
-                                (p) => p.title !== currentSelection.title,
+                        if (!res.ok) {
+                            const errorData = await res.json();
+                            throw new Error(
+                                errorData.error ||
+                                    "Falló la eliminación en el servidor.",
                             );
+                        }
 
-                        const saveDbRes = await fetch("/api/save.json", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                dbData: {
-                                    favorites: window.favoritesTitles,
-                                    monthlyPicks: window.monthlyPicksGlobal,
-                                },
-                            }),
-                        });
-                        if (!saveDbRes.ok) throw new Error("DB update failed");
-
-                        btn.innerText = "¡Eliminado!";
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
                         setTimeout(() => window.location.reload(), 500);
                     } catch (e) {
-                        console.error("Error deleting item:", e);
-                        alert("Error al eliminar la obra.");
-                        btn.innerText = originalText;
+                        console.error("Error al eliminar:", e);
+                        alert(`Error al eliminar: ${e.message}`);
+                        btn.innerHTML = originalHTML;
                         btn.disabled = false;
                     }
                 });
