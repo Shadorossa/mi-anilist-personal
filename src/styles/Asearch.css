@@ -849,3 +849,30 @@ body.is-dragging-active .asearch-card:not(.sortable-chosen):hover .asearch-info 
     box-shadow: 0 0 0 3px #6366f1;
     border-color: #6366f1;
 }
+
+/* Gestor de Versiones */
+.version-drop-zone {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.version-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 6px;
+    min-height: 110px;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
+    flex-grow: 1;
+}
+
+.versions-search-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}

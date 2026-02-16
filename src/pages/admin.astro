@@ -11,6 +11,7 @@ import FavoritesPanel from "../components/admin/FavoritesPanel.astro";
 import SagasPanel from "../components/admin/SagasPanel.astro";
 import ImageManagerPanel from "../components/admin/ImageManagerPanel.astro";
 import EditorModal from "../components/admin/EditorModal.astro";
+import VersionsPanel from "../components/admin/VersionsPanel.astro";
 import MusicSearchPanel from "../components/admin/MusicSearchPanel.astro";
 import MyMusicPanel from "../components/admin/MyMusicPanel.astro";
 import CharacterModal from "../components/admin/CharacterModal.astro";
@@ -135,6 +136,7 @@ const favoritesOrdered = (db.favorites || [])
             <ImageManagerPanel />
             <MusicSearchPanel />
             <MyMusicPanel />
+            <VersionsPanel />
         </main>
 
         <EditorModal />
@@ -515,6 +517,56 @@ const favoritesOrdered = (db.favorites || [])
             let localCurrentSort = "saga";
             let localIsAscending = false;
 
+            // --- Gestor de Versiones State ---
+            let currentGameForVersioning = null;
+            let editionListSortable = null;
+            let editionSearchResultsSortable = null;
+            let editionSortables = { search: null, lists: [] };
+
+            function filterEditionKeywords(data) {
+                const keywordsToFilter = [
+                    "digital deluxe",
+                    "deluxe edition",
+                    "collection",
+                    "hd edition",
+                    "limited edition",
+                    "bundle",
+                    "limited box",
+                    "digital premium edition",
+                    "special outfit",
+                    "trial version",
+                    "season pass",
+                ];
+                const patternsToFilter = [
+                    /\w+\s+set(\s+\d+)?$/,
+                    /\w+\s+pack$/,
+                    /\w+\s+suit$/,
+                    /\w+\s+costume(\s+(v\d+|\d+))?$/,
+                    /\w+\s+uniform$/,
+                ];
+
+                if (!Array.isArray(data)) return [];
+
+                return data.filter((item) => {
+                    const lowerCaseTitle = item.title.toLowerCase();
+                    if (
+                        keywordsToFilter.some((keyword) =>
+                            lowerCaseTitle.includes(keyword),
+                        )
+                    ) {
+                        return false;
+                    }
+                    if (
+                        patternsToFilter.some((pattern) =>
+                            pattern.test(lowerCaseTitle),
+                        )
+                    ) {
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
             // Busca esta función en tu <script is:inline>
             window.handleCardClick = (actionName, encodedItem) => {
                 if (!actionName) return; // No hacer nada si no hay acción
@@ -529,6 +581,8 @@ const favoritesOrdered = (db.favorites || [])
 
                     // --- ESTA ES LA LÍNEA QUE TE FALTA ---
                     if (actionName === "openCharEditor") openCharEditor(item);
+                    if (actionName === "selectGameForVersioning")
+                        selectGameForVersioning(item);
                 } catch (e) {
                     console.error("Error al procesar el click:", e);
                 }
@@ -2163,47 +2217,7 @@ const favoritesOrdered = (db.favorites || [])
                             `/api/search.json?q=${encodeURIComponent(q)}&type=${t}`,
                         );
                         const data = await res.json();
-                        const keywordsToFilter = [
-                            "digital deluxe",
-                            "deluxe edition",
-                            "collection",
-                            "hd edition",
-                            "limited edition",
-                            "bundle",
-                            "limited box",
-                            "digital premium edition",
-                            "special outfit",
-                            "trial version",
-                            "season pass",
-                        ];
-                        const patternsToFilter = [
-                            /\w+\s+set(\s+\d+)?$/, // ej: "costume set", "persona set 2"
-                            /\w+\s+pack$/, // ej: "outfit pack"
-                            /\w+\s+suit$/, // ej: "gundam suit"
-                            /\w+\s+costume(\s+(v\d+|\d+))?$/, // ej: "idol costume", "special costume v1"
-                            /\w+\s+uniform$/, // ej: "school uniform"
-                        ];
-
-                        const filteredData = data.filter((item) => {
-                            const lowerCaseTitle = item.title.toLowerCase();
-                            // Filtra por palabras clave que indican ediciones
-                            if (
-                                keywordsToFilter.some((keyword) =>
-                                    lowerCaseTitle.includes(keyword),
-                                )
-                            ) {
-                                return false;
-                            }
-                            // Filtra por patrones de terminación (ej: "costume set", "outfit pack")
-                            if (
-                                patternsToFilter.some((pattern) =>
-                                    pattern.test(lowerCaseTitle),
-                                )
-                            ) {
-                                return false;
-                            }
-                            return true;
-                        });
+                        const filteredData = filterEditionKeywords(data);
                         document.getElementById("searchResults").innerHTML =
                             filteredData
                                 .map((i) => renderCard(i, "openEditorSearch"))
@@ -2254,22 +2268,365 @@ const favoritesOrdered = (db.favorites || [])
                     }
                 });
 
+            // --- Gestor de Versiones (NUEVA LÓGICA) ---
+
+            window.selectGameForVersioning = async (item) => {
+                const VERSION_TYPES = [
+                    "expanded",
+                    "remaster",
+                    "dlc",
+                    "mod",
+                    "bundle",
+                ];
+
+                currentGameForVersioning = item;
+
+                document
+                    .getElementById("versions-placeholder")
+                    .classList.add("hidden");
+                const editor = document.getElementById("versions-editor");
+                editor.classList.remove("hidden");
+                editor.classList.add("flex");
+
+                document.getElementById("versions-main-game-cover").src =
+                    item.cover;
+                document.getElementById("versions-main-game-title").innerText =
+                    item.title;
+
+                // Limpiar todas las listas y mostrar mensaje de carga
+                VERSION_TYPES.forEach((type) => {
+                    const listEl = document.getElementById(
+                        `version-list-${type}`,
+                    );
+                    if (listEl)
+                        listEl.innerHTML = `<p class="col-span-full text-center text-white/50 text-[10px] animate-pulse">Cargando...</p>`;
+                });
+                document.getElementById(
+                    "versions-edition-search-results",
+                ).innerHTML = "";
+
+                // Pre-rellenar el buscador de ediciones
+                document.getElementById("versions-edition-search-input").value =
+                    item.title;
+
+                // Cargar y mostrar las ediciones ya guardadas
+                try {
+                    const res = await fetch(
+                        `/api/versions.json?main_id=${item.id}`,
+                    );
+                    if (!res.ok) throw new Error("Failed to fetch versions");
+                    const savedEditions = await res.json();
+
+                    // Limpiar listas antes de poblar
+                    VERSION_TYPES.forEach((type) => {
+                        const listEl = document.getElementById(
+                            `version-list-${type}`,
+                        );
+                        if (listEl) listEl.innerHTML = "";
+                    });
+
+                    savedEditions.forEach((edition) => {
+                        const listEl = document.getElementById(
+                            `version-list-${edition.version_type}`,
+                        );
+                        if (listEl) {
+                            listEl.insertAdjacentHTML(
+                                "beforeend",
+                                renderDraggableVersionCard(edition),
+                            );
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error loading saved versions:", e);
+                    // Limpiar los mensajes de "Cargando..." en caso de error
+                    VERSION_TYPES.forEach((type) => {
+                        const el = document.getElementById(
+                            `version-list-${type}`,
+                        );
+                        if (el)
+                            el.innerHTML = `<p class="col-span-full text-center text-red-400 text-[10px]">Error</p>`;
+                    });
+                }
+
+                // Lanzar la búsqueda de nuevas ediciones DESPUÉS de cargar las guardadas
+                document
+                    .getElementById("versions-edition-search-form")
+                    .dispatchEvent(new Event("submit", { bubbles: true }));
+
+                // Destruir sortables antiguos y crear nuevos
+                editionSortables.lists.forEach((s) => s.destroy());
+                editionSortables.lists = [];
+
+                VERSION_TYPES.forEach((type) => {
+                    const listEl = document.getElementById(
+                        `version-list-${type}`,
+                    );
+                    if (listEl) {
+                        const sortable = new Sortable(listEl, {
+                            group: "versions",
+                            animation: 150,
+                            ghostClass: "sortable-ghost-card",
+                            onAdd: function (evt) {
+                                const newCard = evt.item;
+                                newCard.removeAttribute("onclick");
+                                // Re-ejecutar la búsqueda para que el item arrastrado desaparezca de los resultados
+                                document
+                                    .getElementById(
+                                        "versions-edition-search-form",
+                                    )
+                                    .dispatchEvent(
+                                        new Event("submit", { bubbles: true }),
+                                    );
+                            },
+                        });
+                        editionSortables.lists.push(sortable);
+                    }
+                });
+            };
+
+            function renderDraggableVersionCard(item) {
+                const displayTitle = getDisplayTitle(item);
+                const year = getWorkYear(item);
+
+                return `
+                <div
+                    data-id="${item.id}"
+                    data-title="${item.title}"
+                    data-cover="${item.cover}"
+                    class="asearch-card"
+                    draggable="true"
+                >
+                    <img src="${item.cover}" class="obj-center" loading="lazy" />
+                    ${year ? `<div class="fixed-badge">${year}</div>` : ""}
+                    <div class="asearch-info" style="pointer-events: none;">
+                        <h4 class="asearch-title">${displayTitle}</h4>
+                    </div>
+                </div>`;
+            }
+
+            document
+                .getElementById("version-main-search-form")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const q = document.getElementById(
+                        "version-main-search-input",
+                    ).value;
+                    if (!q) return;
+
+                    const resultsGrid = document.getElementById(
+                        "version-main-search-results",
+                    );
+                    resultsGrid.innerHTML = `<p class="col-span-full text-center text-white/50 animate-pulse">Buscando...</p>`;
+                    try {
+                        const res = await fetch(
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=game`,
+                        );
+                        const data = await res.json();
+                        const filteredData = filterEditionKeywords(data);
+                        resultsGrid.innerHTML =
+                            filteredData.length > 0
+                                ? filteredData
+                                      .map((i) =>
+                                          renderCard(
+                                              i,
+                                              "selectGameForVersioning",
+                                          ),
+                                      )
+                                      .join("")
+                                : `<p class="col-span-full text-center text-white/20">No se encontraron resultados.</p>`;
+                    } catch (e) {
+                        console.error(
+                            "Error en búsqueda de juego principal para versiones:",
+                            e,
+                        );
+                        resultsGrid.innerHTML = `<p class="col-span-full text-red-400">Error al buscar</p>`;
+                    }
+                });
+
+            document
+                .getElementById("versions-edition-search-form")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const q = document.getElementById(
+                        "versions-edition-search-input",
+                    ).value;
+                    if (!q) return;
+
+                    const resultsGrid = document.getElementById(
+                        "versions-edition-search-results",
+                    );
+                    resultsGrid.innerHTML = `<p class="col-span-full text-center text-white/50 animate-pulse">Buscando...</p>`;
+
+                    try {
+                        const res = await fetch(
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=game&include_editions=true`,
+                        );
+                        let data = await res.json();
+
+                        // Ocultar el juego principal y las ediciones ya asociadas de los resultados de búsqueda
+                        if (currentGameForVersioning) {
+                            const mainGameId = currentGameForVersioning.id;
+                            const associatedEditionIds = new Set(
+                                Array.from(
+                                    document.querySelectorAll(
+                                        ".version-list-grid .asearch-card",
+                                    ),
+                                ).map((card) => parseInt(card.dataset.id, 10)),
+                            );
+
+                            data = data.filter((item) => {
+                                // Filtrar el juego principal
+                                if (item.id === mainGameId) return false;
+                                // Filtrar ediciones ya en la lista
+                                if (associatedEditionIds.has(item.id))
+                                    return false;
+
+                                return true;
+                            });
+                        }
+
+                        resultsGrid.innerHTML =
+                            data.length > 0
+                                ? data
+                                      .map((i) => renderDraggableVersionCard(i))
+                                      .join("")
+                                : `<p class="col-span-full text-center text-white/20">No se encontraron resultados.</p>`;
+
+                        if (editionSortables.search)
+                            editionSortables.search.destroy();
+                        editionSortables.search = new Sortable(resultsGrid, {
+                            group: {
+                                name: "versions",
+                                pull: "clone",
+                                put: false,
+                            },
+                            sort: false,
+                            animation: 150,
+                            ghostClass: "sortable-ghost-card",
+                        });
+                    } catch (e) {
+                        console.error("Error en búsqueda de ediciones:", e);
+                        resultsGrid.innerHTML = `<p class="col-span-full text-red-400">Error al buscar</p>`;
+                    }
+                });
+
+            document
+                .getElementById("save-versions-btn")
+                .addEventListener("click", async () => {
+                    if (!currentGameForVersioning) {
+                        alert("No hay un juego principal seleccionado.");
+                        return;
+                    }
+
+                    const btn = document.getElementById("save-versions-btn");
+                    const originalText = btn.textContent;
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...`;
+                    btn.disabled = true;
+
+                    const editions = [];
+                    const VERSION_TYPES = [
+                        "expanded",
+                        "remaster",
+                        "dlc",
+                        "mod",
+                        "bundle",
+                    ];
+
+                    VERSION_TYPES.forEach((type) => {
+                        const listEl = document.getElementById(
+                            `version-list-${type}`,
+                        );
+                        if (listEl) {
+                            const editionCards =
+                                listEl.querySelectorAll(".asearch-card");
+                            Array.from(editionCards).forEach((card) => {
+                                editions.push({
+                                    id: parseInt(card.dataset.id, 10),
+                                    title: card.dataset.title,
+                                    version_type: type,
+                                });
+                            });
+                        }
+                    });
+
+                    const mainGameId = currentGameForVersioning.id;
+
+                    const payload = {
+                        dbData: {
+                            versions: {
+                                mainGameId: mainGameId,
+                                mainGameTitle: currentGameForVersioning.title,
+                                editions: editions,
+                            },
+                        },
+                    };
+
+                    try {
+                        const res = await fetch("/api/save.json", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload),
+                        });
+
+                        if (!res.ok) {
+                            const errorData = await res.json();
+                            throw new Error(
+                                errorData.error || "Server returned an error",
+                            );
+                        }
+
+                        btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
+                    } catch (e) {
+                        console.error("Error al guardar las versiones:", e);
+                        alert("Error al guardar las versiones: " + e.message);
+                        btn.innerHTML = "Error";
+                    } finally {
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                    }
+                });
+
+            // --- FIN Gestor de Versiones ---
+
+            document
+                .getElementById("charSearchForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const q = document.getElementById("charInput").value;
+                    if (!q) return;
+
+                    const resultsGrid = document.getElementById("charResults");
+                    resultsGrid.innerHTML =
+                        '<p class="col-span-full text-indigo-400 text-xs py-4 text-center animate-pulse">Buscando...</p>';
+
+                    try {
+                        const res = await fetch(
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=character`,
+                        );
+                        const data = await res.json();
+
+                        if (!data || data.length === 0) {
+                            resultsGrid.innerHTML =
+                                '<p class="col-span-full text-white/20 text-xs py-4 text-center">No se encontraron personajes.</p>';
+                        } else {
+                            // Usamos la función renderCard que ya tienes, pasando true al final para indicar que es personaje
+                            resultsGrid.innerHTML = data
+                                .map((i) =>
+                                    renderCard(i, "openCharEditor", true),
+                                )
+                                .join("");
+                        }
+                    } catch (e) {
+                        console.error("Error en la búsqueda:", e);
+                        resultsGrid.innerHTML =
+                            '<p class="col-span-full text-red-500/50 text-xs py-4 text-center">Error de conexión con el servidor.</p>';
+                    }
+                });
+
             // --- Lógica para guardar la posición de scroll ---
             let activeScrollListeners = [];
-
-            function saveScrollPosition(event) {
-                const el = event.target;
-                // Usamos un timeout para no sobrecargar localStorage en cada pixel de scroll
-                if (el.scrollTimeout) clearTimeout(el.scrollTimeout);
-                el.scrollTimeout = setTimeout(() => {
-                    if (el.id) {
-                        localStorage.setItem(
-                            `scrollPos-${el.id}`,
-                            el.scrollTop,
-                        );
-                    }
-                }, 100);
-            }
 
             window.switchMode = (mode) => {
                 // 1. Limpiar listeners de scroll del panel anterior
@@ -3566,45 +3923,6 @@ const favoritesOrdered = (db.favorites || [])
                         }, 2000);
                     }
                 });
-
-            // --- BUSCADOR DE PERSONAJES ---
-            const charForm = document.getElementById("charSearchForm");
-
-            if (charForm) {
-                charForm.addEventListener("submit", async (e) => {
-                    e.preventDefault(); // CRÍTICO: Evita que el Enter te lleve a otro lado
-
-                    const q = document.getElementById("charInput").value;
-                    if (!q) return;
-
-                    const resultsGrid = document.getElementById("charResults");
-                    resultsGrid.innerHTML =
-                        '<p class="col-span-full text-indigo-400 text-xs py-4 text-center animate-pulse">Buscando...</p>';
-
-                    try {
-                        const res = await fetch(
-                            `/api/search.json?q=${encodeURIComponent(q)}&type=character`,
-                        );
-                        const data = await res.json();
-
-                        if (!data || data.length === 0) {
-                            resultsGrid.innerHTML =
-                                '<p class="col-span-full text-white/20 text-xs py-4 text-center">No se encontraron personajes.</p>';
-                        } else {
-                            // Usamos la función renderCard que ya tienes, pasando true al final para indicar que es personaje
-                            resultsGrid.innerHTML = data
-                                .map((i) =>
-                                    renderCard(i, "openCharEditor", true),
-                                )
-                                .join("");
-                        }
-                    } catch (e) {
-                        console.error("Error en la búsqueda:", e);
-                        resultsGrid.innerHTML =
-                            '<p class="col-span-full text-red-500/50 text-xs py-4 text-center">Error de conexión con el servidor.</p>';
-                    }
-                });
-            }
 
             document
                 .getElementById("deleteCharBtn")

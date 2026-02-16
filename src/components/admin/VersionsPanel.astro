@@ -1,0 +1,159 @@
+<div id="versions-panel" class="panel hidden">
+    <div class="flex justify-between items-start mb-4 shrink-0">
+        <div class="flex-1"></div>
+        <div class="flex flex-col items-center pt-1">
+            <h2 class="text-lg font-bold text-white tracking-tight">
+                Gestor de Versiones
+            </h2>
+            <div class="w-32 h-px bg-white/10 mt-2"></div>
+        </div>
+        <div class="flex-1 flex justify-end">
+            <!-- Maybe buttons here later -->
+        </div>
+    </div>
+    <div class="flex-1 flex gap-8 min-h-0">
+        <!-- Left Column: Main Game Search -->
+        <div class="w-1/3 flex flex-col min-h-0">
+            <form
+                id="version-main-search-form"
+                class="relative mb-4"
+                onsubmit="event.preventDefault();"
+            >
+                <input
+                    type="text"
+                    id="version-main-search-input"
+                    placeholder="Buscar juego principal..."
+                    autocomplete="off"
+                    class="form-input !w-full !text-xs"
+                />
+                <button
+                    type="submit"
+                    class="absolute top-0 right-0 h-full px-3 text-gray-500 hover:text-white transition-colors"
+                >
+                    <i class="fa-solid fa-search text-xs"></i>
+                </button>
+            </form>
+            <div class="custom-scrollbar flex-1">
+                <div id="version-main-search-results" class="asearch-grid">
+                </div>
+            </div>
+        </div>
+        <!-- Right Column: Editor and Edition Searcher -->
+        <div class="w-2/3 flex flex-col min-h-0">
+            <div
+                id="versions-placeholder"
+                class="flex-1 flex items-center justify-center text-gray-600 text-sm italic"
+            >
+                Selecciona un juego para gestionar sus versiones.
+            </div>
+            <div id="versions-editor" class="hidden h-full flex-col gap-4">
+                <div
+                    class="flex gap-4 p-4 bg-[#0c0c0e] border border-white/10 rounded-xl"
+                >
+                    <div class="w-[120px] shrink-0">
+                        <div
+                            class="relative aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800"
+                        >
+                            <img
+                                id="versions-main-game-cover"
+                                src=""
+                                class="absolute inset-0 w-full h-full object-cover"
+                            />
+                        </div>
+                        <h3
+                            id="versions-main-game-title"
+                            class="text-xs font-bold text-center mt-2 text-white truncate"
+                        >
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 flex-1">
+                        <div
+                            class="version-drop-zone"
+                            data-version-type="expanded"
+                        >
+                            <h4 class="panel-subheader mb-2">Expanded Game</h4>
+                            <div
+                                id="version-list-expanded"
+                                class="version-list-grid"
+                            >
+                            </div>
+                        </div>
+                        <div
+                            class="version-drop-zone"
+                            data-version-type="remaster"
+                        >
+                            <h4 class="panel-subheader mb-2">Remaster</h4>
+                            <div
+                                id="version-list-remaster"
+                                class="version-list-grid"
+                            >
+                            </div>
+                        </div>
+                        <div
+                            class="version-drop-zone"
+                            data-version-type="bundle"
+                        >
+                            <h4 class="panel-subheader mb-2">Bundles</h4>
+                            <div
+                                id="version-list-bundle"
+                                class="version-list-grid"
+                            >
+                            </div>
+                        </div>
+                        <div class="version-drop-zone" data-version-type="dlc">
+                            <h4 class="panel-subheader mb-2">DLCs</h4>
+                            <div
+                                id="version-list-dlc"
+                                class="version-list-grid"
+                            >
+                            </div>
+                        </div>
+                        <div class="version-drop-zone" data-version-type="mod">
+                            <h4 class="panel-subheader mb-2">MODs</h4>
+                            <div
+                                id="version-list-mod"
+                                class="version-list-grid"
+                            >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col min-h-0">
+                    <form
+                        id="versions-edition-search-form"
+                        class="relative mb-4"
+                        onsubmit="event.preventDefault();"
+                    >
+                        <input
+                            type="text"
+                            id="versions-edition-search-input"
+                            placeholder="Buscar ediciones para arrastrar..."
+                            autocomplete="off"
+                            class="form-input !w-full !text-xs"
+                        />
+                        <button
+                            type="submit"
+                            class="absolute top-0 right-0 h-full px-3 text-gray-500 hover:text-white transition-colors"
+                        >
+                            <i class="fa-solid fa-search text-xs"></i>
+                        </button>
+                    </form>
+                    <div class="custom-scrollbar flex-1">
+                        <div
+                            id="versions-edition-search-results"
+                            class="asearch-grid versions-search-grid"
+                        >
+                        </div>
+                    </div>
+                </div>
+                <div class="shrink-0 pt-4 border-t border-white/10">
+                    <button
+                        id="save-versions-btn"
+                        class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg transition hover:bg-indigo-500 active:scale-95 text-xs uppercase tracking-wide"
+                        >Guardar Versiones</button
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

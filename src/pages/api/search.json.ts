@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { supabase } from "../../lib/supabase";
 
 // --- Caches en memoria para tokens ---
 let spotifyToken: { value: string | null; expires: number } = { value: null, expires: 0 };
@@ -115,7 +116,7 @@ async function searchIgdb(query: string) {
     // Se relaja la consulta: se eliminó `version_parent = null` que era muy restrictivo
     // y se añadió la categoría de expansiones standalone (4) para obtener más resultados relevantes.
     // Se elimina el filtro 'where' para que la búsqueda sea más amplia, como ha solicitado el usuario.
-    body: `search "${sanitizedQuery}"; fields name, cover.url, first_release_date; limit 50;`,
+    body: `search "${sanitizedQuery}"; fields id, name, cover.url, first_release_date; limit 50;`,
   });
 
   if (!response.ok) {
@@ -125,6 +126,7 @@ async function searchIgdb(query: string) {
 
   const data = await response.json();
   return data.map((game: any) => ({
+    id: game.id,
     title: game.name,
     cover: game.cover?.url
       ? game.cover.url.replace("t_thumb", "t_cover_big")
@@ -207,6 +209,7 @@ async function searchAnilistCharacter(query: string) {
 
   const data = await response.json();
   return data.data.Page.characters.map((char: any) => ({
+    id: char.id,
     title: char.name.full,
     cover: char.image.large,
     source: char.media.nodes[0]?.title.english || char.media.nodes[0]?.title.romaji || 'Unknown',
@@ -219,6 +222,7 @@ async function searchAnilistCharacter(query: string) {
 export const GET: APIRoute = async ({ url }) => {
   const query = url.searchParams.get("q");
   const type = url.searchParams.get("type");
+  const includeEditions = url.searchParams.get("include_editions") === 'true';
 
   if (!query) {
     return new Response(JSON.stringify({ error: "El parámetro 'q' es requerido" }), { status: 400 });
@@ -232,6 +236,17 @@ export const GET: APIRoute = async ({ url }) => {
         break;
       case "game":
         results = await searchIgdb(query);
+        if (!includeEditions) {
+          // Fetch all edition IDs from the game_versions table to hide them from general search
+          const { data: versionsData, error: versionsError } = await supabase
+              .from('game_versions')
+              .select('edition_igdb_id');
+          
+          if (versionsError) console.error("Error fetching game versions to filter search:", versionsError.message);
+
+          const editionIds = new Set(versionsData?.map(v => v.edition_igdb_id) || []);
+          results = results.filter(game => !editionIds.has(game.id));
+        }
         break;
       case "anime":
         results = await searchAnilistMedia(query, 'ANIME');

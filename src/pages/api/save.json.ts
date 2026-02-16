@@ -6,85 +6,89 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const { fileData, dbData } = body;
 
-    if (!fileData) {
-      return new Response(JSON.stringify({ error: "Faltan los datos del archivo (fileData)." }), { status: 400 });
+    // Si no hay fileData, debemos asegurarnos de que al menos haya datos de versiones para guardar.
+    // Esto permite que el gestor de versiones funcione de forma independiente.
+    if (!fileData && !dbData?.versions) {
+      return new Response(JSON.stringify({ error: "Faltan datos para guardar (ni fileData ni dbData.versions)." }), { status: 400 });
     }
 
     let savedRecord = null;
 
-    // --- 1. Guardar la entrada principal (obra o música) ---
-    if (fileData.type === 'music') {
-      // 1. Upsert del álbum para obtener su ID
-      const { data: albumRecord, error: albumError } = await supabase
-        .from('albums')
-        .upsert({
-          title: fileData.album,
+    // --- 1. Guardar la entrada principal (obra o música), si existe fileData ---
+    if (fileData) {
+      if (fileData.type === 'music') {
+        // 1. Upsert del álbum para obtener su ID
+        const { data: albumRecord, error: albumError } = await supabase
+          .from('albums')
+          .upsert({
+            title: fileData.album,
+            artist: fileData.artist,
+            cover: fileData.cover,
+            year: fileData.year,
+          }, { onConflict: 'title, artist' })
+          .select()
+          .single();
+
+        if (albumError) throw new Error(`Error al gestionar el álbum: ${albumError.message}`);
+
+        // 2. Upsert de la canción con el ID del álbum
+        const { data: songRecord, error: songError } = await supabase
+          .from('music')
+          .upsert({
+            ...(fileData.id && { id: fileData.id }),
+            title: fileData.title,
+            score: fileData.score,
+            album_id: albumRecord.id,
+          })
+          .select()
+          .single();
+
+        if (songError) throw new Error(`Error al guardar la canción: ${songError.message}`);
+
+        // 3. Devolvemos la canción recién guardada junto con los datos de su álbum
+        const { data: newSongWithAlbum, error: fetchError } = await supabase
+          .from('music')
+          .select('*, albums(*)')
+          .eq('id', songRecord.id)
+          .single();
+
+        if (fetchError) throw new Error(`Error al recuperar la canción guardada: ${fetchError.message}`);
+        savedRecord = newSongWithAlbum;
+
+      } else if (fileData.type === 'music-album') {
+        // Es un álbum, lo guardamos en la tabla 'albums'
+        const { data, error } = await supabase.from('albums').upsert({
+          id: fileData.id,
+          title: fileData.title,
           artist: fileData.artist,
           cover: fileData.cover,
           year: fileData.year,
-        }, { onConflict: 'title, artist' })
-        .select()
-        .single();
+          cover_offset_y: fileData.coverOffsetY,
+        }).select().single();
 
-      if (albumError) throw new Error(`Error al gestionar el álbum: ${albumError.message}`);
+        if (error) throw new Error(`Error al guardar en 'albums': ${error.message}`);
+        savedRecord = data;
 
-      // 2. Upsert de la canción con el ID del álbum
-      const { data: songRecord, error: songError } = await supabase
-        .from('music')
-        .upsert({
-          ...(fileData.id && { id: fileData.id }),
+      } else {
+        // Es una obra (juego, anime, etc.), la guardamos en la tabla 'works'
+        const { data, error } = await supabase.from('works').upsert({
           title: fileData.title,
+          cover: fileData.cover,
+          year: fileData.year,
+          type: fileData.type,
+          status: fileData.status,
           score: fileData.score,
-          album_id: albumRecord.id,
-        })
-        .select()
-        .single();
+          start_date: fileData.startDate,
+          finish_date: fileData.finishDate,
+          cover_offset_y: fileData.coverOffsetY,
+          private_notes: fileData.privateNotes,
+          // Añadimos un ID si existe para que 'upsert' pueda actualizar
+          ...(fileData.id && { id: fileData.id }),
+        }).select().single();
 
-      if (songError) throw new Error(`Error al guardar la canción: ${songError.message}`);
-
-      // 3. Devolvemos la canción recién guardada junto con los datos de su álbum
-      const { data: newSongWithAlbum, error: fetchError } = await supabase
-        .from('music')
-        .select('*, albums(*)')
-        .eq('id', songRecord.id)
-        .single();
-
-      if (fetchError) throw new Error(`Error al recuperar la canción guardada: ${fetchError.message}`);
-      savedRecord = newSongWithAlbum;
-
-    } else if (fileData.type === 'music-album') {
-      // Es un álbum, lo guardamos en la tabla 'albums'
-      const { data, error } = await supabase.from('albums').upsert({
-        id: fileData.id,
-        title: fileData.title,
-        artist: fileData.artist,
-        cover: fileData.cover,
-        year: fileData.year,
-        cover_offset_y: fileData.coverOffsetY,
-      }).select().single();
-
-      if (error) throw new Error(`Error al guardar en 'albums': ${error.message}`);
-      savedRecord = data;
-
-    } else {
-      // Es una obra (juego, anime, etc.), la guardamos en la tabla 'works'
-      const { data, error } = await supabase.from('works').upsert({
-        title: fileData.title,
-        cover: fileData.cover,
-        year: fileData.year,
-        type: fileData.type,
-        status: fileData.status,
-        score: fileData.score,
-        start_date: fileData.startDate,
-        finish_date: fileData.finishDate,
-        cover_offset_y: fileData.coverOffsetY,
-        private_notes: fileData.privateNotes,
-        // Añadimos un ID si existe para que 'upsert' pueda actualizar
-        ...(fileData.id && { id: fileData.id }),
-      }).select().single();
-
-      if (error) throw new Error(`Error al guardar en 'works': ${error.message}`);
-      savedRecord = data;
+        if (error) throw new Error(`Error al guardar en 'works': ${error.message}`);
+        savedRecord = data;
+      }
     }
 
     // --- 2. Guardar datos adicionales (favoritos, mensuales, sagas, etc.) ---
@@ -140,10 +144,34 @@ export const POST: APIRoute = async ({ request }) => {
         }
       }
 
-      const results = await Promise.allSettled(promises);
-      results.forEach(result => {
-        if (result.status === 'rejected') console.error("Error en una de las operaciones de dbData:", result.reason);
-      });
+      if (dbData.versions) {
+        const { mainGameId, mainGameTitle, editions } = dbData.versions;
+
+        const manageVersions = async () => {
+          // 1. Delete all existing entries for this main game
+          const { error: deleteError } = await supabase.from('game_versions').delete().eq('main_igdb_id', mainGameId);
+          if (deleteError) throw new Error(`Error deleting old versions: ${deleteError.message}`);
+
+          // 2. Insert new entries if any
+          if (editions && editions.length > 0) {
+            const versionsToInsert = editions.map(edition => ({
+              main_igdb_id: mainGameId,
+              edition_igdb_id: edition.id,
+              main_title: mainGameTitle,
+              edition_title: edition.title,
+              version_type: edition.version_type,
+            }));
+            const { error: insertError } = await supabase.from('game_versions').insert(versionsToInsert);
+            if (insertError) throw new Error(`Error inserting new versions: ${insertError.message}`);
+          }
+        };
+        promises.push(manageVersions());
+      }
+
+      // Se cambia a Promise.all para que cualquier error en las sub-operaciones
+      // detenga la ejecución y sea capturado por el bloque catch principal.
+      // Esto asegura que el cliente reciba una respuesta de error si algo falla.
+      await Promise.all(promises);
     }
 
     return new Response(JSON.stringify({ success: true, savedRecord }), { status: 200 });
