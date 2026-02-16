@@ -11,6 +11,7 @@ export const GET: APIRoute = async () => {
             sagasRes,
             monthlyPicksRes,
             monthlyCharsRes,
+            musicRes,
             favoritesRes,
             configRes,
         ] = await Promise.all([
@@ -19,6 +20,7 @@ export const GET: APIRoute = async () => {
             supabase.from("sagas").select("*"),
             supabase.from("monthly_picks").select("*"),
             supabase.from("monthly_chars").select("*"),
+            supabase.from("music").select("*"),
             supabase.from("favorites").select("*").order("order"),
             supabase.from("config").select("*").single(),
         ]);
@@ -34,6 +36,7 @@ export const GET: APIRoute = async () => {
             sagas: sagasRes.data,
             monthlyPicks: monthlyPicksRes.data,
             monthlyChars: monthlyCharsRes.data,
+            music: musicRes.data,
             favorites: favoritesRes.data,
             config: configRes.data,
         };

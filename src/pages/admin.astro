@@ -24,7 +24,8 @@ const [
     charactersRes,
     monthlyCharsRes,
     sagasRes,
-    musicRes,
+    musicRes, // Ahora musicRes tendrá los datos del álbum anidados
+    albumsRes,
 ] = await Promise.all([
     supabase.from("works").select("*"),
     supabase.from("favorites").select("is_saga, title, cover").order("order"),
@@ -32,12 +33,29 @@ const [
     supabase.from("characters").select("*"),
     supabase.from("monthly_chars").select("month, char_name, cover"),
     supabase.from("sagas").select("name, work_titles"),
-    supabase.from("music").select("*"),
+    supabase.from("music").select("*, albums(*)"), // Hacemos el JOIN aquí
+    supabase.from("albums").select("*"),
 ]);
 
 // --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
 const localLibrary = worksRes.data || [];
-const localMusic = musicRes.data || [];
+const localAlbums = albumsRes.data || [];
+
+// Aplanamos los datos de la música para que el cliente los use fácilmente
+const localMusic = (musicRes.data || []).map((song) => {
+    if (song.albums) {
+        // Nuevo formato con JOIN
+        return {
+            ...song, // id, title, score, album_id
+            artist: song.albums.artist,
+            album: song.albums.title,
+            cover: song.albums.cover,
+            year: song.albums.year,
+            cover_offset_y: song.albums.cover_offset_y,
+        };
+    }
+    return song; // Mantenemos compatibilidad con datos antiguos sin JOIN
+});
 
 const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
     acc[saga.name] = saga.work_titles;
@@ -261,6 +279,7 @@ const favoritesOrdered = (db.favorites || [])
                 allImages,
                 unusedImages,
                 localMusic,
+                localAlbums,
             }}
         >
             window.localLibrary = localLibrary;
@@ -276,6 +295,7 @@ const favoritesOrdered = (db.favorites || [])
             window.allImages = allImages;
             window.unusedImages = unusedImages;
             window.localMusic = localMusic;
+            window.localAlbums = localAlbums;
         </script>
 
         <!-- Script para restaurar el estado de la página -->
@@ -956,13 +976,17 @@ const favoritesOrdered = (db.favorites || [])
                 const sourceDisplayText = document.getElementById(
                     "charSourceDisplayText",
                 );
+                const modalContent = document.getElementById(
+                    "char-editor-main-content",
+                );
 
                 if (
                     modal &&
                     img &&
                     nameInput &&
                     sourceDisplayContainer &&
-                    sourceDisplayText
+                    sourceDisplayText &&
+                    modalContent
                 ) {
                     img.src = item.cover;
                     nameInput.value = item.title;
@@ -1005,7 +1029,8 @@ const favoritesOrdered = (db.favorites || [])
                     renderCharMonthTags();
 
                     // Mostramos el modal
-                    modal.classList.remove("hidden");
+                    modal.classList.remove("opacity-0", "pointer-events-none");
+                    modalContent.classList.remove("opacity-0", "scale-95");
                 }
                 initCustomSlider(
                     "char-custom-slider-container",
@@ -1016,7 +1041,18 @@ const favoritesOrdered = (db.favorites || [])
 
             // Función para cerrar el editor de personajes
             window.closeCharEditor = () => {
-                document.getElementById("charEditor").classList.add("hidden");
+                const modal = document.getElementById("charEditor");
+                const modalContent = document.getElementById(
+                    "char-editor-main-content",
+                );
+                modal.classList.add("opacity-0");
+                modalContent.classList.add("opacity-0", "scale-95");
+                setTimeout(() => {
+                    // Solo añadir si sigue cerrado, para evitar race conditions
+                    if (modal.classList.contains("opacity-0")) {
+                        modal.classList.add("pointer-events-none");
+                    }
+                }, 200); // Coincide con duration-200
             };
 
             function getDisplayTitle(item) {
@@ -1362,19 +1398,28 @@ const favoritesOrdered = (db.favorites || [])
             window.openEditorLocal = (item) => fillEditor(item, item.type);
 
             window.openEditorMusic = (item) => {
+                // Si el item viene del grid de álbumes, su tipo ya será 'music-album'
+                if (item.type === "music-album") {
+                    fillEditor(item, "music-album");
+                    return;
+                }
+
+                // Si no, es una canción (de la búsqueda o de la lista de canciones)
                 const existing = window.localMusic.find(
                     (l) =>
                         l.title === item.title &&
                         (l.artist ? l.artist === item.artist : true),
                 );
+
                 const dataToFill = existing
                     ? existing
                     : {
                           ...item,
                           type: "music",
                           artist: item.artist || "Artista Desconocido",
-                          album: item.album || "Álbum Desconocido",
+                          album: item.album || "Sin Álbum",
                       };
+
                 fillEditor(dataToFill, "music");
             };
 
@@ -1382,8 +1427,13 @@ const favoritesOrdered = (db.favorites || [])
                 currentSelection = data;
                 currentSelection.type = type; // Asegurarse de que el tipo está bien definido
                 const editorEl = document.getElementById("editor");
+                const editorContent = document.getElementById(
+                    "editor-main-content",
+                );
+
                 const displayTitle = getDisplayTitle(data);
-                document.getElementById("editor").classList.remove("hidden");
+                editorEl.classList.remove("opacity-0", "pointer-events-none");
+                editorContent.classList.remove("opacity-0", "scale-95");
                 document.getElementById("editorTitle").innerText = displayTitle;
                 document.getElementById("editorYear").innerText =
                     data.year || "----";
@@ -1392,22 +1442,91 @@ const favoritesOrdered = (db.favorites || [])
                 document.getElementById("privateNotes").value =
                     data.private_notes || data.privateNotes || "";
 
-                // Saga Selector Logic
+                // --- Reset de Visibilidad ---
                 const sagaContainer = document.getElementById("sagaContainer");
                 const albumContainer =
                     document.getElementById("albumContainer");
+                const statusContainer =
+                    document.getElementById("statusContainer");
+                const dateInputsContainer = document.getElementById(
+                    "dateInputsContainer",
+                );
+                const timelinePicker =
+                    editorEl.querySelector(".timeline-picker");
+                const offsetTimelineGrid = document.getElementById(
+                    "offset-timeline-grid",
+                );
+                const offsetEditor =
+                    offsetTimelineGrid.querySelector("div:first-child");
+                const scoreContainer =
+                    document.getElementById("scoreContainer");
+                const privateNotesContainer = document
+                    .getElementById("privateNotes")
+                    .closest("div");
+                const favBtn = document.getElementById("favBtn");
+                const deleteBtn = document.getElementById("deleteMediaBtn");
+
+                // --- Visibilidad por defecto (para obras) ---
+                [
+                    sagaContainer,
+                    statusContainer,
+                    dateInputsContainer,
+                    privateNotesContainer,
+                ].forEach((el) => el.classList.remove("hidden"));
+                [albumContainer].forEach((el) => el.classList.add("hidden"));
+                [favBtn, deleteBtn, scoreContainer].forEach(
+                    (el) => (el.style.display = "flex"),
+                );
+                if (timelinePicker) timelinePicker.classList.remove("hidden");
+                if (offsetEditor) offsetEditor.classList.remove("hidden");
+                offsetTimelineGrid.classList.replace(
+                    "grid-cols-1",
+                    "grid-cols-2",
+                );
+
+                // --- Visibilidad de Elementos según el Tipo ---
+                if (type === "music" || type === "music-album") {
+                    // Común para música y álbumes: ocultar sagas, estados, fechas, cronología
+                    [
+                        sagaContainer,
+                        statusContainer,
+                        dateInputsContainer,
+                    ].forEach((el) => el.classList.add("hidden"));
+                    if (timelinePicker) timelinePicker.classList.add("hidden");
+
+                    // Mostrar contenedor de álbum y rellenar nombre
+                    albumContainer.classList.remove("hidden");
+                    document.getElementById("albumInput").innerText =
+                        type === "music" ? data.album : data.title;
+                }
 
                 if (type === "music") {
+                    // Solo para canciones individuales
                     editorEl.dataset.mediaType = "music";
-                    sagaContainer.classList.add("hidden");
-                    albumContainer.classList.remove("hidden");
-                    document.getElementById("albumInput").value =
-                        data.album || "";
+                    // Ocultar el ajustador de offset para canciones individuales
+                    if (offsetEditor) offsetEditor.classList.add("hidden");
+                    offsetTimelineGrid.classList.replace(
+                        "grid-cols-2",
+                        "grid-cols-1",
+                    );
+                } else if (type === "music-album") {
+                    // Solo para editor de álbumes
+                    editorEl.dataset.mediaType = "music-album";
+                    // Ocultar más cosas que no aplican a un álbum
+                    [scoreContainer, favBtn, deleteBtn].forEach(
+                        (el) => (el.style.display = "none"),
+                    );
+                    privateNotesContainer.classList.add("hidden");
+
+                    // Asegurar que el ajustador de offset ocupe todo el ancho
+                    offsetTimelineGrid.classList.replace(
+                        "grid-cols-2",
+                        "grid-cols-1",
+                    );
                 } else {
                     delete editorEl.dataset.mediaType;
-                    sagaContainer.classList.remove("hidden");
-                    albumContainer.classList.add("hidden");
 
+                    // Lógica de Sagas para obras
                     const sagaSelector =
                         document.getElementById("sagaSelector");
                     sagaSelector.innerHTML =
@@ -1452,12 +1571,15 @@ const favoritesOrdered = (db.favorites || [])
                 const editorSubtitle =
                     document.getElementById("editorSubtitle");
                 // Para música, el subtítulo es el artista. El álbum tiene su propio input.
-                editorSubtitle.innerText =
-                    type === "music"
-                        ? data.artist || "Artista Desconocido"
-                        : "";
-                editorSubtitle.style.display =
-                    type === "music" ? "block" : "none";
+                const isMusicOrAlbum =
+                    type === "music" || type === "music-album";
+                editorSubtitle.innerText = isMusicOrAlbum
+                    ? data.artist || "Artista Desconocido"
+                    : "";
+                editorSubtitle.style.display = isMusicOrAlbum
+                    ? "block"
+                    : "none";
+
                 const offsetY = data.cover_offset_y ?? data.coverOffsetY ?? 50;
                 document.getElementById("coverOffsetYRange").value = offsetY;
                 document.getElementById(
@@ -1509,8 +1631,20 @@ const favoritesOrdered = (db.favorites || [])
                 );
             }
 
-            window.closeEditor = () =>
-                document.getElementById("editor").classList.add("hidden");
+            window.closeEditor = () => {
+                const editorEl = document.getElementById("editor");
+                const editorContent = document.getElementById(
+                    "editor-main-content",
+                );
+                editorEl.classList.add("opacity-0");
+                editorContent.classList.add("opacity-0", "scale-95");
+                setTimeout(() => {
+                    // Solo añadir si sigue cerrado, para evitar race conditions
+                    if (editorEl.classList.contains("opacity-0")) {
+                        editorEl.classList.add("pointer-events-none");
+                    }
+                }, 200); // Coincide con duration-200
+            };
 
             window.changePickYear = (delta) => {
                 currentPickYear += delta;
@@ -1678,9 +1812,54 @@ const favoritesOrdered = (db.favorites || [])
                     btn.disabled = true;
 
                     // 1. Recoger valores del DOM
-                    const status = document.querySelector(
-                        'input[name="status"]:checked',
-                    ).value;
+                    const editorEl = document.getElementById("editor");
+                    const mediaType = editorEl.dataset.mediaType;
+
+                    // --- LÓGICA DE GUARDADO PARA ÁLBUMES ---
+                    if (mediaType === "music-album") {
+                        const coverOffsetY =
+                            document.getElementById("coverOffsetYRange").value;
+                        const albumName = currentSelection.title;
+
+                        try {
+                            const res = await fetch(
+                                "/api/album-offset-update.json",
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        album: albumName,
+                                        cover_offset_y: Number(coverOffsetY),
+                                    }),
+                                },
+                            );
+                            if (!res.ok)
+                                throw new Error("Server response was not ok");
+
+                            btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado! Recargando...`;
+                            setTimeout(() => window.location.reload(), 500);
+                        } catch (e) {
+                            console.error(
+                                "Error al guardar el offset del álbum:",
+                                e,
+                            );
+                            alert(
+                                "Error al guardar el offset del álbum. Revisa la consola.",
+                            );
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        }
+                        return; // Detener aquí para no ejecutar el guardado normal
+                    }
+
+                    const isMusic = mediaType === "music";
+
+                    const status = !isMusic
+                        ? document.querySelector('input[name="status"]:checked')
+                              ?.value
+                        : null;
                     const scoreVal =
                         document.getElementById("scoreRange").value;
                     const startDate =
@@ -1728,7 +1907,10 @@ const favoritesOrdered = (db.favorites || [])
                         type: currentSelection.type,
                         artist: currentSelection.artist, // Para música
                         status: status,
-                        score: status === "Completado" ? Number(scoreVal) : 0,
+                        score:
+                            isMusic || status === "Completado"
+                                ? Number(scoreVal)
+                                : 0,
                         startDate: startDate,
                         finishDate: finishDate,
                         coverOffsetY: Number(coverOffsetY),
@@ -1737,7 +1919,7 @@ const favoritesOrdered = (db.favorites || [])
 
                     if (fileData.type === "music") {
                         fileData.album =
-                            document.getElementById("albumInput").value;
+                            document.getElementById("albumInput").innerText;
                     }
 
                     if (fileData.type !== "music") {
@@ -1800,21 +1982,96 @@ const favoritesOrdered = (db.favorites || [])
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(combinedPayload),
                         });
+                        const result = await res.json();
 
-                        if (res.ok) {
-                            // Éxito: recargar para que Astro reconozca los nuevos archivos .json
-                            btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado! Recargando...`;
-                            // Pequeña espera y recarga con cache-busting para asegurar que se obtienen los datos más recientes.
+                        if (res.ok && result.success) {
+                            btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
+
+                            const savedRecord = result.savedRecord;
+                            if (savedRecord) {
+                                if (fileData.type === "music-album") {
+                                    const index = window.localAlbums.findIndex(
+                                        (a) => a.id === savedRecord.id,
+                                    );
+                                    if (index > -1) {
+                                        window.localAlbums[index] = savedRecord;
+                                    } else {
+                                        window.localAlbums.push(savedRecord);
+                                    }
+                                } else if (fileData.type === "music") {
+                                    const flattenedSong = {
+                                        ...savedRecord,
+                                        artist: savedRecord.albums.artist,
+                                        album: savedRecord.albums.title,
+                                        cover: savedRecord.albums.cover,
+                                        year: savedRecord.albums.year,
+                                        cover_offset_y:
+                                            savedRecord.albums.cover_offset_y,
+                                    };
+                                    delete flattenedSong.albums;
+
+                                    const index = window.localMusic.findIndex(
+                                        (s) => s.id === flattenedSong.id,
+                                    );
+                                    if (index > -1) {
+                                        window.localMusic[index] =
+                                            flattenedSong;
+                                    } else {
+                                        window.localMusic.push(flattenedSong);
+                                    }
+                                } else {
+                                    const index = window.localLibrary.findIndex(
+                                        (w) => w.id === savedRecord.id,
+                                    );
+                                    if (index > -1) {
+                                        window.localLibrary[index] =
+                                            savedRecord;
+                                    } else {
+                                        window.localLibrary.push(savedRecord);
+                                    }
+                                }
+                            }
+
+                            // Re-renderizar la vista actual si es necesario
+                            const activePanelId = document.querySelector(
+                                ".panel:not(.hidden)",
+                            )?.id;
+                            if (activePanelId === "library-panel") {
+                                renderLocalLibrary(
+                                    document.getElementById("localFilter")
+                                        .value,
+                                );
+                            } else if (activePanelId === "my-music-panel") {
+                                const albumsView = document.getElementById(
+                                    "local-music-albums-view",
+                                );
+                                if (
+                                    albumsView &&
+                                    !albumsView.classList.contains("hidden")
+                                ) {
+                                    renderLocalAlbums(
+                                        document.getElementById(
+                                            "localMusicFilter",
+                                        ).value,
+                                    );
+                                } else {
+                                    renderLocalMusic(
+                                        document.getElementById(
+                                            "localMusicFilter",
+                                        ).value,
+                                    );
+                                }
+                            }
+
                             setTimeout(() => {
-                                // Añadimos un timestamp para evitar que el navegador sirva una versión cacheada de la página.
-                                window.location.href =
-                                    window.location.pathname +
-                                    "?t=" +
-                                    new Date().getTime();
+                                closeEditor();
+                                btn.innerText = originalText;
+                                btn.disabled = false;
                             }, 500);
                         } else {
                             throw new Error(
-                                "Fallo en la respuesta del servidor",
+                                result.error ||
+                                    "Fallo en la respuesta del servidor",
                             );
                         }
                     } catch (e) {
@@ -1853,16 +2110,23 @@ const favoritesOrdered = (db.favorites || [])
             };
 
             window.checkScoreLock = () => {
-                const status = document.querySelector(
+                const statusEl = document.querySelector(
                     'input[name="status"]:checked',
-                ).value;
+                );
+                const status = statusEl ? statusEl.value : null;
                 const range = document.getElementById("scoreRange");
                 const container = document.getElementById("scoreContainer");
-                if (status === "Completado") {
+                const isMusic =
+                    document.getElementById("editor").dataset.mediaType ===
+                    "music";
+
+                // La valoración está disponible si la obra está 'Completado' o si es música.
+                if (status === "Completado" || isMusic) {
                     range.disabled = false;
                     container.style.opacity = "1";
                     container.style.pointerEvents = "auto";
                 } else {
+                    // Para otros estados, se bloquea y resetea.
                     range.disabled = true;
                     container.style.opacity = "0.3";
                     container.style.pointerEvents = "none";
@@ -1937,11 +2201,15 @@ const favoritesOrdered = (db.favorites || [])
                         const data = await res.json();
                         // La API ahora devuelve los datos en el formato correcto: { title, artist, cover, year, type: 'music' }
 
+                        // FIX: The API might not return an array directly. This ensures we handle both arrays and
+                        // cases where the data is not in the expected format, preventing a crash.
+                        const results = Array.isArray(data) ? data : [];
+
                         document.getElementById(
                             "musicSearchResults",
                         ).innerHTML =
-                            data.length > 0
-                                ? data
+                            results.length > 0
+                                ? results
                                       .map((i) =>
                                           renderCard(i, "openEditorMusic"),
                                       )
@@ -2017,11 +2285,10 @@ const favoritesOrdered = (db.favorites || [])
                 }
                 if (mode === "my-characters") renderMyCharacters();
                 if (mode === "sagas") renderSagasPanel();
-                if (mode === "my-music") renderLocalMusic();
-                if (mode === "music-search") {
+                if (mode === "my-music") switchMusicView("songs"); // Por defecto, mostramos la vista de canciones
+                if (mode === "music-search")
                     document.getElementById("musicSearchResults").innerHTML =
                         "";
-                }
                 if (mode === "images") {
                     renderImageManager(); // Renderiza el contenido inicial
                     switchImageManagerView("works"); // Activa la vista de obras por defecto
@@ -2045,6 +2312,70 @@ const favoritesOrdered = (db.favorites || [])
                             });
                         });
                 }, 50); // Pequeño delay para asegurar que el contenido se ha renderizado
+            };
+
+            function renderLocalAlbums(filterText = "") {
+                const grid = document.getElementById("localAlbumsGrid");
+                if (!grid) return;
+
+                const lowerFilter = filterText.toLowerCase();
+                const albums = window.localAlbums.filter(
+                    (album) =>
+                        album.title.toLowerCase().includes(lowerFilter) ||
+                        (album.artist &&
+                            album.artist.toLowerCase().includes(lowerFilter)),
+                );
+
+                albums.sort((a, b) => a.title.localeCompare(b.title));
+
+                grid.innerHTML =
+                    albums.length > 0
+                        ? albums
+                              .map((album) =>
+                                  renderCard(
+                                      { ...album, type: "music-album" },
+                                      "openEditorMusic",
+                                  ),
+                              )
+                              .join("")
+                        : `<p class="col-span-full text-center text-white/20 text-sm py-10">No se encontraron álbumes.</p>`;
+            }
+
+            window.switchMusicView = (type) => {
+                const songsView = document.getElementById(
+                    "local-music-songs-view",
+                );
+                const albumsView = document.getElementById(
+                    "local-music-albums-view",
+                );
+                const btnSongs = document.getElementById(
+                    "btn-music-view-songs",
+                );
+                const btnAlbums = document.getElementById(
+                    "btn-music-view-albums",
+                );
+                const bg = document.getElementById("music-view-tab-bg");
+
+                if (type === "songs") {
+                    songsView.classList.remove("hidden");
+                    albumsView.classList.add("hidden");
+                    bg.style.transform = "translateX(0)";
+                    btnSongs.classList.remove("opacity-50");
+                    btnAlbums.classList.add("opacity-50");
+                    renderLocalMusic(
+                        document.getElementById("localMusicFilter").value,
+                    );
+                } else {
+                    // albums
+                    songsView.classList.add("hidden");
+                    albumsView.classList.remove("hidden");
+                    bg.style.transform = "translateX(100%)";
+                    btnAlbums.classList.remove("opacity-50");
+                    btnSongs.classList.add("opacity-50");
+                    renderLocalAlbums(
+                        document.getElementById("localMusicFilter").value,
+                    );
+                }
             };
 
             function renderLocalMusic(filterText = "") {
@@ -3575,6 +3906,23 @@ const favoritesOrdered = (db.favorites || [])
                     if (finishDateValue) {
                         const restOfFinishDate = finishDateValue.substring(4); // -MM-DD
                         finishDateInput.value = `${startYear}${restOfFinishDate}`;
+                    }
+                });
+        </script>
+        <script is:inline>
+            // --- Cerrar Modales al hacer click fuera ---
+            document.getElementById("editor").addEventListener("click", (e) => {
+                // Si el click es en el fondo (el propio div 'editor') y no en un hijo
+                if (e.target.id === "editor") {
+                    closeEditor();
+                }
+            });
+
+            document
+                .getElementById("charEditor")
+                .addEventListener("click", (e) => {
+                    if (e.target.id === "charEditor") {
+                        closeCharEditor();
                     }
                 });
         </script>

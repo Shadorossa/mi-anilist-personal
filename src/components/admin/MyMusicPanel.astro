@@ -1,6 +1,30 @@
 <div id="my-music-panel" class="panel hidden">
     <div class="flex justify-between items-start mb-4 shrink-0">
-        <div class="flex-1"></div>
+        <div class="flex-1">
+            <div
+                class="bg-[#0a0a0c] p-1 rounded-full border border-white/10 flex relative w-48 h-10 shadow-inner"
+            >
+                <div
+                    id="music-view-tab-bg"
+                    class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white/10 rounded-full transition-transform duration-300 ease-out border border-white/5"
+                >
+                </div>
+                <button
+                    onclick="switchMusicView('songs')"
+                    id="btn-music-view-songs"
+                    class="relative z-10 w-1/2 h-full flex items-center justify-center transition-opacity"
+                    title="Canciones"
+                    ><span class="text-xs font-bold">Canciones</span></button
+                >
+                <button
+                    onclick="switchMusicView('albums')"
+                    id="btn-music-view-albums"
+                    class="relative z-10 w-1/2 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
+                    title="Álbumes"
+                    ><span class="text-xs font-bold">Álbumes</span></button
+                >
+            </div>
+        </div>
         <div class="flex flex-col items-center pt-1">
             <h2 class="text-lg font-bold text-white tracking-tight">
                 Mi Colección de Música
@@ -19,6 +43,11 @@
         </div>
     </div>
     <div class="custom-scrollbar flex-1">
-        <div id="localMusicGrid" class="asearch-grid"></div>
+        <div id="local-music-songs-view">
+            <div id="localMusicGrid" class="asearch-grid"></div>
+        </div>
+        <div id="local-music-albums-view" class="hidden">
+            <div id="localAlbumsGrid" class="asearch-grid"></div>
+        </div>
     </div>
 </div>

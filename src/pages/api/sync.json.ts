@@ -32,6 +32,7 @@ export const GET: APIRoute = async () => {
         const urlToLocalPath = new Map<string, string>();
 
         const workUpdates: { id: string; cover: string }[] = [];
+        const musicUpdates: { id: string; cover: string }[] = [];
         const characterUpdates: { id: string; cover: string }[] = [];
         const favoriteSagaUpdates: { title: string; cover: string }[] = [];
         const monthlyPickUpdates: { month: string; cover: string }[] = [];
@@ -40,7 +41,7 @@ export const GET: APIRoute = async () => {
         // --- 1. OBTENER TODOS LOS DATOS DE SUPABASE ---
         const [
             worksRes, charactersRes, sagasRes, monthlyPicksRes,
-            monthlyCharsRes, favoritesRes, configRes,
+            monthlyCharsRes, favoritesRes, configRes, musicRes,
         ] = await Promise.all([
             supabase.from("works").select("*"),
             supabase.from("characters").select("*"),
@@ -49,10 +50,11 @@ export const GET: APIRoute = async () => {
             supabase.from("monthly_chars").select("*"),
             supabase.from("favorites").select("*").order("order"),
             supabase.from("config").select("*").single(),
+            supabase.from("music").select("*"),
         ]);
 
         // Comprobar errores
-        for (const res of [worksRes, charactersRes, sagasRes, monthlyPicksRes, monthlyCharsRes, favoritesRes, configRes]) {
+        for (const res of [worksRes, charactersRes, sagasRes, monthlyPicksRes, monthlyCharsRes, favoritesRes, configRes, musicRes]) {
             if (res.error) throw new Error(`Supabase fetch failed: ${res.error.message}`);
         }
 
@@ -62,6 +64,7 @@ export const GET: APIRoute = async () => {
         const allMonthlyPicks = monthlyPicksRes.data || [];
         const allMonthlyChars = monthlyCharsRes.data || [];
         const allFavorites = favoritesRes.data || [];
+        const allMusic = musicRes.data || [];
         const config = configRes.data || {};
 
         // --- 2. PROCESAR DATOS Y PREPARAR ARCHIVOS ---
@@ -84,7 +87,23 @@ export const GET: APIRoute = async () => {
             contentFolder.file(`${typeFolder}/${slug}.json`, JSON.stringify(workData, null, 2));
         }
 
-        // B. Procesar personajes y sus portadas
+        // B. Procesar música y sus portadas
+        for (const song of allMusic) {
+            const { id, created_at, ...songData } = song;
+            const slug = createSlug(`${song.artist || 'unknown'}-${song.title}`);
+
+            if (song.cover && song.cover.startsWith('http')) {
+                const extension = getExtension(song.cover);
+                const localCoverPath = `/img/covers/music/${slug}${extension}`;
+                urlToLocalPath.set(song.cover, `public${localCoverPath}`);
+                songData.cover = localCoverPath;
+                musicUpdates.push({ id: song.id, cover: localCoverPath });
+            }
+
+            contentFolder.file(`music/${slug}.json`, JSON.stringify(songData, null, 2));
+        }
+
+        // C. Procesar personajes y sus portadas
         allCharacters.forEach(char => {
             if (char.cover && char.cover.startsWith('http')) {
                 const slug = createSlug(char.title);
@@ -102,7 +121,7 @@ export const GET: APIRoute = async () => {
             }
         });
 
-        // C. Reconstruir database.json con el formato original
+        // D. Reconstruir database.json con el formato original
         const sagasMap = allSagas.reduce((acc, saga) => {
             acc[saga.name] = saga.work_titles;
             return acc;
@@ -200,6 +219,9 @@ export const GET: APIRoute = async () => {
         const updatePromises = [];
         if (workUpdates.length > 0) {
             updatePromises.push(supabase.from('works').upsert(workUpdates));
+        }
+        if (musicUpdates.length > 0) {
+            updatePromises.push(supabase.from('music').upsert(musicUpdates));
         }
         if (characterUpdates.length > 0) {
             // Usamos upsert para mayor robustez, ya que ahora proporcionamos los campos requeridos

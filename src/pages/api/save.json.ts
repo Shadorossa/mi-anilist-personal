@@ -10,25 +10,65 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "Faltan los datos del archivo (fileData)." }), { status: 400 });
     }
 
+    let savedRecord = null;
+
     // --- 1. Guardar la entrada principal (obra o música) ---
     if (fileData.type === 'music') {
-      // Es una canción, la guardamos en la tabla 'music'
-      const { error } = await supabase.from('music').upsert({
+      // 1. Upsert del álbum para obtener su ID
+      const { data: albumRecord, error: albumError } = await supabase
+        .from('albums')
+        .upsert({
+          title: fileData.album,
+          artist: fileData.artist,
+          cover: fileData.cover,
+          year: fileData.year,
+        }, { onConflict: 'title, artist' })
+        .select()
+        .single();
+
+      if (albumError) throw new Error(`Error al gestionar el álbum: ${albumError.message}`);
+
+      // 2. Upsert de la canción con el ID del álbum
+      const { data: songRecord, error: songError } = await supabase
+        .from('music')
+        .upsert({
+          ...(fileData.id && { id: fileData.id }),
+          title: fileData.title,
+          score: fileData.score,
+          album_id: albumRecord.id,
+        })
+        .select()
+        .single();
+
+      if (songError) throw new Error(`Error al guardar la canción: ${songError.message}`);
+
+      // 3. Devolvemos la canción recién guardada junto con los datos de su álbum
+      const { data: newSongWithAlbum, error: fetchError } = await supabase
+        .from('music')
+        .select('*, albums(*)')
+        .eq('id', songRecord.id)
+        .single();
+
+      if (fetchError) throw new Error(`Error al recuperar la canción guardada: ${fetchError.message}`);
+      savedRecord = newSongWithAlbum;
+
+    } else if (fileData.type === 'music-album') {
+      // Es un álbum, lo guardamos en la tabla 'albums'
+      const { data, error } = await supabase.from('albums').upsert({
+        id: fileData.id,
         title: fileData.title,
         artist: fileData.artist,
-        album: fileData.album,
-        year: fileData.year,
         cover: fileData.cover,
-        score: fileData.score,
-        // Añadimos un ID si existe para que 'upsert' pueda actualizar
-        ...(fileData.id && { id: fileData.id }),
-      });
+        year: fileData.year,
+        cover_offset_y: fileData.coverOffsetY,
+      }).select().single();
 
-      if (error) throw new Error(`Error al guardar en 'music': ${error.message}`);
+      if (error) throw new Error(`Error al guardar en 'albums': ${error.message}`);
+      savedRecord = data;
 
     } else {
       // Es una obra (juego, anime, etc.), la guardamos en la tabla 'works'
-      const { error } = await supabase.from('works').upsert({
+      const { data, error } = await supabase.from('works').upsert({
         title: fileData.title,
         cover: fileData.cover,
         year: fileData.year,
@@ -41,9 +81,10 @@ export const POST: APIRoute = async ({ request }) => {
         private_notes: fileData.privateNotes,
         // Añadimos un ID si existe para que 'upsert' pueda actualizar
         ...(fileData.id && { id: fileData.id }),
-      });
+      }).select().single();
 
       if (error) throw new Error(`Error al guardar en 'works': ${error.message}`);
+      savedRecord = data;
     }
 
     // --- 2. Guardar datos adicionales (favoritos, mensuales, sagas, etc.) ---
@@ -105,7 +146,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return new Response(JSON.stringify({ success: true, savedRecord }), { status: 200 });
 
   } catch (error) {
     console.error("Error en API de guardado:", error);
