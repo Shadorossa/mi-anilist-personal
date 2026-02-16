@@ -58,6 +58,43 @@
                     </div>
                 </div>
 
+                <div class="mt-4">
+                    <label class="form-label">Categoría</label>
+                    <div
+                        id="charCategoryContainer"
+                        class="flex justify-around items-center px-2"
+                    >
+                        <label class="cursor-pointer group flex flex-col items-center gap-1.5 w-16 text-center">
+                            <input type="radio" name="char-category" value="hall_of_fame" class="status-radio hidden"/>
+                            <div class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b]">
+                                <i class="fa-solid fa-crown text-xs text-gray-500 status-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[8px] font-bold text-gray-600 uppercase status-text transition-colors opacity-60 group-hover:opacity-100">Fame</span>
+                        </label>
+                        <label class="cursor-pointer group flex flex-col items-center gap-1.5 w-16 text-center">
+                            <input type="radio" name="char-category" value="liked" class="status-radio hidden"/>
+                            <div class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b]">
+                                <i class="fa-solid fa-heart text-xs text-gray-500 status-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[8px] font-bold text-gray-600 uppercase status-text transition-colors opacity-60 group-hover:opacity-100">Me Gusta</span>
+                        </label>
+                        <label class="cursor-pointer group flex flex-col items-center gap-1.5 w-16 text-center">
+                            <input type="radio" name="char-category" value="interested" class="status-radio hidden"/>
+                            <div class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b]">
+                                <i class="fa-solid fa-eye text-xs text-gray-500 status-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[8px] font-bold text-gray-600 uppercase status-text transition-colors opacity-60 group-hover:opacity-100">Interesa</span>
+                        </label>
+                        <label class="cursor-pointer group flex flex-col items-center gap-1.5 w-16 text-center">
+                            <input type="radio" name="char-category" value="disliked" class="status-radio hidden"/>
+                            <div class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center transition-all bg-[#18181b]">
+                                <i class="fa-solid fa-thumbs-down text-xs text-gray-500 status-icon transition-colors"></i>
+                            </div>
+                            <span class="text-[8px] font-bold text-gray-600 uppercase status-text transition-colors opacity-60 group-hover:opacity-100">No Gusta</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4 mt-4">
                     <div
                         class="bg-[#121215] border border-white/5 rounded-lg p-3"

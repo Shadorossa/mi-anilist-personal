@@ -10,14 +10,24 @@
             id="charSearchForm"
             class="relative"
             onsubmit="event.preventDefault();"
+            data-search-mode="character"
         >
             <input
                 type="text"
                 id="charInput"
                 placeholder="Buscar personaje..."
                 autocomplete="off"
-                class="form-input !w-64 !text-xs"
+                class="form-input !w-64 !text-xs !pr-16"
             />
+            <button
+                type="button"
+                id="charSearchModeBtn"
+                onclick="toggleCharSearchMode()"
+                class="absolute top-0 right-9 h-full px-3 text-gray-500 hover:text-white transition-colors"
+                title="Buscar por nombre de personaje"
+            >
+                <i class="fa-solid fa-user text-xs"></i>
+            </button>
             <button
                 type="submit"
                 class="absolute top-0 right-0 h-full px-3 text-gray-500 hover:text-white transition-colors"

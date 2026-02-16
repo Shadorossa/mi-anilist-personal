@@ -27,6 +27,7 @@ const [
     sagasRes,
     musicRes, // Ahora musicRes tendrá los datos del álbum anidados
     albumsRes,
+    gameVersionsRes,
 ] = await Promise.all([
     supabase.from("works").select("*"),
     supabase.from("favorites").select("is_saga, title, cover").order("order"),
@@ -36,6 +37,7 @@ const [
     supabase.from("sagas").select("name, work_titles"),
     supabase.from("music").select("*, albums(*)"), // Hacemos el JOIN aquí
     supabase.from("albums").select("*"),
+    supabase.from("game_versions").select("edition_igdb_id"),
 ]);
 
 // --- 2. PROCESAR Y ESTRUCTURAR LOS DATOS ---
@@ -64,6 +66,9 @@ const sagasMap = (sagasRes.data || []).reduce((acc, saga) => {
 }, {});
 
 const allCharacters = charactersRes.data || [];
+const myCharacterCategoryMap = new Map(
+    allCharacters.map((c) => [String(c.id), c.category]),
+);
 const charactersByCategory = {
     hall_of_fame: allCharacters
         .filter((c) => c.category === "hall_of_fame")
@@ -108,6 +113,10 @@ const favoritesOrdered = (db.favorites || [])
         return localLibrary.find((item) => item.title === fav.title);
     })
     .filter(Boolean);
+
+const allGameVersionIds = (gameVersionsRes.data || []).map(
+    (v) => v.edition_igdb_id,
+);
 ---
 
 <html lang="es" class="dark">
@@ -282,6 +291,10 @@ const favoritesOrdered = (db.favorites || [])
                 unusedImages,
                 localMusic,
                 localAlbums,
+                myCharacterCategoryMap: Object.fromEntries(
+                    myCharacterCategoryMap,
+                ),
+                allGameVersionIds,
             }}
         >
             window.localLibrary = localLibrary;
@@ -298,6 +311,10 @@ const favoritesOrdered = (db.favorites || [])
             window.unusedImages = unusedImages;
             window.localMusic = localMusic;
             window.localAlbums = localAlbums;
+            window.myCharacterCategoryMap = new Map(
+                Object.entries(myCharacterCategoryMap),
+            );
+            window.allGameVersionIds = new Set(allGameVersionIds);
         </script>
 
         <!-- Script para restaurar el estado de la página -->
@@ -506,7 +523,15 @@ const favoritesOrdered = (db.favorites || [])
             let activeCharCategory = "fav";
             let activeCharListSortable = null;
             // State for Bulk Editing
+            let charSearchMode = "character"; // 'character' or 'work'
             let isBulkEditing = false; // For works
+            const categoryDisplayNames = {
+                hall_of_fame: "Hall of Fame",
+                liked: "Me Gusta",
+                interested: "Interesado",
+                disliked: "No me gusta",
+            };
+
             let selectedItemIds = new Set(); // For works
             let isCharBulkEditing = false; // For characters
             let selectedCharIds = new Set(); // For characters
@@ -519,6 +544,7 @@ const favoritesOrdered = (db.favorites || [])
 
             // --- Gestor de Versiones State ---
             let currentGameForVersioning = null;
+            let initialEditionsForCurrentGame = new Set();
             let editionListSortable = null;
             let editionSearchResultsSortable = null;
             let editionSortables = { search: null, lists: [] };
@@ -1086,6 +1112,16 @@ const favoritesOrdered = (db.favorites || [])
                     modal.classList.remove("opacity-0", "pointer-events-none");
                     modalContent.classList.remove("opacity-0", "scale-95");
                 }
+
+                // Set the correct category radio button
+                const currentCategory =
+                    window.myCharacterCategoryMap.get(String(item.id)) ||
+                    "liked"; // Default to 'liked' for new characters
+                const radioBtn = document.querySelector(
+                    `input[name="char-category"][value="${currentCategory}"]`,
+                );
+                if (radioBtn) radioBtn.checked = true;
+
                 initCustomSlider(
                     "char-custom-slider-container",
                     "char-custom-slider-thumb",
@@ -1232,13 +1268,26 @@ const favoritesOrdered = (db.favorites || [])
                 return null;
             }
 
-            function renderCard(item, actionName, isChar = false) {
+            function renderCard(
+                item,
+                actionName,
+                isChar = false,
+                context = "",
+            ) {
                 const fullId = isChar ? item.id : `${item.type}/${item.id}`;
                 const isWorkBulkSelected =
                     !isChar && isBulkEditing && selectedItemIds.has(fullId);
                 const isCharBulkSelected =
-                    isChar && isCharBulkEditing && selectedCharIds.has(item.id);
+                    isChar &&
+                    isCharBulkEditing &&
+                    selectedCharIds.has(String(item.id));
                 const isSelected = isWorkBulkSelected || isCharBulkSelected;
+
+                // Check if the character is already in the user's collection
+                const ownedCategory =
+                    isChar && context === "char-search"
+                        ? window.myCharacterCategoryMap.get(String(item.id))
+                        : null;
 
                 let isFav;
                 // Para mangas, la comprobación de favorito debe considerar el posible sufijo '-M'
@@ -1284,6 +1333,8 @@ const favoritesOrdered = (db.favorites || [])
                     onclickAction = `toggleItemSelection('${fullId}')`;
                 } else if (isCharBulkEditing && isChar) {
                     onclickAction = `toggleCharItemSelection('${item.id}')`;
+                } else if (ownedCategory) {
+                    onclickAction = ""; // Disable click for owned characters
                 }
 
                 const showBulkCheckbox =
@@ -1300,10 +1351,11 @@ const favoritesOrdered = (db.favorites || [])
         data-id="${fullId}"
         data-title="${item.title}"
         onclick="${onclickAction}"
-        class="asearch-card ${isSelected ? "selected" : ""}"
+        class="asearch-card ${isSelected ? "selected" : ""} ${ownedCategory ? `is-owned is-${ownedCategory}` : ""}"
         draggable="false"
     >
         ${showBulkCheckbox ? `<div class="bulk-checkbox"><i class="fa-solid fa-check"></i></div>` : ""}
+        ${ownedCategory ? `<div class="owned-badge is-${ownedCategory}"><i class="fa-solid fa-check"></i> ${categoryDisplayNames[ownedCategory] || "En Colección"}</div>` : ""}
         <img src="${item.cover}" class="${isChar ? "obj-top" : "obj-center"}" loading="lazy" draggable="false" />
         ${!isChar && year ? `<div class="fixed-badge">${year}</div>` : ""}
         ${!isChar && isManga && actionName === "openEditorSearch" ? `<div class="fixed-badge" style="top: 30px; background: rgba(239, 68, 68, 0.6); font-size: 8px;">MANGA</div>` : ""}
@@ -2277,9 +2329,11 @@ const favoritesOrdered = (db.favorites || [])
                     "dlc",
                     "mod",
                     "bundle",
+                    "edition",
                 ];
 
                 currentGameForVersioning = item;
+                initialEditionsForCurrentGame.clear(); // Reset on new selection
 
                 document
                     .getElementById("versions-placeholder")
@@ -2316,6 +2370,11 @@ const favoritesOrdered = (db.favorites || [])
                     );
                     if (!res.ok) throw new Error("Failed to fetch versions");
                     const savedEditions = await res.json();
+
+                    // Populate the set of initial editions for the current game
+                    savedEditions.forEach((edition) =>
+                        initialEditionsForCurrentGame.add(edition.id),
+                    );
 
                     // Limpiar listas antes de poblar
                     VERSION_TYPES.forEach((type) => {
@@ -2481,6 +2540,15 @@ const favoritesOrdered = (db.favorites || [])
                                 if (associatedEditionIds.has(item.id))
                                     return false;
 
+                                // Filtrar ediciones que ya están vinculadas a OTRO juego.
+                                // Se permite mostrar si es una edición del juego actual (para poder arrastrarla fuera y que vuelva a aparecer).
+                                if (
+                                    window.allGameVersionIds.has(item.id) &&
+                                    !initialEditionsForCurrentGame.has(item.id)
+                                ) {
+                                    return false;
+                                }
+
                                 return true;
                             });
                         }
@@ -2524,30 +2592,26 @@ const favoritesOrdered = (db.favorites || [])
                     btn.disabled = true;
 
                     const editions = [];
-                    const VERSION_TYPES = [
-                        "expanded",
-                        "remaster",
-                        "dlc",
-                        "mod",
-                        "bundle",
-                    ];
+                    document
+                        .querySelectorAll(".version-drop-zone")
+                        .forEach((zone) => {
+                            const type = zone.dataset.versionType;
+                            if (!type) return;
 
-                    VERSION_TYPES.forEach((type) => {
-                        const listEl = document.getElementById(
-                            `version-list-${type}`,
-                        );
-                        if (listEl) {
-                            const editionCards =
-                                listEl.querySelectorAll(".asearch-card");
-                            Array.from(editionCards).forEach((card) => {
-                                editions.push({
-                                    id: parseInt(card.dataset.id, 10),
-                                    title: card.dataset.title,
-                                    version_type: type,
+                            const listEl =
+                                zone.querySelector(".version-list-grid");
+                            if (listEl) {
+                                const editionCards =
+                                    listEl.querySelectorAll(".asearch-card");
+                                Array.from(editionCards).forEach((card) => {
+                                    editions.push({
+                                        id: parseInt(card.dataset.id, 10),
+                                        title: card.dataset.title,
+                                        version_type: type,
+                                    });
                                 });
-                            });
-                        }
-                    });
+                            }
+                        });
 
                     const mainGameId = currentGameForVersioning.id;
 
@@ -2574,6 +2638,23 @@ const favoritesOrdered = (db.favorites || [])
                                 errorData.error || "Server returned an error",
                             );
                         }
+
+                        // Actualizar el estado del lado del cliente para reflejar los cambios sin recargar.
+                        // 1. Eliminar las ediciones antiguas de este juego del conjunto global.
+                        initialEditionsForCurrentGame.forEach((id) => {
+                            window.allGameVersionIds.delete(id);
+                        });
+
+                        // 2. Añadir las nuevas ediciones de este juego al conjunto global.
+                        editions.forEach((edition) => {
+                            window.allGameVersionIds.add(edition.id);
+                        });
+
+                        // 3. Actualizar el conjunto de ediciones iniciales para la próxima operación en este mismo juego.
+                        initialEditionsForCurrentGame.clear();
+                        editions.forEach((edition) => {
+                            initialEditionsForCurrentGame.add(edition.id);
+                        });
 
                         btn.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado!`;
                     } catch (e) {
@@ -2602,8 +2683,11 @@ const favoritesOrdered = (db.favorites || [])
                         '<p class="col-span-full text-indigo-400 text-xs py-4 text-center animate-pulse">Buscando...</p>';
 
                     try {
+                        const searchMode =
+                            document.getElementById("charSearchForm").dataset
+                                .searchMode || "character";
                         const res = await fetch(
-                            `/api/search.json?q=${encodeURIComponent(q)}&type=character`,
+                            `/api/search.json?q=${encodeURIComponent(q)}&type=character&search_by=${searchMode}`,
                         );
                         const data = await res.json();
 
@@ -2614,7 +2698,12 @@ const favoritesOrdered = (db.favorites || [])
                             // Usamos la función renderCard que ya tienes, pasando true al final para indicar que es personaje
                             resultsGrid.innerHTML = data
                                 .map((i) =>
-                                    renderCard(i, "openCharEditor", true),
+                                    renderCard(
+                                        i,
+                                        "openCharEditor",
+                                        true,
+                                        "char-search",
+                                    ),
                                 )
                                 .join("");
                         }
@@ -2624,6 +2713,27 @@ const favoritesOrdered = (db.favorites || [])
                             '<p class="col-span-full text-red-500/50 text-xs py-4 text-center">Error de conexión con el servidor.</p>';
                     }
                 });
+
+            window.toggleCharSearchMode = () => {
+                const form = document.getElementById("charSearchForm");
+                const input = document.getElementById("charInput");
+                const btn = document.getElementById("charSearchModeBtn");
+                const icon = btn.querySelector("i");
+
+                if (charSearchMode === "character") {
+                    charSearchMode = "work";
+                    form.dataset.searchMode = "work";
+                    btn.title = "Buscar por nombre de obra";
+                    icon.className = "fa-solid fa-book text-xs";
+                    input.placeholder = "Buscar por obra...";
+                } else {
+                    charSearchMode = "character";
+                    form.dataset.searchMode = "character";
+                    btn.title = "Buscar por nombre de personaje";
+                    icon.className = "fa-solid fa-user text-xs";
+                    input.placeholder = "Buscar personaje...";
+                }
+            };
 
             // --- Lógica para guardar la posición de scroll ---
             let activeScrollListeners = [];
@@ -3971,12 +4081,16 @@ const favoritesOrdered = (db.favorites || [])
                     const coverOffsetY = document.getElementById(
                         "charCoverOffsetYRange",
                     ).value;
+                    const newCategory = document.querySelector(
+                        'input[name="char-category"]:checked',
+                    ).value;
 
                     const updatedChar = {
                         ...currentSelection,
                         title: name,
                         coverOffsetY: Number(coverOffsetY),
                     };
+                    updatedChar.category = newCategory;
 
                     // Asignar el sourceId y eliminar el source antiguo para evitar inconsistencias
                     updatedChar.sourceId =
@@ -3985,38 +4099,72 @@ const favoritesOrdered = (db.favorites || [])
                         null;
                     if ("source" in updatedChar) delete updatedChar.source;
 
-                    const favIndex = window.charactersGlobal.findIndex(
-                        (c) => c.id === updatedChar.id,
-                    );
-                    const likedIndex = window.likedCharactersGlobal.findIndex(
-                        (c) => c.id === updatedChar.id,
-                    );
-                    const interestedIndex =
-                        window.interestedCharactersGlobal.findIndex(
-                            (c) => c.id === updatedChar.id,
-                        );
-                    const dislikedIndex =
-                        window.dislikedCharactersGlobal.findIndex(
-                            (c) => c.id === updatedChar.id,
-                        );
+                    // Mover el personaje a la lista de categoría correcta
+                    const allLists = {
+                        hall_of_fame: window.charactersGlobal,
+                        liked: window.likedCharactersGlobal,
+                        interested: window.interestedCharactersGlobal,
+                        disliked: window.dislikedCharactersGlobal,
+                    };
 
-                    if (favIndex > -1) {
-                        window.charactersGlobal[favIndex] = updatedChar;
-                    } else if (likedIndex > -1) {
-                        window.likedCharactersGlobal[likedIndex] = updatedChar;
-                    } else if (interestedIndex > -1) {
-                        window.interestedCharactersGlobal[interestedIndex] =
-                            updatedChar;
-                    } else if (dislikedIndex > -1) {
-                        window.dislikedCharactersGlobal[dislikedIndex] =
-                            updatedChar;
+                    // Eliminar de cualquier lista en la que pudiera estar
+                    for (const category in allLists) {
+                        const list = allLists[category];
+                        const index = list.findIndex(
+                            (c) => c.id === updatedChar.id,
+                        );
+                        if (index > -1) {
+                            list.splice(index, 1);
+                        }
+                    }
+
+                    // Añadir a la nueva lista correcta
+                    const targetList = allLists[newCategory];
+                    if (targetList) {
+                        targetList.push(updatedChar);
                     } else {
                         // Por defecto, un personaje nuevo se añade a "Me Gustan"
                         window.likedCharactersGlobal.push(updatedChar);
                     }
 
                     try {
-                        await saveAllCharacterLists();
+                        const saveData = await saveAllCharacterLists();
+
+                        if (saveData && saveData.savedCharacters) {
+                            const savedCharData = saveData.savedCharacters.find(
+                                (c) => c.id === updatedChar.id,
+                            );
+
+                            if (savedCharData) {
+                                // 1. Update the global map
+                                window.myCharacterCategoryMap.set(
+                                    String(savedCharData.id),
+                                    savedCharData.category,
+                                );
+
+                                // 2. Find the card in the search results grid and update it
+                                const searchResultsGrid =
+                                    document.getElementById("charResults");
+                                if (searchResultsGrid) {
+                                    const cardToUpdate =
+                                        searchResultsGrid.querySelector(
+                                            `.asearch-card[data-id='${savedCharData.id}']`,
+                                        );
+                                    if (cardToUpdate) {
+                                        // Usamos el objeto 'updatedChar' que tiene toda la información
+                                        // necesaria (incluyendo el 'source' que no viene de la DB)
+                                        // y la nueva categoría.
+                                        cardToUpdate.outerHTML = renderCard(
+                                            updatedChar,
+                                            "openCharEditor",
+                                            true,
+                                            "char-search",
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
                         closeCharEditor();
                         if (
                             !document
@@ -4055,10 +4203,15 @@ const favoritesOrdered = (db.favorites || [])
                     body: JSON.stringify(payload),
                 });
                 if (!res.ok) {
+                    const errorData = await res
+                        .json()
+                        .catch(() => ({ error: "Unknown server error" }));
                     throw new Error(
-                        "Server error while saving character lists",
+                        errorData.error ||
+                            "Server error while saving character lists",
                     );
                 }
+                return res.json();
             }
 
             document

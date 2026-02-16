@@ -47,7 +47,6 @@ async function searchSpotify(query: string) {
   searchUrl.searchParams.append('q', query);
   searchUrl.searchParams.append('type', 'track');
   searchUrl.searchParams.append('market', 'ES');
-  searchUrl.searchParams.append('limit', '50');
 
   const response = await fetch(searchUrl.href, {
     headers: { Authorization: `Bearer ${token}` },
@@ -59,9 +58,9 @@ async function searchSpotify(query: string) {
   }
 
   const data = await response.json();
-  return data.tracks.items.map((track: any) => ({
+  return (data.tracks?.items || []).map((track: any) => ({
     title: track.name,
-    artist: track.artists.map((a: any) => a.name).join(", "),
+    artist: (track.artists || []).map((a: any) => a.name).join(", "),
     cover: track.album.images[0]?.url || "https://placehold.co/300x300?text=No+Cover",
     year: track.album.release_date ? new Date(track.album.release_date).getFullYear() : null,
     album: track.album.name,
@@ -116,7 +115,7 @@ async function searchIgdb(query: string) {
     // Se relaja la consulta: se eliminó `version_parent = null` que era muy restrictivo
     // y se añadió la categoría de expansiones standalone (4) para obtener más resultados relevantes.
     // Se elimina el filtro 'where' para que la búsqueda sea más amplia, como ha solicitado el usuario.
-    body: `search "${sanitizedQuery}"; fields id, name, cover.url, first_release_date; limit 50;`,
+    body: `search "${sanitizedQuery}"; fields id, name, cover.url, first_release_date; limit 500;`,
   });
 
   if (!response.ok) {
@@ -168,7 +167,7 @@ async function searchAnilistMedia(query: string, type: 'ANIME' | 'MANGA') {
   }
 
   const data = await response.json();
-  return data.data.Page.media.map((item: any) => ({
+  return (data.data.Page.media || []).map((item: any) => ({
     title: item.title.english || item.title.romaji,
     cover: item.coverImage.extraLarge,
     year: item.startDate.year,
@@ -185,7 +184,7 @@ async function searchAnilistCharacter(query: string) {
           id
           name { full }
           image { large }
-          media(sort: POPULARITY_DESC, perPage: 1) {
+          media(sort: START_DATE, perPage: 1) {
             nodes {
               id
               title { romaji english }
@@ -208,20 +207,121 @@ async function searchAnilistCharacter(query: string) {
   }
 
   const data = await response.json();
-  return data.data.Page.characters.map((char: any) => ({
+  return (data.data.Page.characters || []).map((char: any) => ({
     id: char.id,
     title: char.name.full,
-    cover: char.image.large,
-    source: char.media.nodes[0]?.title.english || char.media.nodes[0]?.title.romaji || 'Unknown',
-    sourceId: char.media.nodes[0]?.id,
+    cover: char.image?.large || "https://s4.anilist.co/file/anilistcdn/character/large/default.jpg",
+    source:
+      char.media?.nodes?.[0]?.title?.english ||
+      char.media?.nodes?.[0]?.title?.romaji || "Unknown",
+    sourceId: char.media?.nodes?.[0]?.id,
     type: 'character',
   }));
+}
+
+async function searchAnilistCharacterByWork(query: string) {
+  const graphqlQuery = `
+    query ($search: String) {
+      Page(page: 1, perPage: 50) { # Fetch more to filter from
+        media(search: $search, sort: [SEARCH_MATCH, POPULARITY_DESC]) {
+          id
+          title { romaji english }
+          characters(sort: [ROLE, RELEVANCE, ID], perPage: 25) { # Aumentado de 10 a 25
+            nodes {
+              id
+              name { full }
+              image { large }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const variables = { search: query };
+  const response = await fetch(anilistApiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: graphqlQuery, variables }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Anilist Character by Work API Error:", errorText);
+    throw new Error("La búsqueda de personajes por obra en Anilist falló.");
+  }
+
+  const data = await response.json();
+  if (!data.data.Page?.media) {
+    return [];
+  }
+
+  const allCharacters = [];
+  const characterIds = new Set(); // Para evitar duplicados
+
+  // Filter the fuzzy search results to get precise "contains" matches
+  const lowerCaseQuery = query.toLowerCase();
+  const allContainingMedia = data.data.Page.media.filter(mediaItem => {
+    const romaji = mediaItem.title?.romaji?.toLowerCase() || '';
+    const english = mediaItem.title?.english?.toLowerCase() || '';
+    return romaji.includes(lowerCaseQuery) || english.includes(lowerCaseQuery);
+  });
+
+  // Sort the results to prioritize exact matches, then "starts with", then "contains"
+  allContainingMedia.sort((a, b) => {
+    const getMatchScore = (title: string | null, q: string) => {
+      if (!title) return 3; // No title, lowest priority
+      const lowerTitle = title.toLowerCase();
+      if (lowerTitle === q) return 0; // Exact match
+      if (lowerTitle.startsWith(q)) return 1; // Starts with
+      return 2; // Contains (guaranteed by the filter above)
+    };
+
+    const scoreA = Math.min(
+      getMatchScore(a.title?.romaji, lowerCaseQuery),
+      getMatchScore(a.title?.english, lowerCaseQuery)
+    );
+    const scoreB = Math.min(
+      getMatchScore(b.title?.romaji, lowerCaseQuery),
+      getMatchScore(b.title?.english, lowerCaseQuery)
+    );
+
+    if (scoreA !== scoreB) {
+      return scoreA - scoreB;
+    }
+    // If scores are the same, keep original relative order from Anilist API
+    return 0;
+  });
+
+
+  // Limit to the top 20 most relevant of the filtered & sorted results
+  for (const mediaItem of allContainingMedia.slice(0, 50)) { // Aumentado de 20 a 50
+    if (mediaItem.characters && mediaItem.characters.nodes) {
+      for (const charNode of mediaItem.characters.nodes) {
+        if (!characterIds.has(charNode.id)) {
+          allCharacters.push({
+            id: charNode.id,
+            title: charNode.name.full,
+            cover: charNode.image?.large || "https://s4.anilist.co/file/anilistcdn/character/large/default.jpg",
+            source:
+              mediaItem.title?.english ||
+              mediaItem.title?.romaji || "Unknown",
+            sourceId: mediaItem.id,
+            type: 'character',
+          });
+          characterIds.add(charNode.id);
+        }
+      }
+    }
+  }
+
+  return allCharacters;
 }
 
 // --- Endpoint principal ---
 export const GET: APIRoute = async ({ url }) => {
   const query = url.searchParams.get("q");
   const type = url.searchParams.get("type");
+  const searchBy = url.searchParams.get("search_by");
   const includeEditions = url.searchParams.get("include_editions") === 'true';
 
   if (!query) {
@@ -239,9 +339,9 @@ export const GET: APIRoute = async ({ url }) => {
         if (!includeEditions) {
           // Fetch all edition IDs from the game_versions table to hide them from general search
           const { data: versionsData, error: versionsError } = await supabase
-              .from('game_versions')
-              .select('edition_igdb_id');
-          
+            .from('game_versions')
+            .select('edition_igdb_id');
+
           if (versionsError) console.error("Error fetching game versions to filter search:", versionsError.message);
 
           const editionIds = new Set(versionsData?.map(v => v.edition_igdb_id) || []);
@@ -255,7 +355,11 @@ export const GET: APIRoute = async ({ url }) => {
         results = await searchAnilistMedia(query, 'MANGA');
         break;
       case "character":
-        results = await searchAnilistCharacter(query);
+        if (searchBy === 'work') {
+          results = await searchAnilistCharacterByWork(query);
+        } else {
+          results = await searchAnilistCharacter(query);
+        }
         break;
       default:
         return new Response(JSON.stringify({ error: `Tipo de búsqueda no soportado: ${type}` }), { status: 400 });

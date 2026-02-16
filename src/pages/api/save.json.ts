@@ -6,13 +6,15 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const { fileData, dbData } = body;
 
-    // Si no hay fileData, debemos asegurarnos de que al menos haya datos de versiones para guardar.
-    // Esto permite que el gestor de versiones funcione de forma independiente.
-    if (!fileData && !dbData?.versions) {
-      return new Response(JSON.stringify({ error: "Faltan datos para guardar (ni fileData ni dbData.versions)." }), { status: 400 });
+    // Validación: debe haber algo que guardar.
+    // El cuerpo de la petición debe contener `fileData` (para una obra/música) o `dbData` (para favoritos, sagas, personajes, versiones, etc.).
+    const hasDbData = dbData && Object.keys(dbData).length > 0;
+    if (!fileData && !hasDbData) {
+      return new Response(JSON.stringify({ error: "Faltan datos para guardar." }), { status: 400 });
     }
 
     let savedRecord = null;
+    let savedCharacters = null;
 
     // --- 1. Guardar la entrada principal (obra o música), si existe fileData ---
     if (fileData) {
@@ -133,7 +135,11 @@ export const POST: APIRoute = async ({ request }) => {
         ];
         const charsToUpsert = allChars.map(c => ({ id: c.id, title: c.title, cover: c.cover, source_id: c.source_id || c.sourceId, cover_offset_y: c.cover_offset_y ?? c.coverOffsetY, category: c.category, order: c.order }));
         if (charsToUpsert.length > 0) {
-          promises.push(supabase.from('characters').upsert(charsToUpsert, { onConflict: 'id' }));
+          const { data, error } = await supabase.from('characters').upsert(charsToUpsert, { onConflict: 'id' }).select();
+          if (error) {
+            throw new Error(`Error upserting characters: ${error.message}`);
+          }
+          savedCharacters = data;
         }
       }
 
@@ -174,7 +180,7 @@ export const POST: APIRoute = async ({ request }) => {
       await Promise.all(promises);
     }
 
-    return new Response(JSON.stringify({ success: true, savedRecord }), { status: 200 });
+    return new Response(JSON.stringify({ success: true, savedRecord, savedCharacters }), { status: 200 });
 
   } catch (error) {
     console.error("Error en API de guardado:", error);
