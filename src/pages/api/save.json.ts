@@ -1,6 +1,16 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../lib/supabase";
 
+// Helper para crear un slug seguro para nombres de archivo
+const createSlug = (title: string): string => {
+  if (!title) return 'unknown-' + Date.now();
+  return title.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // permite letras, números, espacios y guiones
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+};
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
@@ -73,7 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
 
       } else {
         // Es una obra (juego, anime, etc.), la guardamos en la tabla 'works'
-        const { data, error } = await supabase.from('works').upsert({
+        const workPayload = {
           title: fileData.title,
           cover: fileData.cover,
           year: fileData.year,
@@ -84,9 +94,18 @@ export const POST: APIRoute = async ({ request }) => {
           finish_date: fileData.finishDate,
           cover_offset_y: fileData.coverOffsetY,
           private_notes: fileData.privateNotes,
-          // Añadimos un ID si existe para que 'upsert' pueda actualizar
-          ...(fileData.id && { id: fileData.id }),
-        }).select().single();
+        };
+
+        // Si un ID existe, es una actualización. Si no, es una inserción y generamos un ID.
+        if (fileData.id) {
+          workPayload.id = fileData.id;
+        } else {
+          const slug = createSlug(fileData.title);
+          const typeFolder = fileData.type === 'games' ? 'games' : fileData.type;
+          workPayload.id = `${typeFolder}/${slug}.json`;
+        }
+
+        const { data, error } = await supabase.from('works').upsert(workPayload).select().single();
 
         if (error) throw new Error(`Error al guardar en 'works': ${error.message}`);
         savedRecord = data;

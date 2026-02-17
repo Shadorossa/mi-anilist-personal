@@ -24,7 +24,15 @@ const { profile, bannerPath, avatarPath, stats } = Astro.props;
             class="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent"
         >
         </div>
-        <!-- El botón de Admin ha sido ocultado. El acceso ahora es directo por URL /admin260405 -->
+        <!-- Botón de Admin que aparece condicionalmente -->
+        <a
+            id="admin-btn"
+            href="/admin"
+            class="hidden absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 hover:bg-white/20 transition-all"
+        >
+            <i class="fa-solid fa-user-shield mr-2"></i>
+            Admin
+        </a>
     </div>
     <!-- Avatar, Username, Bio container -->
     <div
@@ -137,6 +145,29 @@ const { profile, bannerPath, avatarPath, stats } = Astro.props;
             const scrollY = window.scrollY;
             // Move the banner down at a fraction of the scroll speed to create a parallax effect
             banner.style.transform = `translateY(${scrollY * 0.4}px)`;
+        }
+    });
+
+    // Lógica para mostrar el botón de admin si la IP coincide
+    document.addEventListener("DOMContentLoaded", async () => {
+        const ADMIN_IP = "92.186.225.215";
+        try {
+            // Usamos un servicio que no tenga CORS para obtener la IP
+            const response = await fetch("https://api.ipify.org?format=json", {
+                signal: AbortSignal.timeout(3000), // Timeout de 3 segundos
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            const userIp = data.ip;
+
+            if (userIp === ADMIN_IP) {
+                const adminBtn = document.getElementById("admin-btn");
+                if (adminBtn) {
+                    adminBtn.classList.remove("hidden");
+                }
+            }
+        } catch (error) {
+            // Falla silenciosamente si no se puede obtener la IP (por timeout, adblocker, etc.)
         }
     });
 </script>

@@ -1,0 +1,76 @@
+---
+// src/components/CharacterCollectionModal.astro
+const {
+    modalId,
+    title,
+    description,
+    iconClass,
+    colorClasses,
+    characters,
+    getSourceWork,
+} = Astro.props;
+---
+
+<div
+    id={modalId}
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
+>
+    <div
+        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
+    >
+        <div class="flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4 mb-4">
+                <div
+                    class:list={[
+                        "w-12 h-12 flex items-center justify-center rounded-2xl",
+                        colorClasses,
+                    ]}
+                >
+                    <i class:list={["text-xl", iconClass]}></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white">{title}</h2>
+                    <p class="text-sm text-gray-500">{description}</p>
+                </div>
+            </div>
+            <button
+                onclick={`document.getElementById('${modalId}').classList.add('hidden'); document.body.style.overflow = '';`}
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2">
+            {characters.length > 0 ? (
+                <div class="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
+                    {characters.map((char) => {
+                        const sourceWork = getSourceWork(char);
+                        const offsetY = sourceWork?.cover_offset_y ?? sourceWork?.coverOffsetY ?? 50;
+                        return (
+                            <div class="text-center group">
+                                <div class="relative aspect-[2/3] bg-zinc-800 rounded-lg overflow-hidden mb-2 border border-transparent group-hover:border-white/20 transition-colors">
+                                    <img src={char.img} alt={char.name} loading="lazy" class="w-full h-full object-cover" style={`object-position: center ${char.cover_offset_y ?? char.coverOffsetY ?? 50}%;`} />
+                                    {sourceWork && (
+                                        <div
+                                            class="absolute bottom-1.5 right-1.5 w-12 h-8 rounded-md overflow-hidden border-2 border-zinc-900 shadow-lg group-hover:scale-110 transition-transform"
+                                            title={`Obra: ${sourceWork.title}`}
+                                        >
+                                            <img src={sourceWork.cover} alt={sourceWork.title} class="w-full h-full object-cover" style={`object-position: center ${offsetY}%;`} />
+                                        </div>
+                                    )}
+                                </div>
+                                <h4 class="text-xs font-bold text-white truncate" title={char.name}>
+                                    {char.name}
+                                </h4>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div class="flex items-center justify-center h-full">
+                    <p class="text-gray-600">No hay personajes en esta lista.</p>
+                </div>
+            )}
+        </div>
+    </div>
+</div>

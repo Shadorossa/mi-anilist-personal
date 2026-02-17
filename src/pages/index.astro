@@ -140,19 +140,24 @@ const stats = {
     favs: db.favorites.length,
 };
 
-const timeTravelData = Object.entries(
-    allContent
-        .filter((item) => item.status === "Completado" && item.finishDate)
-        .reduce((acc, item) => {
-            const year = item.finishDate.substring(0, 4);
-            if (year) {
-                acc[year] = (acc[year] || 0) + 1;
-            }
-            return acc;
-        }, {}),
-)
-    .map(([year, count]) => ({ year: parseInt(year), count }))
-    .sort((a, b) => a.year - b.year);
+const timeTravelWorks = allContent
+    .filter(
+        (item) =>
+            item.status === "Completado" &&
+            (item.start_date || item.startDate) &&
+            (item.finish_date || item.finishDate),
+    )
+    .map((item) => ({
+        title: item.title,
+        cover: item.cover,
+        startDate: item.start_date || item.startDate,
+        finishDate: item.finish_date || item.finishDate,
+        coverOffsetY: item.cover_offset_y ?? item.coverOffsetY,
+    }))
+    .sort(
+        (a, b) =>
+            new Date(a.finishDate).getTime() - new Date(b.finishDate).getTime(),
+    );
 
 // 4. FAVORITOS
 const favorites = (db.favorites || [])
@@ -577,7 +582,7 @@ if (layoutOptions.length > 0) {
             <div class="h-px w-full bg-white/10"></div>
 
             <SectionWrapper title="Viaje en el Tiempo">
-                <TimeTravel data={timeTravelData} />
+                <TimeTravel data={timeTravelWorks} />
             </SectionWrapper>
 
             <div class="h-px w-full bg-white/10"></div>

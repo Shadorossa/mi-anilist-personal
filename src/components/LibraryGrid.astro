@@ -12,22 +12,22 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
         >
             <button
                 onclick="filterType('all', this)"
-                class="type-btn active px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold transition-all"
+                class="type-btn active px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold"
                 >Todos</button
             >
             <button
-                onclick="filterType('game', this)"
-                class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5 transition-all"
+                onclick="filterType('games', this)"
+                class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5"
                 >Juegos</button
             >
             <button
                 onclick="filterType('anime', this)"
-                class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5 transition-all"
+                class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5"
                 >Anime</button
             >
             <button
                 onclick="filterType('manga', this)"
-                class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5 transition-all"
+                class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5"
                 >Manga</button
             >
         </div>
@@ -320,8 +320,10 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
         currentlyVisibleCount = INITIAL_LOAD;
         document.querySelectorAll(".type-btn").forEach((b) => {
             b.classList.remove("active");
+            b.classList.add("text-gray-500");
         });
         btn.classList.add("active");
+        btn.classList.remove("text-gray-500");
         updateGrid();
     };
     window.setSort = (sort, btn) => {

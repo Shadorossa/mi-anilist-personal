@@ -1,4 +1,6 @@
 ---
+import CharacterCollectionModal from "./CharacterCollectionModal.astro";
+
 const {
     favorites = [],
     characters = [],
@@ -8,14 +10,24 @@ const {
     localLibrary = [],
 } = Astro.props;
 
-const worksMap = new Map(localLibrary.map((work) => [work.id, work.title]));
+const worksMap = new Map(localLibrary.map((work) => [work.id, work]));
+
+const getSourceWork = (char) => {
+    if (!char) return null;
+    const sourceId = char.source_id || char.sourceId;
+    if (sourceId) {
+        return worksMap.get(sourceId);
+    }
+    // Backwards compatibility for source as string title
+    if (char.source) {
+        return localLibrary.find((w) => w.title === char.source);
+    }
+    return null;
+};
 
 const getSourceTitle = (char) => {
-    if (!char) return null;
-    if (char.sourceId) {
-        return worksMap.get(char.sourceId);
-    }
-    return char.source; // Backwards compatibility
+    const sourceWork = getSourceWork(char);
+    return sourceWork ? sourceWork.title : null;
 };
 
 const padArray = (arr, size) => {
@@ -36,26 +48,11 @@ const chunkArray = (arr, size) => {
 const fixedFavorites = padArray(favorites, 10);
 const characterPages = chunkArray(characters, 10);
 const paddedCharacterPages = characterPages.map((page) => padArray(page, 10));
-
-const likedCharacterRows = chunkArray(likedCharacters, 30);
-const paddedLikedCharacterRows = likedCharacterRows.map((row) =>
-    padArray(row, 30),
-);
-
-const interestedCharacterRows = chunkArray(interestedCharacters, 30);
-const paddedInterestedCharacterRows = interestedCharacterRows.map((row) =>
-    padArray(row, 30),
-);
-
-const dislikedCharacterRows = chunkArray(dislikedCharacters, 30);
-const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
-    padArray(row, 30),
-);
 ---
 
 <div class="w-full" id="hall-of-fame-component">
-    <div class="flex gap-6 items-center">
-        <div class="flex-1 min-w-0">
+    <div class="flex gap-6">
+        <div class="relative flex-1 min-w-0 pb-12">
             <div
                 id="view-works"
                 class="flex h-[400px] w-full gap-1 bg-[#0a0a0c] border border-white/5 rounded-2xl overflow-hidden shadow-2xl"
@@ -179,7 +176,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                                             class:list={[
                                                 "relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0",
                                                 char
-                                                    ? "hover:flex-[3] cursor-pointer bg-black"
+                                                    ? "hover:flex-[3] cursor-pointer bg-[#121215]"
                                                     : "bg-[#121215]",
                                             ]}
                                         >
@@ -247,7 +244,7 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                 paddedCharacterPages.length > 1 && (
                     <div
                         id="char-pagination-controls"
-                        class="hidden justify-end gap-2 mt-2"
+                        class="absolute bottom-0 right-0 flex justify-end gap-2 opacity-0 pointer-events-none transition-opacity duration-300"
                     >
                         <button
                             id="char-prev-btn"
@@ -267,323 +264,85 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
                 )
             }
         </div>
-        <div class="flex flex-col items-center gap-2">
-            <button
-                onclick="switchView('works')"
-                id="btn-works"
-                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white"
-            >
-                <i class="fa-solid fa-crown"></i>
-            </button>
-            <div class="w-px h-4 bg-white/10"></div>
-            <button
-                onclick="switchView('chars')"
-                id="btn-chars"
-                class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
-            >
-                <i class="fa-solid fa-mask"></i>
-            </button>
-            <button
-                onclick="toggleLikedCharsModal(true)"
-                id="btn-liked-toggle"
-                class="hidden w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
-            >
-                <i class="fa-solid fa-thumbs-up"></i>
-            </button>
-            <button
-                onclick="toggleInterestedCharsModal(true)"
-                id="btn-interested-toggle"
-                class="hidden w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
-            >
-                <i class="fa-solid fa-eye"></i>
-            </button>
-            <button
-                onclick="toggleDislikedCharsModal(true)"
-                id="btn-disliked-toggle"
-                class="hidden w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
-            >
-                <i class="fa-solid fa-thumbs-down"></i>
-            </button>
+        <div class="flex flex-col justify-start pt-20">
+            <div class="relative">
+                <div class="flex flex-col items-center gap-2">
+                    <button
+                        onclick="switchView('works')"
+                        id="btn-works"
+                        class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white"
+                    >
+                        <i class="fa-solid fa-crown"></i>
+                    </button>
+                    <div class="w-px h-4 bg-white/10"></div>
+                    <button
+                        onclick="switchView('chars')"
+                        id="btn-chars"
+                        class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+                    >
+                        <i class="fa-solid fa-mask"></i>
+                    </button>
+                </div>
+                <div
+                    id="extra-char-buttons"
+                    class="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-col items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-300"
+                >
+                    <button
+                        onclick="toggleLikedCharsModal(true)"
+                        id="btn-liked-toggle"
+                        class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+                    >
+                        <i class="fa-solid fa-thumbs-up"></i>
+                    </button>
+                    <button
+                        onclick="toggleInterestedCharsModal(true)"
+                        id="btn-interested-toggle"
+                        class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+                    >
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button
+                        onclick="toggleDislikedCharsModal(true)"
+                        id="btn-disliked-toggle"
+                        class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-gray-600 hover:bg-white/5 hover:text-white"
+                    >
+                        <i class="fa-solid fa-thumbs-down"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Liked Characters Fullscreen Modal -->
-<div
-    id="liked-chars-modal"
-    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
->
-    <div
-        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
-    >
-        <div class="flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-4 mb-4">
-                <div
-                    class="w-12 h-12 flex items-center justify-center bg-pink-500/10 text-pink-400 rounded-2xl border border-pink-500/20"
-                >
-                    <i class="fa-solid fa-thumbs-up text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-black text-white">Me Gustan</h2>
-                    <p class="text-sm text-gray-500">
-                        Colección de personajes que no son de mis favoritos,
-                        pero aprecio.
-                    </p>
-                </div>
-            </div>
-            <button
-                onclick="toggleLikedCharsModal(false)"
-                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
-            >
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div
-            class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2 space-y-2"
-        >
-            {
-                likedCharacters.length > 0 ? (
-                    paddedLikedCharacterRows.map((row) => (
-                        <div class="flex h-[150px] w-full gap-1">
-                            {row.map((char) =>
-                                char ? (
-                                    <div
-                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[2] cursor-pointer bg-black"
-                                        title={char.name}
-                                    >
-                                        <img
-                                            src={char.img}
-                                            alt={char.name}
-                                            loading="lazy"
-                                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
-                                        />
-                                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
-                                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
-                                            <h3
-                                                class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
-                                                style="writing-mode: vertical-rl; transform: rotate(180deg);"
-                                            >
-                                                {char.name}
-                                            </h3>
-                                        </div>
-                                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
-                                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
-                                                {char.name}
-                                            </h3>
-                                            {(() => {
-                                                const sourceTitle =
-                                                    getSourceTitle(char);
-                                                return (
-                                                    sourceTitle && (
-                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                            {sourceTitle}
-                                                        </p>
-                                                    )
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div class="relative flex-1 min-w-0 bg-[#121215] border-r border-black/50 last:border-0" />
-                                ),
-                            )}
-                        </div>
-                    ))
-                ) : (
-                    <div class="flex items-center justify-center h-full">
-                        <p class="text-gray-600">
-                            No hay personajes en esta lista.
-                        </p>
-                    </div>
-                )
-            }
-        </div>
-    </div>
-</div>
+<CharacterCollectionModal
+    modalId="liked-chars-modal"
+    title="Me Gustan"
+    description="Colección de personajes que no son de mis favoritos, pero aprecio."
+    iconClass="fa-solid fa-thumbs-up"
+    colorClasses="bg-pink-500/10 text-pink-400 border border-pink-500/20"
+    characters={likedCharacters}
+    getSourceWork={getSourceWork}
+/>
 
-<!-- Interested Characters Fullscreen Modal -->
-<div
-    id="interested-chars-modal"
-    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
->
-    <div
-        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
-    >
-        <div class="flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-4 mb-4">
-                <div
-                    class="w-12 h-12 flex items-center justify-center bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20"
-                >
-                    <i class="fa-solid fa-eye text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-black text-white">Interesan</h2>
-                    <p class="text-sm text-gray-500">
-                        Personajes que sigo de cerca.
-                    </p>
-                </div>
-            </div>
-            <button
-                onclick="toggleInterestedCharsModal(false)"
-                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
-            >
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div
-            class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2 space-y-2"
-        >
-            {
-                interestedCharacters.length > 0 ? (
-                    paddedInterestedCharacterRows.map((row) => (
-                        <div class="flex h-[150px] w-full gap-1">
-                            {row.map((char) =>
-                                char ? (
-                                    <div
-                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[2] cursor-pointer bg-black"
-                                        title={char.name}
-                                    >
-                                        <img
-                                            src={char.img}
-                                            alt={char.name}
-                                            loading="lazy"
-                                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
-                                        />
-                                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
-                                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
-                                            <h3
-                                                class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
-                                                style="writing-mode: vertical-rl; transform: rotate(180deg);"
-                                            >
-                                                {char.name}
-                                            </h3>
-                                        </div>
-                                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
-                                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
-                                                {char.name}
-                                            </h3>
-                                            {(() => {
-                                                const sourceTitle =
-                                                    getSourceTitle(char);
-                                                return (
-                                                    sourceTitle && (
-                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                            {sourceTitle}
-                                                        </p>
-                                                    )
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div class="relative flex-1 min-w-0 bg-[#121215] border-r border-black/50 last:border-0" />
-                                ),
-                            )}
-                        </div>
-                    ))
-                ) : (
-                    <div class="flex items-center justify-center h-full">
-                        <p class="text-gray-600">
-                            No hay personajes en esta lista.
-                        </p>
-                    </div>
-                )
-            }
-        </div>
-    </div>
-</div>
+<CharacterCollectionModal
+    modalId="interested-chars-modal"
+    title="Interesan"
+    description="Personajes que sigo de cerca."
+    iconClass="fa-solid fa-eye"
+    colorClasses="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+    characters={interestedCharacters}
+    getSourceWork={getSourceWork}
+/>
 
-<!-- Disliked Characters Fullscreen Modal -->
-<div
-    id="disliked-chars-modal"
-    class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
->
-    <div
-        class="bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl w-[85vw] h-[85vh] flex flex-col p-6"
-    >
-        <div class="flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-4 mb-4">
-                <div
-                    class="w-12 h-12 flex items-center justify-center bg-red-500/10 text-red-400 rounded-2xl border border-red-500/20"
-                >
-                    <i class="fa-solid fa-thumbs-down text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-black text-white">No Me Gustan</h2>
-                    <p class="text-sm text-gray-500">
-                        Personajes que no son de mi agrado.
-                    </p>
-                </div>
-            </div>
-            <button
-                onclick="toggleDislikedCharsModal(false)"
-                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition"
-            >
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div
-            class="flex-1 min-h-0 overflow-y-auto custom-scrollbar-popup pr-2 space-y-2"
-        >
-            {
-                dislikedCharacters.length > 0 ? (
-                    paddedDislikedCharacterRows.map((row) => (
-                        <div class="flex h-[150px] w-full gap-1">
-                            {row.map((char) =>
-                                char ? (
-                                    <div
-                                        class="relative flex-1 min-w-0 transition-[flex-grow] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden group border-r border-black/50 last:border-0 hover:flex-[2] cursor-pointer bg-black"
-                                        title={char.name}
-                                    >
-                                        <img
-                                            src={char.img}
-                                            alt={char.name}
-                                            loading="lazy"
-                                            class="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-100 transition-opacity duration-500 grayscale group-hover:grayscale-0"
-                                        />
-                                        <div class="absolute inset-0 bg-black/60 group-hover:bg-transparent transition-colors duration-500" />
-                                        <div class="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-500 delay-200 group-hover:opacity-0 group-hover:duration-75 group-hover:delay-0 pointer-events-none z-10 p-2">
-                                            <h3
-                                                class="text-[10px] text-white/50 font-bold uppercase tracking-widest whitespace-nowrap"
-                                                style="writing-mode: vertical-rl; transform: rotate(180deg);"
-                                            >
-                                                {char.name}
-                                            </h3>
-                                        </div>
-                                        <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-hover:duration-500 group-hover:delay-100 translate-y-2 group-hover:translate-y-0 z-30">
-                                            <h3 class="text-sm font-bold text-white leading-tight drop-shadow-md whitespace-normal break-words pr-2">
-                                                {char.name}
-                                            </h3>
-                                            {(() => {
-                                                const sourceTitle =
-                                                    getSourceTitle(char);
-                                                return (
-                                                    sourceTitle && (
-                                                        <p class="text-pink-400 font-semibold text-[10px] uppercase tracking-widest mt-1 truncate opacity-80">
-                                                            {sourceTitle}
-                                                        </p>
-                                                    )
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div class="relative flex-1 min-w-0 bg-[#121215] border-r border-black/50 last:border-0" />
-                                ),
-                            )}
-                        </div>
-                    ))
-                ) : (
-                    <div class="flex items-center justify-center h-full">
-                        <p class="text-gray-600">
-                            No hay personajes en esta lista.
-                        </p>
-                    </div>
-                )
-            }
-        </div>
-    </div>
-</div>
+<CharacterCollectionModal
+    modalId="disliked-chars-modal"
+    title="No Me Gustan"
+    description="Personajes que no son de mi agrado."
+    iconClass="fa-solid fa-thumbs-down"
+    colorClasses="bg-red-500/10 text-red-400 border border-red-500/20"
+    characters={dislikedCharacters}
+    getSourceWork={getSourceWork}
+/>
 
 <script
     define:vars={{
@@ -648,22 +407,21 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
         const paginationControls = document.getElementById(
             "char-pagination-controls",
         );
-        const btnLiked = document.getElementById("btn-liked-toggle");
-        const btnInterested = document.getElementById("btn-interested-toggle");
-        const btnDisliked = document.getElementById("btn-disliked-toggle");
+        const extraCharButtons = document.getElementById("extra-char-buttons");
 
         if (type === "works") {
             worksView.classList.remove("hidden");
             worksView.classList.add("flex");
             charsView.classList.add("hidden");
             if (paginationControls) {
-                paginationControls.classList.add("hidden");
-                paginationControls.classList.remove("flex");
+                paginationControls.classList.remove("opacity-100");
+                paginationControls.classList.add(
+                    "opacity-0",
+                    "pointer-events-none",
+                );
             }
-            btnLiked.classList.add("hidden");
-            btnInterested.classList.add("hidden");
-            btnDisliked.classList.add("hidden");
-
+            extraCharButtons.classList.remove("opacity-100");
+            extraCharButtons.classList.add("opacity-0", "pointer-events-none");
             btnWorks.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
             btnChars.className =
@@ -673,13 +431,17 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
             worksView.classList.remove("flex");
             charsView.classList.remove("hidden");
             if (paginationControls) {
-                paginationControls.classList.remove("hidden");
-                paginationControls.classList.add("flex");
+                paginationControls.classList.remove(
+                    "opacity-0",
+                    "pointer-events-none",
+                );
+                paginationControls.classList.add("opacity-100");
             }
-            btnLiked.classList.remove("hidden");
-            btnInterested.classList.remove("hidden");
-            btnDisliked.classList.remove("hidden");
-
+            extraCharButtons.classList.remove(
+                "opacity-0",
+                "pointer-events-none",
+            );
+            extraCharButtons.classList.add("opacity-100");
             btnChars.className =
                 "w-10 h-10 flex items-center justify-center rounded-lg transition-colors bg-white/10 text-white";
             btnWorks.className =
@@ -722,38 +484,23 @@ const paddedDislikedCharacterRows = dislikedCharacterRows.map((row) =>
         }
     }
 
-    window.toggleLikedCharsModal = (show) => {
-        const modal = document.getElementById("liked-chars-modal");
+    const toggleModal = (modalId, show) => {
+        const modal = document.getElementById(modalId);
         if (show) {
             modal.classList.remove("hidden");
-            document.body.style.overflow = "hidden"; // Prevent background scroll
+            document.body.style.overflow = "hidden";
         } else {
             modal.classList.add("hidden");
-            document.body.style.overflow = ""; // Restore background scroll
+            document.body.style.overflow = "";
         }
     };
 
-    window.toggleDislikedCharsModal = (show) => {
-        const modal = document.getElementById("disliked-chars-modal");
-        if (show) {
-            modal.classList.remove("hidden");
-            document.body.style.overflow = "hidden"; // Prevent background scroll
-        } else {
-            modal.classList.add("hidden");
-            document.body.style.overflow = ""; // Restore background scroll
-        }
-    };
-
-    window.toggleInterestedCharsModal = (show) => {
-        const modal = document.getElementById("interested-chars-modal");
-        if (show) {
-            modal.classList.remove("hidden");
-            document.body.style.overflow = "hidden"; // Prevent background scroll
-        } else {
-            modal.classList.add("hidden");
-            document.body.style.overflow = ""; // Restore background scroll
-        }
-    };
+    window.toggleLikedCharsModal = (show) =>
+        toggleModal("liked-chars-modal", show);
+    window.toggleInterestedCharsModal = (show) =>
+        toggleModal("interested-chars-modal", show);
+    window.toggleDislikedCharsModal = (show) =>
+        toggleModal("disliked-chars-modal", show);
 
     document.addEventListener("keydown", (e) => {
         const hofComponent = document.getElementById("hall-of-fame-component");
