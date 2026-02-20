@@ -5,7 +5,7 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
 
 <div class="w-full flex flex-col" id="library-section">
     <div
-        class="flex flex-col xl:flex-row gap-4 mb-8 bg-[#121215] p-2 rounded-xl border border-white/5 items-center justify-between shadow-lg"
+        class="sticky top-4 z-30 bg-[#121215]/90 backdrop-blur-md flex flex-col xl:flex-row gap-4 mb-8 p-2 rounded-xl border border-white/5 items-center justify-between shadow-lg"
     >
         <div
             class="flex gap-1 w-full xl:w-auto justify-center xl:justify-start"
@@ -13,22 +13,30 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
             <button
                 onclick="filterType('all', this)"
                 class="type-btn active px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold"
-                >Todos</button
+                >Todos <span
+                    id="count-type-all"
+                    class="font-normal opacity-70 ml-0.5"></span></button
             >
             <button
                 onclick="filterType('games', this)"
                 class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5"
-                >Juegos</button
+                >Juegos <span
+                    id="count-type-games"
+                    class="font-normal opacity-70 ml-0.5"></span></button
             >
             <button
                 onclick="filterType('anime', this)"
                 class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5"
-                >Anime</button
+                >Anime <span
+                    id="count-type-anime"
+                    class="font-normal opacity-70 ml-0.5"></span></button
             >
             <button
                 onclick="filterType('manga', this)"
                 class="type-btn px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold text-gray-500 hover:bg-white/5"
-                >Manga</button
+                >Manga <span
+                    id="count-type-manga"
+                    class="font-normal opacity-70 ml-0.5"></span></button
             >
         </div>
 
@@ -187,6 +195,23 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
         }
     }
 
+    function updateFilterCounts(filteredItems) {
+        const typeCounts = { all: 0, games: 0, anime: 0, manga: 0 };
+
+        filteredItems.forEach((item) => {
+            const type = item.type;
+            typeCounts.all++;
+            if (typeCounts.hasOwnProperty(type)) {
+                typeCounts[type]++;
+            }
+        });
+
+        for (const type in typeCounts) {
+            const el = document.getElementById(`count-type-${type}`);
+            if (el) el.textContent = `(${typeCounts[type]})`;
+        }
+    }
+
     const calculateRating = (score) =>
         (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
 
@@ -238,6 +263,8 @@ const calculateRating = (score) => (score / 2).toFixed(score % 2 === 0 ? 0 : 1);
                 .includes(textFilter);
             return statusMatch && typeMatch && titleMatch;
         });
+
+        updateFilterCounts(filteredItems);
 
         filteredItems.sort((a, b) => {
             if (currentSort === "saga") {

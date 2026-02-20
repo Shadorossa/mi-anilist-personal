@@ -2061,7 +2061,7 @@ const allGameVersionIds = (gameVersionsRes.data || []).map(
                     dateInputsContainer,
                     privateNotesContainer,
                 ].forEach((el) => el && el.classList.remove("hidden"));
-                [albumContainer, editionContainer].forEach(
+                [albumContainer].forEach(
                     (el) => el && el.classList.add("hidden"),
                 );
                 [favBtn, deleteBtn, scoreContainer].forEach(
@@ -2079,10 +2079,9 @@ const allGameVersionIds = (gameVersionsRes.data || []).map(
                     // Común para música y álbumes: ocultar sagas, estados, fechas, cronología
                     [
                         sagaContainer,
-                        editionContainer,
                         statusContainer,
                         dateInputsContainer,
-                    ].forEach((el) => el.classList.add("hidden"));
+                    ].forEach((el) => el && el.classList.add("hidden"));
                     if (timelinePicker) timelinePicker.classList.add("hidden");
 
                     // Mostrar contenedor de álbum y rellenar nombre
@@ -2116,58 +2115,6 @@ const allGameVersionIds = (gameVersionsRes.data || []).map(
                     );
                 } else {
                     delete editorEl.dataset.mediaType;
-
-                    if (type === "games") {
-                        sagaEditionGrid.classList.replace(
-                            "grid-cols-1",
-                            "grid-cols-2",
-                        );
-                        editionContainer.classList.remove("hidden");
-                        const editionSelector =
-                            document.getElementById("editionSelector");
-                        editionSelector.innerHTML =
-                            '<option value="">Edición Base</option>'; // Default option
-
-                        fetch(`/api/versions.json?main_id=${data.id}`)
-                            .then((res) => {
-                                if (!res.ok)
-                                    throw new Error("Failed to fetch versions");
-                                return res.json();
-                            })
-                            .then((versions) => {
-                                if (versions && versions.length > 0) {
-                                    const relevantVersions = versions.filter(
-                                        (v) =>
-                                            v.version_type === "expanded" ||
-                                            v.version_type === "remaster",
-                                    );
-                                    if (relevantVersions.length > 0) {
-                                        relevantVersions.forEach((v) => {
-                                            const option =
-                                                document.createElement(
-                                                    "option",
-                                                );
-                                            option.value = v.id;
-                                            option.textContent = v.title;
-                                            editionSelector.appendChild(option);
-                                        });
-                                    }
-                                }
-                            })
-                            .catch((err) => {
-                                console.error(
-                                    `Could not load editions for game ${data.id}:`,
-                                    err,
-                                );
-                                editionSelector.innerHTML =
-                                    '<option value="">Error al cargar</option>';
-                            });
-                    } else {
-                        sagaEditionGrid.classList.replace(
-                            "grid-cols-2",
-                            "grid-cols-1",
-                        );
-                    }
 
                     // Lógica de Sagas para obras
                     const sagaSelector =
